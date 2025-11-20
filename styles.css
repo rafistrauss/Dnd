@@ -1,0 +1,525 @@
+:root {
+    --primary-color: #8b0000;
+    --secondary-color: #c8a882;
+    --bg-color: #f5f5dc;
+    --card-bg: #ffffff;
+    --text-color: #2c1810;
+    --border-color: #8b7355;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* Header */
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+
+header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+}
+
+.btn-primary {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.btn-primary:hover {
+    background-color: #d4b896;
+    box-shadow: var(--hover-shadow);
+}
+
+.btn-secondary {
+    background-color: white;
+    color: var(--primary-color);
+}
+
+.btn-secondary:hover {
+    background-color: #f0f0f0;
+    box-shadow: var(--hover-shadow);
+}
+
+.roll-btn, .roll-btn-small {
+    padding: 6px 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.roll-btn:hover, .roll-btn-small:hover {
+    background-color: #a50000;
+    transform: translateY(-2px);
+    box-shadow: var(--hover-shadow);
+}
+
+.roll-btn-small {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+}
+
+/* Sections */
+section {
+    background-color: var(--card-bg);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+section h2 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 15px;
+    flex: 1;
+    min-width: 150px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+}
+
+input[type="text"],
+input[type="number"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Character Info */
+.info-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+/* Combat Stats */
+.combat-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+}
+
+.stat-box {
+    text-align: center;
+}
+
+.stat-box label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+.stat-input {
+    width: 100%;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.hp-box .hp-inputs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: center;
+}
+
+.hp-box .hp-inputs span {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Ability Scores */
+.abilities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.ability-card {
+    background: linear-gradient(135deg, var(--secondary-color), #dcc5a3);
+    border: 3px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ability-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--hover-shadow);
+}
+
+.ability-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.ability-modifier {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color);
+    margin: 10px 0;
+}
+
+.ability-score {
+    width: 60px;
+    text-align: center;
+    margin: 10px auto;
+    font-size: 1.1rem;
+}
+
+.ability-card .roll-btn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Saves and Skills */
+.saves-grid, .skills-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.save-item, .skill-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px;
+    background-color: var(--bg-color);
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+}
+
+.save-item input[type="checkbox"],
+.skill-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.save-item label,
+.skill-item label {
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.save-mod, .skill-mod {
+    font-weight: bold;
+    min-width: 35px;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+/* Attacks Section */
+.attack-item {
+    background-color: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.attack-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.attack-header input {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.attack-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.attack-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: 15% auto;
+    padding: 30px;
+    border: 3px solid var(--border-color);
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 20px;
+}
+
+.close:hover,
+.close:focus {
+    color: var(--primary-color);
+}
+
+#rollResult {
+    text-align: center;
+    padding: 20px;
+}
+
+#rollResult h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+#rollResult .dice-roll {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 20px 0;
+    animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+#rollResult .roll-details {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 5px;
+    }
+
+    header h1 {
+        font-size: 1.3rem;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .header-actions .btn {
+        flex: 1;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+
+    section {
+        padding: 15px;
+    }
+
+    section h2 {
+        font-size: 1.1rem;
+    }
+
+    .abilities-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .combat-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-row {
+        flex-direction: column;
+    }
+
+    .form-group {
+        width: 100%;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 30% auto;
+    }
+
+    #rollResult .dice-roll {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .abilities-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .save-item, .skill-item {
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+    }
+
+    .save-mod, .skill-mod {
+        grid-column: 2;
+        text-align: right;
+    }
+
+    .roll-btn-small {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .attack-actions {
+        flex-direction: column;
+    }
+
+    .attack-actions button {
+        width: 100%;
+    }
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background-color: white;
+    }
+
+    .header-actions,
+    .roll-btn,
+    .roll-btn-small,
+    #addAttackBtn {
+        display: none;
+    }
+
+    section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
