@@ -51,7 +51,14 @@ let character = {
     attacks: [],
     features: '',
     equipment: '',
-    notes: ''
+    notes: '',
+    classFeatures: {
+        divineSense: [false, false, false],
+        layOnHandsPool: 15,
+        spellSlots: [false, false, false, false],
+        channelDivinity: false,
+        preparedSpells: ''
+    }
 };
 
 // Skill to ability mapping
@@ -97,6 +104,13 @@ function setupEventListeners() {
     });
     
     document.getElementById('fileInput').addEventListener('change', importCharacter);
+    
+    // Gist buttons
+    document.getElementById('saveToGistBtn').addEventListener('click', openGistModal.bind(null, 'save'));
+    document.getElementById('loadFromGistBtn').addEventListener('click', openGistModal.bind(null, 'load'));
+    document.getElementById('saveGistConfirm').addEventListener('click', saveToGist);
+    document.getElementById('loadGistConfirm').addEventListener('click', loadFromGist);
+    document.getElementById('cancelGist').addEventListener('click', closeGistModal);
     
     // Character info inputs
     document.getElementById('characterName').addEventListener('change', (e) => {
@@ -188,6 +202,34 @@ function setupEventListeners() {
         character.notes = e.target.value;
     });
     
+    // Class features tracking
+    document.getElementById('layOnHandsPool').addEventListener('change', (e) => {
+        character.classFeatures.layOnHandsPool = parseInt(e.target.value) || 0;
+    });
+    
+    document.getElementById('preparedSpells').addEventListener('change', (e) => {
+        character.classFeatures.preparedSpells = e.target.value;
+    });
+    
+    // Divine Sense checkboxes
+    [1, 2, 3].forEach(num => {
+        document.getElementById(`divineSense${num}`).addEventListener('change', (e) => {
+            character.classFeatures.divineSense[num - 1] = e.target.checked;
+        });
+    });
+    
+    // Spell slot checkboxes
+    [1, 2, 3, 4].forEach(num => {
+        document.getElementById(`spellSlot1_${num}`).addEventListener('change', (e) => {
+            character.classFeatures.spellSlots[num - 1] = e.target.checked;
+        });
+    });
+    
+    // Channel Divinity checkbox
+    document.getElementById('channelDivinity').addEventListener('change', (e) => {
+        character.classFeatures.channelDivinity = e.target.checked;
+    });
+    
     // Roll buttons for ability checks
     document.querySelectorAll('.ability-card .roll-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -217,9 +259,13 @@ function setupEventListeners() {
     
     // Modal close
     document.querySelector('.close').addEventListener('click', closeModal);
+    document.querySelector('.close-gist').addEventListener('click', closeGistModal);
     window.addEventListener('click', (e) => {
         if (e.target === document.getElementById('rollModal')) {
             closeModal();
+        }
+        if (e.target === document.getElementById('gistModal')) {
+            closeGistModal();
         }
     });
 }
@@ -255,6 +301,9 @@ function updateAllModifiers() {
         const skillMod = abilityMod + (character.skillProficiencies[skill] ? character.proficiencyBonus : 0);
         document.getElementById(skill).textContent = formatModifier(skillMod);
     });
+    
+    // Update spell save DC
+    updateSpellSaveDC();
 }
 
 // Update proficiency bonus based on level
@@ -380,6 +429,229 @@ function closeModal() {
     document.getElementById('rollModal').style.display = 'none';
 }
 
+// Gist Integration
+function openGistModal(mode) {
+    const modal = document.getElementById('gistModal');
+    const statusDiv = document.getElementById('gistStatus');
+    const gistList = document.getElementById('gistList');
+    
+    // Clear previous status and list
+    statusDiv.style.display = 'none';
+    statusDiv.className = '';
+    gistList.innerHTML = '';
+    
+    // Load saved token if exists
+    const savedToken = localStorage.getItem('githubToken');
+    if (savedToken) {
+        document.getElementById('githubToken').value = savedToken;
+        document.getElementById('rememberToken').checked = true;
+    }
+    
+    // Show appropriate buttons
+    document.getElementById('saveGistConfirm').style.display = mode === 'save' ? 'inline-block' : 'none';
+    document.getElementById('loadGistConfirm').style.display = mode === 'load' ? 'inline-block' : 'none';
+    
+    // If loading, fetch gists
+    if (mode === 'load' && savedToken) {
+        fetchGists(savedToken);
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeGistModal() {
+    document.getElementById('gistModal').style.display = 'none';
+}
+
+function showGistStatus(message, type) {
+    const statusDiv = document.getElementById('gistStatus');
+    statusDiv.textContent = message;
+    statusDiv.className = type;
+    statusDiv.style.display = 'block';
+}
+
+async function saveToGist() {
+    const token = document.getElementById('githubToken').value.trim();
+    const rememberToken = document.getElementById('rememberToken').checked;
+    
+    if (!token) {
+        showGistStatus('Please enter a GitHub token', 'error');
+        return;
+    }
+    
+    if (rememberToken) {
+        localStorage.setItem('githubToken', token);
+    } else {
+        localStorage.removeItem('githubToken');
+    }
+    
+    showGistStatus('Saving to GitHub Gist...', 'info');
+    
+    const characterData = JSON.stringify(character, null, 2);
+    const fileName = `${character.name || 'character'}-dnd-sheet.json`;
+    
+    const gistData = {
+        description: `D&D Character Sheet: ${character.name || 'Unnamed'} (Level ${character.level} ${character.class})`,
+        public: false,
+        files: {
+            [fileName]: {
+                content: characterData
+            }
+        }
+    };
+    
+    try {
+        const response = await fetch('https://api.github.com/gists', {
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify(gistData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Save gist ID for future updates
+        character.gistId = result.id;
+        localStorage.setItem('lastGistId', result.id);
+        
+        showGistStatus(`Successfully saved to Gist! ID: ${result.id}`, 'success');
+        
+        setTimeout(() => {
+            closeGistModal();
+        }, 2000);
+        
+    } catch (error) {
+        showGistStatus(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function loadFromGist() {
+    const token = document.getElementById('githubToken').value.trim();
+    const rememberToken = document.getElementById('rememberToken').checked;
+    
+    if (!token) {
+        showGistStatus('Please enter a GitHub token', 'error');
+        return;
+    }
+    
+    if (rememberToken) {
+        localStorage.setItem('githubToken', token);
+    } else {
+        localStorage.removeItem('githubToken');
+    }
+    
+    await fetchGists(token);
+}
+
+async function fetchGists(token) {
+    showGistStatus('Loading your gists...', 'info');
+    
+    try {
+        const response = await fetch('https://api.github.com/gists', {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+        
+        const gists = await response.json();
+        
+        // Filter for D&D character sheets
+        const characterGists = gists.filter(gist => 
+            gist.description && gist.description.includes('D&D Character Sheet')
+        );
+        
+        if (characterGists.length === 0) {
+            showGistStatus('No character sheets found in your gists', 'info');
+            return;
+        }
+        
+        showGistStatus(`Found ${characterGists.length} character sheet(s)`, 'success');
+        displayGistList(characterGists);
+        
+    } catch (error) {
+        showGistStatus(`Error: ${error.message}`, 'error');
+    }
+}
+
+function displayGistList(gists) {
+    const gistList = document.getElementById('gistList');
+    gistList.innerHTML = '<h4>Select a character to load:</h4>';
+    
+    gists.forEach(gist => {
+        const gistItem = document.createElement('div');
+        gistItem.className = 'gist-item';
+        
+        const date = new Date(gist.updated_at).toLocaleString();
+        
+        gistItem.innerHTML = `
+            <div class="gist-item-title">${gist.description}</div>
+            <div class="gist-item-date">Last updated: ${date}</div>
+        `;
+        
+        gistItem.addEventListener('click', () => {
+            loadGistContent(gist.id);
+        });
+        
+        gistList.appendChild(gistItem);
+    });
+}
+
+async function loadGistContent(gistId) {
+    const token = document.getElementById('githubToken').value.trim();
+    
+    showGistStatus('Loading character...', 'info');
+    
+    try {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+        
+        const gist = await response.json();
+        
+        // Find the character sheet file
+        const files = Object.values(gist.files);
+        const characterFile = files.find(file => file.filename.endsWith('.json'));
+        
+        if (!characterFile) {
+            throw new Error('No character sheet file found in gist');
+        }
+        
+        character = JSON.parse(characterFile.content);
+        character.gistId = gistId;
+        
+        populateForm();
+        saveToLocalStorage();
+        
+        showGistStatus('Character loaded successfully!', 'success');
+        
+        setTimeout(() => {
+            closeGistModal();
+        }, 1500);
+        
+    } catch (error) {
+        showGistStatus(`Error: ${error.message}`, 'error');
+    }
+}
+
 // Attack management
 function addAttack() {
     const attack = {
@@ -503,6 +775,32 @@ function populateForm() {
     // Attacks
     renderAttacks();
     
+    // Class features
+    if (character.classFeatures) {
+        document.getElementById('layOnHandsPool').value = character.classFeatures.layOnHandsPool || 15;
+        document.getElementById('preparedSpells').value = character.classFeatures.preparedSpells || '';
+        
+        // Divine Sense
+        if (character.classFeatures.divineSense) {
+            [1, 2, 3].forEach((num, idx) => {
+                document.getElementById(`divineSense${num}`).checked = character.classFeatures.divineSense[idx] || false;
+            });
+        }
+        
+        // Spell Slots
+        if (character.classFeatures.spellSlots) {
+            [1, 2, 3, 4].forEach((num, idx) => {
+                document.getElementById(`spellSlot1_${num}`).checked = character.classFeatures.spellSlots[idx] || false;
+            });
+        }
+        
+        // Channel Divinity
+        document.getElementById('channelDivinity').checked = character.classFeatures.channelDivinity || false;
+    }
+    
+    // Update spell save DC
+    updateSpellSaveDC();
+    
     // Update all calculated values
     updateAllModifiers();
 }
@@ -539,7 +837,78 @@ function importCharacter(event) {
     event.target.value = '';
 }
 
+// Class feature reset functions
+function resetDivineSense() {
+    character.classFeatures.divineSense = [false, false, false];
+    [1, 2, 3].forEach(num => {
+        document.getElementById(`divineSense${num}`).checked = false;
+    });
+    alert('Divine Sense uses restored!');
+}
+
+function resetLayOnHands() {
+    character.classFeatures.layOnHandsPool = 15;
+    document.getElementById('layOnHandsPool').value = 15;
+    alert('Lay on Hands pool restored to 15 HP!');
+}
+
+function resetSpellSlots() {
+    character.classFeatures.spellSlots = [false, false, false, false];
+    [1, 2, 3, 4].forEach(num => {
+        document.getElementById(`spellSlot1_${num}`).checked = false;
+    });
+    alert('Spell slots restored!');
+}
+
+function resetChannelDivinity() {
+    character.classFeatures.channelDivinity = false;
+    document.getElementById('channelDivinity').checked = false;
+    alert('Channel Divinity restored!');
+}
+
+function rollDivineSmite() {
+    const level = parseInt(document.getElementById('smiteLevel').value);
+    const isUndead = document.getElementById('smiteUndead').checked;
+    
+    // Base damage: 2d8 for 1st level, +1d8 per level above 1st
+    const diceCount = 1 + level;
+    const baseDice = rollDice(8, diceCount);
+    
+    // Extra 1d8 for undead/fiend
+    let extraDice = { results: [], total: 0 };
+    if (isUndead) {
+        extraDice = rollDice(8, 1);
+    }
+    
+    const total = baseDice.total + extraDice.total;
+    const allResults = [...baseDice.results, ...extraDice.results];
+    
+    showRollResult(
+        `Divine Smite (${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} Level)`,
+        total,
+        `${diceCount}d8${isUndead ? ' + 1d8' : ''}: [${allResults.join(', ')}] = ${total} radiant damage`
+    );
+}
+
+function updateSpellSaveDC() {
+    const chaMod = calculateModifier(character.abilities.charisma);
+    const profBonus = character.proficiencyBonus;
+    const spellSaveDC = 8 + chaMod + profBonus;
+    
+    document.getElementById('spellSaveDC').textContent = spellSaveDC;
+    document.getElementById('spellSaveDC2').textContent = spellSaveDC;
+    
+    // Update prepared spells count
+    const preparedCount = chaMod + 1;
+    document.getElementById('preparedSpellsCount').textContent = Math.max(1, preparedCount);
+}
+
 // Make functions globally accessible for inline event handlers
 window.removeAttack = removeAttack;
 window.rollAttack = rollAttack;
 window.rollDamage = rollDamage;
+window.resetDivineSense = resetDivineSense;
+window.resetLayOnHands = resetLayOnHands;
+window.resetSpellSlots = resetSpellSlots;
+window.resetChannelDivinity = resetChannelDivinity;
+window.rollDivineSmite = rollDivineSmite;
