@@ -209,6 +209,13 @@ body.use-mode input[type="checkbox"] {
     pointer-events: auto;
 }
 
+body.use-mode #currentHP,
+body.use-mode #layOnHandsPool {
+    pointer-events: auto;
+    background-color: white;
+    border-color: var(--border-color);
+}
+
 body.use-mode .btn-primary,
 body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small) {
     opacity: 0.5;
