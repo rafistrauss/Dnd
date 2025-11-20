@@ -215,6 +215,10 @@ body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small) {
     pointer-events: none;
 }
 
+body.use-mode .btn-danger {
+    display: none;
+}
+
 body.use-mode input[type="text"],
 body.use-mode input[type="number"],
 body.use-mode textarea,
@@ -966,7 +970,7 @@ textarea {
     }
 
     .save-item, .skill-item {
-        grid-template-columns: auto auto auto auto;
+        grid-template-columns: auto 1fr;
         gap: 6px;
         font-size: 0.8rem;
     }
@@ -979,9 +983,18 @@ textarea {
 
     .save-item label,
     .skill-item label {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        grid-column: 2;
+    }
+
+    .save-mod, .skill-mod {
+        grid-column: 1;
+        grid-row: 2;
+        text-align: left;
+    }
+
+    .roll-btn-small {
+        grid-column: 2;
+        grid-row: 2;
     }
 
     section h2 {
