@@ -216,7 +216,7 @@ body.use-mode #layOnHandsPool {
     border-color: var(--border-color);
 }
 
-body.use-mode .btn-primary,
+body.use-mode .btn-primary:not(.attack-actions .btn-primary):not(.smite-calculator .btn-primary),
 body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small) {
     opacity: 0.5;
     pointer-events: none;
@@ -239,7 +239,7 @@ body.use-mode input[type="checkbox"] {
     pointer-events: auto;
 }
 
-body.use-mode .btn-primary,
+body.use-mode .btn-primary:not(.attack-actions .btn-primary):not(.smite-calculator .btn-primary),
 body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small) {
     opacity: 0.5;
     pointer-events: none;
