@@ -83,11 +83,17 @@ const skillAbilities = {
     survival: 'wisdom'
 };
 
+// Mode state
+let isEditMode = true;
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadFromLocalStorage();
     setupEventListeners();
     updateAllModifiers();
+    setupCollapsibleSections();
+    // Start in use mode
+    toggleMode();
 });
 
 // Setup event listeners
@@ -253,6 +259,18 @@ function setupEventListeners() {
             rollSkillCheck(skill);
         });
     });
+    
+    // Mode toggle
+    document.getElementById('modeToggle').addEventListener('click', toggleMode);
+    
+    // Header collapse
+    document.getElementById('headerToggle').addEventListener('click', toggleHeader);
+    
+    // Mode toggle
+    document.getElementById('modeToggle').addEventListener('click', toggleMode);
+    
+    // Header collapse
+    document.getElementById('headerToggle').addEventListener('click', toggleHeader);
     
     // Add attack button
     document.getElementById('addAttackBtn').addEventListener('click', addAttack);
@@ -504,15 +522,17 @@ async function saveToGist() {
         const response = await fetch('https://api.github.com/gists', {
             method: 'POST',
             headers: {
-                'Authorization': `token ${token}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json'
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28'
             },
             body: JSON.stringify(gistData)
         });
         
         if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `GitHub API error: ${response.status}`);
         }
         
         const result = await response.json();
@@ -521,13 +541,14 @@ async function saveToGist() {
         character.gistId = result.id;
         localStorage.setItem('lastGistId', result.id);
         
-        showGistStatus(`Successfully saved to Gist! ID: ${result.id}`, 'success');
+        showGistStatus(`Successfully saved to Gist!`, 'success');
         
         setTimeout(() => {
             closeGistModal();
         }, 2000);
         
     } catch (error) {
+        console.error('Gist save error:', error);
         showGistStatus(`Error: ${error.message}`, 'error');
     }
 }
@@ -556,13 +577,15 @@ async function fetchGists(token) {
     try {
         const response = await fetch('https://api.github.com/gists', {
             headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28'
             }
         });
         
         if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `GitHub API error: ${response.status}`);
         }
         
         const gists = await response.json();
@@ -581,6 +604,7 @@ async function fetchGists(token) {
         displayGistList(characterGists);
         
     } catch (error) {
+        console.error('Gist fetch error:', error);
         showGistStatus(`Error: ${error.message}`, 'error');
     }
 }
@@ -616,13 +640,15 @@ async function loadGistContent(gistId) {
     try {
         const response = await fetch(`https://api.github.com/gists/${gistId}`, {
             headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28'
             }
         });
         
         if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `GitHub API error: ${response.status}`);
         }
         
         const gist = await response.json();
@@ -648,6 +674,7 @@ async function loadGistContent(gistId) {
         }, 1500);
         
     } catch (error) {
+        console.error('Gist load error:', error);
         showGistStatus(`Error: ${error.message}`, 'error');
     }
 }
@@ -901,6 +928,56 @@ function updateSpellSaveDC() {
     // Update prepared spells count
     const preparedCount = chaMod + 1;
     document.getElementById('preparedSpellsCount').textContent = Math.max(1, preparedCount);
+}
+
+// Mode toggle functionality
+function toggleMode() {
+    isEditMode = !isEditMode;
+    const btn = document.getElementById('modeToggle');
+    
+    if (isEditMode) {
+        document.body.classList.remove('use-mode');
+        btn.textContent = '📝 Edit Mode';
+        btn.classList.remove('use-mode');
+    } else {
+        document.body.classList.add('use-mode');
+        btn.textContent = '🎲 Use Mode';
+        btn.classList.add('use-mode');
+    }
+}
+
+// Header collapse functionality
+function toggleHeader() {
+    const headerActions = document.getElementById('headerActions');
+    const btn = document.getElementById('headerToggle');
+    
+    headerActions.classList.toggle('collapsed');
+    btn.textContent = headerActions.classList.contains('collapsed') ? '▶' : '▼';
+}
+
+// Collapsible sections functionality
+function setupCollapsibleSections() {
+    document.querySelectorAll('.collapsible-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const content = document.getElementById(targetId);
+            
+            this.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+            
+            // Set max-height for smooth animation
+            if (!content.classList.contains('collapsed')) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+            } else {
+                content.style.maxHeight = '0';
+            }
+        });
+        
+        // Initialize with proper max-height
+        const targetId = header.getAttribute('data-target');
+        const content = document.getElementById(targetId);
+        content.style.maxHeight = content.scrollHeight + 'px';
+    });
 }
 
 // Make functions globally accessible for inline event handlers
