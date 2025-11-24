@@ -1,5 +1,6 @@
 :root {
     --primary-color: #8b0000;
+    --primary-color-hover: #a50000;
     --secondary-color: #c8a882;
     --bg-color: #f5f5dc;
     --card-bg: #ffffff;
@@ -134,7 +135,7 @@ header h1 {
 }
 
 .roll-btn:hover, .roll-btn-small:hover {
-    background-color: #a50000;
+    background-color: var(--primary-color-hover);
     transform: translateY(-2px);
     box-shadow: var(--hover-shadow);
 }
@@ -236,7 +237,7 @@ body.use-mode .smite-calculator .btn-primary {
 
 body.use-mode .attack-actions .btn-primary:hover,
 body.use-mode .smite-calculator .btn-primary:hover {
-    background-color: #a50000 !important;
+    background-color: var(--primary-color-hover) !important;
 }
 
 textarea {
