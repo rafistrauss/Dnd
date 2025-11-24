@@ -1,5 +1,6 @@
 :root {
     --primary-color: #8b0000;
+    --primary-color-hover: #a50000;
     --secondary-color: #c8a882;
     --bg-color: #f5f5dc;
     --card-bg: #ffffff;
@@ -21,6 +22,7 @@ body {
     color: var(--text-color);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    padding-top: 120px;
 }
 
 .container {
@@ -31,12 +33,16 @@ body {
 
 /* Header */
 header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     background-color: var(--primary-color);
     color: white;
     padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow);
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .header-top {
@@ -134,7 +140,7 @@ header h1 {
 }
 
 .roll-btn:hover, .roll-btn-small:hover {
-    background-color: #a50000;
+    background-color: var(--primary-color-hover);
     transform: translateY(-2px);
     box-shadow: var(--hover-shadow);
 }
@@ -206,6 +212,10 @@ body.use-mode select {
 }
 
 body.use-mode input[type="checkbox"] {
+    pointer-events: none;
+}
+
+body.use-mode input[type="checkbox"].use-checkbox {
     pointer-events: auto;
 }
 
@@ -216,8 +226,8 @@ body.use-mode #layOnHandsPool {
     border-color: var(--border-color);
 }
 
-body.use-mode .btn-primary:not(.attack-actions .btn-primary):not(.smite-calculator .btn-primary),
-body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small) {
+body.use-mode .btn-primary,
+body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small):not(.btn-small) {
     opacity: 0.5;
     pointer-events: none;
 }
@@ -226,23 +236,17 @@ body.use-mode .btn-danger {
     display: none;
 }
 
-body.use-mode input[type="text"],
-body.use-mode input[type="number"],
-body.use-mode textarea,
-body.use-mode select {
-    pointer-events: none;
-    background-color: #f5f5f5;
-    border-color: #ddd;
+body.use-mode .attack-actions .btn-primary,
+body.use-mode .smite-calculator .btn-primary {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
-body.use-mode input[type="checkbox"] {
-    pointer-events: auto;
-}
-
-body.use-mode .btn-primary:not(.attack-actions .btn-primary):not(.smite-calculator .btn-primary),
-body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small) {
-    opacity: 0.5;
-    pointer-events: none;
+body.use-mode .attack-actions .btn-primary:hover,
+body.use-mode .smite-calculator .btn-primary:hover {
+    background-color: var(--primary-color-hover) !important;
 }
 
 textarea {
@@ -263,9 +267,10 @@ textarea {
 
 .collapsible-header:hover {
     background-color: rgba(139, 0, 0, 0.05);
-    padding: 5px 10px;
-    margin: -5px -10px 15px -10px;
-    border-radius: 5px;
+}
+
+.toggle-icon {
+    font-family: monospace;
 }
 
 .collapse-icon {
@@ -294,18 +299,21 @@ textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 5px 10px;
     transition: background-color 0.3s ease;
+    border-radius: 5px;
 }
 
 .collapsible-header:hover {
     background-color: rgba(139, 0, 0, 0.05);
-    padding: 5px 10px;
-    margin: -5px -10px 15px -10px;
-    border-radius: 5px;
 }
 
 .collapse-icon {
     transition: transform 0.3s ease;
+    font-family: monospace;
+    display: inline-block;
+    width: 1.2em;
+    text-align: center;
 }
 
 .collapsible-header.collapsed .collapse-icon {
@@ -425,8 +433,8 @@ textarea {
 }
 
 .save-item, .skill-item {
-    display: grid;
-    grid-template-columns: auto auto auto auto;
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     align-items: center;
     padding: 8px;
@@ -446,6 +454,8 @@ textarea {
 .skill-item label {
     cursor: pointer;
     font-size: 0.95rem;
+    flex: 1;
+    min-width: 100px;
 }
 
 .save-mod, .skill-mod {
@@ -805,6 +815,8 @@ textarea {
     .save-item label,
     .skill-item label {
         font-size: 0.85rem;
+        flex: 1;
+        min-width: 100px;
     }
 
     .roll-btn-small {
@@ -977,7 +989,6 @@ textarea {
     }
 
     .save-item, .skill-item {
-        grid-template-columns: auto 1fr;
         gap: 6px;
         font-size: 0.8rem;
     }
@@ -990,18 +1001,18 @@ textarea {
 
     .save-item label,
     .skill-item label {
-        grid-column: 2;
+        flex: 1;
+        min-width: 80px;
     }
 
     .save-mod, .skill-mod {
-        grid-column: 1;
-        grid-row: 2;
-        text-align: left;
+        min-width: 30px;
     }
 
     .roll-btn-small {
-        grid-column: 2;
-        grid-row: 2;
+        width: 100%;
+        flex-basis: 100%;
+        margin-top: 4px;
     }
 
     section h2 {
