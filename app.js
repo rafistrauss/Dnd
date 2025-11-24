@@ -736,6 +736,27 @@ function renderAttacks() {
     });
 }
 
+// Collapsed state storage functions
+function saveCollapsedState(sectionId, isCollapsed) {
+    try {
+        const collapsedStates = JSON.parse(localStorage.getItem('dndCollapsedStates') || '{}');
+        collapsedStates[sectionId] = isCollapsed;
+        localStorage.setItem('dndCollapsedStates', JSON.stringify(collapsedStates));
+    } catch (error) {
+        console.error('Error saving collapsed state:', error);
+    }
+}
+
+function loadCollapsedState(sectionId) {
+    try {
+        const collapsedStates = JSON.parse(localStorage.getItem('dndCollapsedStates') || '{}');
+        return collapsedStates[sectionId] || false;
+    } catch (error) {
+        console.error('Error loading collapsed state:', error);
+        return false;
+    }
+}
+
 // Local storage functions
 function saveToLocalStorage() {
     try {
@@ -953,6 +974,9 @@ function toggleHeader() {
     
     headerActions.classList.toggle('collapsed');
     btn.textContent = headerActions.classList.contains('collapsed') ? '▶' : '▼';
+    
+    // Save state to localStorage
+    saveCollapsedState('headerActions', headerActions.classList.contains('collapsed'));
 }
 
 // Collapsible sections functionality
@@ -971,13 +995,36 @@ function setupCollapsibleSections() {
             } else {
                 content.style.maxHeight = '0';
             }
+            
+            // Save state to localStorage
+            saveCollapsedState(targetId, content.classList.contains('collapsed'));
         });
         
-        // Initialize with proper max-height
+        // Initialize with proper max-height and restore saved state
         const targetId = header.getAttribute('data-target');
         const content = document.getElementById(targetId);
-        content.style.maxHeight = content.scrollHeight + 'px';
+        
+        // Restore saved collapsed state
+        const isCollapsed = loadCollapsedState(targetId);
+        if (isCollapsed) {
+            header.classList.add('collapsed');
+            content.classList.add('collapsed');
+            content.style.maxHeight = '0';
+        } else {
+            content.style.maxHeight = content.scrollHeight + 'px';
+        }
     });
+    
+    // Restore header actions collapsed state
+    const headerActions = document.getElementById('headerActions');
+    const headerBtn = document.getElementById('headerToggle');
+    if (headerActions && headerBtn) {
+        const isHeaderCollapsed = loadCollapsedState('headerActions');
+        if (isHeaderCollapsed) {
+            headerActions.classList.add('collapsed');
+            headerBtn.textContent = '▶';
+        }
+    }
 }
 
 // Make functions globally accessible for inline event handlers
