@@ -1018,10 +1018,12 @@ function setupCollapsibleSections() {
     // Restore header actions collapsed state
     const headerActions = document.getElementById('headerActions');
     const headerBtn = document.getElementById('headerToggle');
-    const isHeaderCollapsed = loadCollapsedState('headerActions');
-    if (isHeaderCollapsed) {
-        headerActions.classList.add('collapsed');
-        headerBtn.textContent = '▶';
+    if (headerActions && headerBtn) {
+        const isHeaderCollapsed = loadCollapsedState('headerActions');
+        if (isHeaderCollapsed) {
+            headerActions.classList.add('collapsed');
+            headerBtn.textContent = '▶';
+        }
     }
 }
 
