@@ -42,25 +42,36 @@ A mobile-friendly web application for managing your D&D 5e character sheet with 
 
 ## GitHub Pages Deployment
 
-To host this on GitHub Pages:
+This repository is configured with automatic deployment to GitHub Pages using GitHub Actions.
 
-1. **Push to GitHub:**
-   ```bash
-   git add .
-   git commit -m "Add D&D character sheet app"
-   git push origin master
-   ```
+### Automatic Deployment
 
-2. **Enable GitHub Pages:**
+- **Main Branch**: Automatically deploys to `https://rafistrauss.github.io/Dnd/`
+- **Pull Requests**: Each PR gets a preview deployment at `https://rafistrauss.github.io/Dnd/pr-{number}/`
+
+### PR Preview Workflow
+
+When you create or update a pull request:
+1. A preview is automatically deployed to a unique URL
+2. A comment is posted on the PR with the preview link
+3. The preview updates automatically when you push new commits
+4. The preview is cleaned up when the PR is closed
+
+### Manual Setup (First Time Only)
+
+If GitHub Pages is not yet enabled:
+
+1. **Enable GitHub Pages:**
    - Go to your repository on GitHub
    - Click on "Settings"
    - Scroll down to "Pages" section
-   - Under "Source", select "master" branch
+   - Under "Source", select "gh-pages" branch
    - Click "Save"
 
-3. **Access Your App:**
+2. **Wait for Deployment:**
+   - GitHub Actions will automatically deploy on the next push
+   - Check the "Actions" tab to see deployment status
    - Your app will be available at: `https://rafistrauss.github.io/Dnd/`
-   - It may take a few minutes to deploy
 
 ## Mobile Tips
 
