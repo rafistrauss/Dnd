@@ -48,11 +48,20 @@ This repository is configured with automatic deployment to GitHub Pages using Gi
 
 **Before PR previews will work, you must configure GitHub Pages:**
 
-1. Go to your repository **Settings** → **Pages**
-2. Under "Build and deployment" → "Source", select **Deploy from a branch**
-3. Under "Branch", select **gh-pages** and **/ (root)**
-4. Click **Save**
-5. Wait a few minutes for GitHub to build and deploy
+1. **First, deploy the main site to gh-pages:**
+   - Go to **Actions** tab
+   - Click on "Manual Deploy to GitHub Pages" workflow
+   - Click "Run workflow" → select "master" branch → "Run workflow"
+   - Wait for the workflow to complete
+
+2. **Then configure GitHub Pages:**
+   - Go to **Settings** → **Pages**
+   - Under "Build and deployment" → "Source", select **Deploy from a branch**
+   - Under "Branch", select **gh-pages** and **/ (root)**
+   - Click **Save**
+   - Wait a few minutes for GitHub to build and deploy
+
+After these steps, both the root site and PR previews will work from the gh-pages branch.
 
 ### Automatic Deployment
 
