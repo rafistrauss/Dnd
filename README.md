@@ -46,8 +46,10 @@ This repository is configured with automatic deployment to GitHub Pages using Gi
 
 ### Automatic Deployment
 
-- **Main Branch**: Automatically deploys to `https://rafistrauss.github.io/Dnd/`
-- **Pull Requests**: Each PR gets a preview deployment at `https://rafistrauss.github.io/Dnd/pr-{number}/`
+- **Main Branch**: Automatically deploys to `https://{username}.github.io/{repository}/`
+- **Pull Requests**: Each PR gets a preview deployment at `https://{username}.github.io/{repository}/pr-{number}/`
+
+(Replace `{username}` and `{repository}` with your GitHub username and repository name)
 
 ### PR Preview Workflow
 
@@ -71,7 +73,7 @@ If GitHub Pages is not yet enabled:
 2. **Wait for Deployment:**
    - GitHub Actions will automatically deploy on the next push
    - Check the "Actions" tab to see deployment status
-   - Your app will be available at: `https://rafistrauss.github.io/Dnd/`
+   - Your app will be available at: `https://{username}.github.io/{repository}/`
 
 ## Mobile Tips
 
