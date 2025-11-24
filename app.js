@@ -92,8 +92,17 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     updateAllModifiers();
     setupCollapsibleSections();
-    // Start in use mode
-    toggleMode();
+    
+    // Load saved mode or default to use mode
+    const savedMode = localStorage.getItem('dndMode');
+    if (savedMode === 'edit' && !isEditMode) {
+        toggleMode();
+    } else if (savedMode !== 'edit' && isEditMode) {
+        toggleMode();
+    } else if (!savedMode) {
+        // Start in use mode if no saved preference
+        toggleMode();
+    }
 });
 
 // Setup event listeners
@@ -965,6 +974,9 @@ function toggleMode() {
         btn.textContent = '🎲 Use Mode';
         btn.classList.add('use-mode');
     }
+    
+    // Save mode state to localStorage
+    localStorage.setItem('dndMode', isEditMode ? 'edit' : 'use');
 }
 
 // Header collapse functionality
