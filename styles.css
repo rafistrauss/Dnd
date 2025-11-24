@@ -22,6 +22,7 @@ body {
     color: var(--text-color);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    padding-top: 120px;
 }
 
 .container {
@@ -32,12 +33,16 @@ body {
 
 /* Header */
 header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     background-color: var(--primary-color);
     color: white;
     padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow);
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .header-top {
@@ -264,6 +269,10 @@ textarea {
     background-color: rgba(139, 0, 0, 0.05);
 }
 
+.toggle-icon {
+    font-family: monospace;
+}
+
 .collapse-icon {
     transition: transform 0.3s ease;
 }
@@ -301,6 +310,10 @@ textarea {
 
 .collapse-icon {
     transition: transform 0.3s ease;
+    font-family: monospace;
+    display: inline-block;
+    width: 1.2em;
+    text-align: center;
 }
 
 .collapsible-header.collapsed .collapse-icon {

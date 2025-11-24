@@ -220,6 +220,7 @@ function setupEventListeners() {
     // Class features tracking
     document.getElementById('layOnHandsPool').addEventListener('change', (e) => {
         character.classFeatures.layOnHandsPool = parseInt(e.target.value) || 0;
+        saveToLocalStorage(true);
     });
     
     document.getElementById('preparedSpells').addEventListener('change', (e) => {
@@ -229,20 +230,28 @@ function setupEventListeners() {
     // Divine Sense checkboxes
     [1, 2, 3].forEach(num => {
         document.getElementById(`divineSense${num}`).addEventListener('change', (e) => {
+            if (!character.classFeatures) character.classFeatures = {};
+            if (!character.classFeatures.divineSense) character.classFeatures.divineSense = [false, false, false];
             character.classFeatures.divineSense[num - 1] = e.target.checked;
+            saveToLocalStorage(true);
         });
     });
     
     // Spell slot checkboxes
     [1, 2, 3, 4].forEach(num => {
         document.getElementById(`spellSlot1_${num}`).addEventListener('change', (e) => {
+            if (!character.classFeatures) character.classFeatures = {};
+            if (!character.classFeatures.spellSlots) character.classFeatures.spellSlots = [false, false, false, false];
             character.classFeatures.spellSlots[num - 1] = e.target.checked;
+            saveToLocalStorage(true);
         });
     });
     
     // Channel Divinity checkbox
     document.getElementById('channelDivinity').addEventListener('change', (e) => {
+        if (!character.classFeatures) character.classFeatures = {};
         character.classFeatures.channelDivinity = e.target.checked;
+        saveToLocalStorage(true);
     });
     
     // Roll buttons for ability checks
@@ -767,12 +776,16 @@ function loadCollapsedState(sectionId) {
 }
 
 // Local storage functions
-function saveToLocalStorage() {
+function saveToLocalStorage(silent = false) {
     try {
         localStorage.setItem('dndCharacter', JSON.stringify(character));
-        alert('Character saved successfully!');
+        if (!silent) {
+            alert('Character saved successfully!');
+        }
     } catch (error) {
-        alert('Error saving character: ' + error.message);
+        if (!silent) {
+            alert('Error saving character: ' + error.message);
+        }
     }
 }
 
@@ -780,7 +793,16 @@ function loadFromLocalStorage() {
     try {
         const saved = localStorage.getItem('dndCharacter');
         if (saved) {
-            character = JSON.parse(saved);
+            const loadedCharacter = JSON.parse(saved);
+            // Merge with defaults to ensure classFeatures exists
+            character = {
+                ...character,
+                ...loadedCharacter,
+                classFeatures: {
+                    ...character.classFeatures,
+                    ...(loadedCharacter.classFeatures || {})
+                }
+            };
             populateForm();
         }
     } catch (error) {
@@ -881,7 +903,16 @@ function importCharacter(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            character = JSON.parse(e.target.result);
+            const loadedCharacter = JSON.parse(e.target.result);
+            // Merge with defaults to ensure classFeatures exists
+            character = {
+                ...character,
+                ...loadedCharacter,
+                classFeatures: {
+                    ...character.classFeatures,
+                    ...(loadedCharacter.classFeatures || {})
+                }
+            };
             populateForm();
             alert('Character imported successfully!');
         } catch (error) {
@@ -896,6 +927,7 @@ function importCharacter(event) {
 
 // Class feature reset functions
 function resetDivineSense() {
+    if (!character.classFeatures) character.classFeatures = {};
     character.classFeatures.divineSense = [false, false, false];
     [1, 2, 3].forEach(num => {
         document.getElementById(`divineSense${num}`).checked = false;
@@ -904,12 +936,14 @@ function resetDivineSense() {
 }
 
 function resetLayOnHands() {
+    if (!character.classFeatures) character.classFeatures = {};
     character.classFeatures.layOnHandsPool = 15;
     document.getElementById('layOnHandsPool').value = 15;
     alert('Lay on Hands pool restored to 15 HP!');
 }
 
 function resetSpellSlots() {
+    if (!character.classFeatures) character.classFeatures = {};
     character.classFeatures.spellSlots = [false, false, false, false];
     [1, 2, 3, 4].forEach(num => {
         document.getElementById(`spellSlot1_${num}`).checked = false;
@@ -918,6 +952,7 @@ function resetSpellSlots() {
 }
 
 function resetChannelDivinity() {
+    if (!character.classFeatures) character.classFeatures = {};
     character.classFeatures.channelDivinity = false;
     document.getElementById('channelDivinity').checked = false;
     alert('Channel Divinity restored!');
