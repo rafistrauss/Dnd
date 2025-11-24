@@ -44,7 +44,28 @@ A mobile-friendly web application for managing your D&D 5e character sheet with 
 
 This repository is configured with automatic deployment to GitHub Pages using GitHub Actions.
 
+### ⚠️ Required Setup (First Time Only)
+
+**Before PR previews will work, you must configure GitHub Pages:**
+
+1. **First, deploy the main site to gh-pages:**
+   - Go to **Actions** tab
+   - Click on "Manual Deploy to GitHub Pages" workflow
+   - Click "Run workflow" → select "master" branch → "Run workflow"
+   - Wait for the workflow to complete
+
+2. **Then configure GitHub Pages:**
+   - Go to **Settings** → **Pages**
+   - Under "Build and deployment" → "Source", select **Deploy from a branch**
+   - Under "Branch", select **gh-pages** and **/ (root)**
+   - Click **Save**
+   - Wait a few minutes for GitHub to build and deploy
+
+After these steps, both the root site and PR previews will work from the gh-pages branch.
+
 ### Automatic Deployment
+
+Once configured, deployments happen automatically:
 
 - **Main Branch**: Automatically deploys to `https://{username}.github.io/{repository}/`
 - **Pull Requests**: Each PR gets a preview deployment at `https://{username}.github.io/{repository}/pr-{number}/`
@@ -54,26 +75,10 @@ This repository is configured with automatic deployment to GitHub Pages using Gi
 ### PR Preview Workflow
 
 When you create or update a pull request:
-1. A preview is automatically deployed to a unique URL
-2. A comment is posted on the PR with the preview link
+1. GitHub Actions deploys your PR to a unique subdirectory
+2. A bot comment is posted on the PR with the preview link
 3. The preview updates automatically when you push new commits
 4. The preview is cleaned up when the PR is closed
-
-### Manual Setup (First Time Only)
-
-If GitHub Pages is not yet enabled:
-
-1. **Enable GitHub Pages:**
-   - Go to your repository on GitHub
-   - Click on "Settings"
-   - Scroll down to "Pages" section
-   - Under "Source", select "gh-pages" branch
-   - Click "Save"
-
-2. **Wait for Deployment:**
-   - GitHub Actions will automatically deploy on the next push
-   - Check the "Actions" tab to see deployment status
-   - Your app will be available at: `https://{username}.github.io/{repository}/`
 
 ## Mobile Tips
 
