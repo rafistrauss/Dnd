@@ -37,11 +37,11 @@ const DICE = (function() {
             shading: THREE.FlatShading,
         },
         label_color: '#aaaaaa', //numbers on dice
-        dice_color: '#202020',
+        dice_color: '#170074ff',
         ambient_light_color: 0xf0f0f0,
-        spot_light_color: 0xefefef,
-        desk_color: '#101010', //canvas background
-        desk_opacity: 0.5,
+        spot_light_color: 0xcfcfcf,
+        desk_color: '#3a2004', //canvas background
+        desk_opacity: 0.8,
         use_shadows: true,
         use_adapvite_timestep: true //todo: setting this to false improves performace a lot. but the dice rolls don't look as natural...
 
@@ -859,4 +859,3 @@ const DICE = (function() {
 
     return that;
 }());
-
