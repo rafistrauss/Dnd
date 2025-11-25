@@ -558,6 +558,8 @@ textarea {
     font-weight: bold;
     cursor: pointer;
     line-height: 20px;
+    position: relative;
+    z-index: 1000;
 }
 
 .close:hover,
@@ -574,6 +576,11 @@ textarea {
     position: relative;
     margin: 0 auto;
     background: transparent;
+    pointer-events: none;
+}
+
+#diceContainer canvas {
+    pointer-events: auto;
 }
 
 #diceContainer canvas {

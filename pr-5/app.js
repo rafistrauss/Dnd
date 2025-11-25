@@ -394,16 +394,14 @@ function rollDice(sides, count = 1) {
 
 function rollAbilityCheck(ability) {
     const modifier = calculateModifier(character.abilities[ability]);
-    const d20 = rollDice(20);
-    const total = d20.total + modifier;
-    
     const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
     
     showRollResult(
         `${abilityName} Check`,
-        total,
-        `d20: ${d20.total} ${formatModifier(modifier)} = ${total}`,
-        '1d20'
+        modifier,
+        null,
+        '1d20',
+        modifier
     );
 }
 
@@ -411,16 +409,14 @@ function rollSavingThrow(ability) {
     const modifier = calculateModifier(character.abilities[ability]);
     const profBonus = character.saveProficiencies[ability] ? character.proficiencyBonus : 0;
     const totalMod = modifier + profBonus;
-    const d20 = rollDice(20);
-    const total = d20.total + totalMod;
-    
     const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
     
     showRollResult(
         `${abilityName} Save`,
-        total,
-        `d20: ${d20.total} ${formatModifier(totalMod)} = ${total}`,
-        '1d20'
+        totalMod,
+        null,
+        '1d20',
+        totalMod
     );
 }
 
@@ -429,30 +425,29 @@ function rollSkillCheck(skill) {
     const abilityMod = calculateModifier(character.abilities[ability]);
     const profBonus = character.skillProficiencies[skill] ? character.proficiencyBonus : 0;
     const totalMod = abilityMod + profBonus;
-    const d20 = rollDice(20);
-    const total = d20.total + totalMod;
     
     const skillName = skill.replace(/([A-Z])/g, ' $1').trim();
     const formattedSkillName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
     
     showRollResult(
         `${formattedSkillName} Check`,
-        total,
-        `d20: ${d20.total} ${formatModifier(totalMod)} = ${total}`,
-        '1d20'
+        totalMod,
+        null,
+        '1d20',
+        totalMod
     );
 }
 
 function rollAttack(attackIndex) {
     const attack = character.attacks[attackIndex];
-    const d20 = rollDice(20);
-    const total = d20.total + parseInt(attack.attackBonus || 0);
+    const attackBonus = parseInt(attack.attackBonus || 0);
     
     showRollResult(
         `${attack.name} Attack`,
-        total,
-        `d20: ${d20.total} + ${attack.attackBonus} = ${total}${d20.total === 20 ? ' (CRITICAL HIT!)' : ''}${d20.total === 1 ? ' (Critical Miss)' : ''}`,
-        '1d20'
+        attackBonus,
+        null,
+        '1d20',
+        attackBonus
     );
 }
 
@@ -467,28 +462,18 @@ function rollDamage(attackIndex) {
         return;
     }
     
-    const count = parseInt(match[1]);
-    const sides = parseInt(match[2]);
-    const bonus = parseInt(match[3] || 0);
-    
-    const dice = rollDice(sides, count);
-    const total = dice.total + bonus;
-    
-    // Build dice notation for the 3D dice (e.g., "2d6+3" or "2d6")
-    let diceNotation = `${count}d${sides}`;
-    if (bonus !== 0) {
-        diceNotation += `${bonus >= 0 ? '+' : ''}${bonus}`;
-    }
-    
+    // The dice library will handle the rolling
     showRollResult(
         `${attack.name} Damage`,
-        total,
-        `${count}d${sides}: [${dice.results.join(', ')}] ${bonus !== 0 ? formatModifier(bonus) : ''} = ${total}`,
-        diceNotation
+        0, // Not used when using dice animation
+        null,
+        damageStr, // Pass the damage notation directly
+        0, // No additional modifier (already in notation)
+        'damage' // Type of roll
     );
 }
 
-function showRollResult(title, result, details, diceNotation = null) {
+function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20') {
     const modal = document.getElementById('rollModal');
     const resultDiv = document.getElementById('rollResult');
     const diceContainer = document.getElementById('diceContainer');
@@ -507,37 +492,39 @@ function showRollResult(title, result, details, diceNotation = null) {
             setTimeout(() => {
                 const initialized = initializeDiceBox();
                 if (initialized) {
-                    rollDiceAnimation(title, result, details, diceNotation, resultDiv);
+                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
                 } else {
                     // Fallback to instant result if initialization fails
+                    const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
                     resultDiv.innerHTML = `
                         <h3>${title}</h3>
-                        <div class="dice-roll">${result}</div>
-                        <div class="roll-details">${details}</div>
+                        <div class="dice-roll">${fallbackResult}</div>
+                        <div class="roll-details">d20: ${fallbackResult - modifier} ${formatModifier(modifier)} = ${fallbackResult}</div>
                     `;
                 }
             }, 150);
         } else {
             // Dice box already initialized, use it
-            rollDiceAnimation(title, result, details, diceNotation, resultDiv);
+            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
         }
     } else {
         // No dice animation, just show the result
         resultDiv.innerHTML = `
             <h3>${title}</h3>
-            <div class="dice-roll">${result}</div>
-            <div class="roll-details">${details}</div>
+            <div class="dice-roll">${modifier}</div>
+            <div class="roll-details">${details || ''}</div>
         `;
     }
 }
 
-function rollDiceAnimation(title, result, details, diceNotation, resultDiv) {
+function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20') {
     if (!diceBox) {
         // Fallback if dice box not available
+        const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
         resultDiv.innerHTML = `
             <h3>${title}</h3>
-            <div class="dice-roll">${result}</div>
-            <div class="roll-details">${details}</div>
+            <div class="dice-roll">${fallbackResult}</div>
+            <div class="roll-details">d20: ${fallbackResult - modifier} ${formatModifier(modifier)} = ${fallbackResult}</div>
         `;
         return;
     }
@@ -557,9 +544,31 @@ function rollDiceAnimation(title, result, details, diceNotation, resultDiv) {
         function afterRoll(notation) {
             // Add a small delay to let the dice settle visually
             setTimeout(() => {
+                // Use the actual dice result from the notation
+                const diceTotal = notation.resultTotal - (notation.constant || 0);
+                const constant = notation.constant || 0;
+                
+                let finalTotal, details;
+                if (rollType === 'damage') {
+                    // For damage rolls, just show the dice result
+                    finalTotal = notation.resultTotal;
+                    details = `${notation.resultString}`;
+                } else {
+                    // For d20 rolls, add the modifier
+                    finalTotal = diceTotal + modifier;
+                    details = `d20: ${diceTotal} ${formatModifier(modifier)} = ${finalTotal}`;
+                    
+                    // Add critical hit/miss for d20 rolls
+                    if (diceTotal === 20) {
+                        details += ' (CRITICAL HIT!)';
+                    } else if (diceTotal === 1) {
+                        details += ' (Critical Miss)';
+                    }
+                }
+                
                 resultDiv.innerHTML = `
                     <h3>${title}</h3>
-                    <div class="dice-roll">${result}</div>
+                    <div class="dice-roll">${finalTotal}</div>
                     <div class="roll-details">${details}</div>
                 `;
             }, 500);
@@ -569,6 +578,7 @@ function rollDiceAnimation(title, result, details, diceNotation, resultDiv) {
     } catch (error) {
         console.log('Failed to roll dice:', error);
         // Fall back to showing result without animation
+        const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
         resultDiv.innerHTML = `
             <h3>${title}</h3>
             <div class="dice-roll">${result}</div>
@@ -1080,16 +1090,6 @@ function rollDivineSmite() {
     
     // Base damage: 2d8 for 1st level, +1d8 per level above 1st
     const diceCount = 1 + level;
-    const baseDice = rollDice(8, diceCount);
-    
-    // Extra 1d8 for undead/fiend
-    let extraDice = { results: [], total: 0 };
-    if (isUndead) {
-        extraDice = rollDice(8, 1);
-    }
-    
-    const total = baseDice.total + extraDice.total;
-    const allResults = [...baseDice.results, ...extraDice.results];
     
     // Build dice notation
     let diceNotation = `${diceCount}d8`;
@@ -1099,9 +1099,11 @@ function rollDivineSmite() {
     
     showRollResult(
         `Divine Smite (${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} Level)`,
-        total,
-        `${diceCount}d8${isUndead ? ' + 1d8' : ''}: [${allResults.join(', ')}] = ${total} radiant damage`,
-        diceNotation
+        0, // Not used when using dice animation
+        null,
+        diceNotation,
+        0,
+        'damage'
     );
 }
 
