@@ -358,9 +358,13 @@ let diceRollBuffer = null;
 // Initialize audio on first user interaction
 function initAudio() {
     if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        // Generate dice roll sound
-        generateDiceRollSound();
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Generate dice roll sound
+            generateDiceRollSound();
+        } catch (error) {
+            console.log('Audio initialization failed:', error);
+        }
     }
 }
 
@@ -566,7 +570,7 @@ function create3DDice(value) {
         20: { x: 0, y: 0, z: 0 }
     };
     
-    // For values > 20, use a random rotation
+    // For values > 20, use the default rotation (same as 20)
     const rotation = rotations[Math.min(value, 20)] || rotations[20];
     
     return `
