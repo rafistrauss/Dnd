@@ -421,8 +421,9 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
 
         <!-- Roll Result Modal -->
         <div id="rollModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content roll-modal-content">
                 <span class="close">&times;</span>
+                <div id="rollTitle"></div>
                 <div id="diceContainer"></div>
                 <div id="rollResult"></div>
             </div>
@@ -516,14 +517,6 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
                             <span class="dice-count" id="count-20">1</span>
                             <button class="dice-btn-up" data-sides="20">+</button>
                         </div>
-                    </div>
-                </div>
-                <div class="dice-modifier-section">
-                    <label>Modifier:</label>
-                    <div class="modifier-controls">
-                        <button class="modifier-btn-down">−</button>
-                        <span class="modifier-value" id="diceModifier">0</span>
-                        <button class="modifier-btn-up">+</button>
                     </div>
                 </div>
                 <div class="dice-roll-actions">
