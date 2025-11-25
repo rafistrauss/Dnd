@@ -42,25 +42,43 @@ A mobile-friendly web application for managing your D&D 5e character sheet with 
 
 ## GitHub Pages Deployment
 
-To host this on GitHub Pages:
+This repository is configured with automatic deployment to GitHub Pages using GitHub Actions.
 
-1. **Push to GitHub:**
-   ```bash
-   git add .
-   git commit -m "Add D&D character sheet app"
-   git push origin master
-   ```
+### ⚠️ Required Setup (First Time Only)
 
-2. **Enable GitHub Pages:**
-   - Go to your repository on GitHub
-   - Click on "Settings"
-   - Scroll down to "Pages" section
-   - Under "Source", select "master" branch
-   - Click "Save"
+**Before PR previews will work, you must configure GitHub Pages:**
 
-3. **Access Your App:**
-   - Your app will be available at: `https://rafistrauss.github.io/Dnd/`
-   - It may take a few minutes to deploy
+1. **First, deploy the main site to gh-pages:**
+   - Go to **Actions** tab
+   - Click on "Manual Deploy to GitHub Pages" workflow
+   - Click "Run workflow" → select "master" branch → "Run workflow"
+   - Wait for the workflow to complete
+
+2. **Then configure GitHub Pages:**
+   - Go to **Settings** → **Pages**
+   - Under "Build and deployment" → "Source", select **Deploy from a branch**
+   - Under "Branch", select **gh-pages** and **/ (root)**
+   - Click **Save**
+   - Wait a few minutes for GitHub to build and deploy
+
+After these steps, both the root site and PR previews will work from the gh-pages branch.
+
+### Automatic Deployment
+
+Once configured, deployments happen automatically:
+
+- **Main Branch**: Automatically deploys to `https://{username}.github.io/{repository}/`
+- **Pull Requests**: Each PR gets a preview deployment at `https://{username}.github.io/{repository}/pr-{number}/`
+
+(Replace `{username}` and `{repository}` with your GitHub username and repository name)
+
+### PR Preview Workflow
+
+When you create or update a pull request:
+1. GitHub Actions deploys your PR to a unique subdirectory
+2. A bot comment is posted on the PR with the preview link
+3. The preview updates automatically when you push new commits
+4. The preview is cleaned up when the PR is closed
 
 ## Mobile Tips
 
