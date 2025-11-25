@@ -1291,7 +1291,7 @@ function rollHitDice() {
 }
 
 function longRest() {
-    if (!confirm('Take a long rest? This will restore HP, hit dice, and all class features.')) {
+    if (!confirm('Take a long rest? This will restore HP, 1/2 of the hit dice, and all class features.')) {
         return;
     }
     
@@ -1299,7 +1299,7 @@ function longRest() {
     character.currentHP = character.maxHP;
     document.getElementById('currentHP').value = character.maxHP;
     
-    // Restore hit dice (at least half)
+    // Restore hit dice (up to half of total, minimum 1)
     const restoredDice = Math.max(1, Math.floor(character.hitDice.max / 2));
     character.hitDice.current = Math.min(character.hitDice.max, character.hitDice.current + restoredDice);
     document.getElementById('hitDiceCurrent').value = character.hitDice.current;
@@ -1313,7 +1313,7 @@ function longRest() {
     // Auto-save
     saveToLocalStorage(true);
     
-    alert('Long rest completed! HP, hit dice, and class features restored.');
+    alert('Long rest completed! HP, 1/2 of the hit dice, and class features restored.');
 }
 
 // Dice Roller Modal Functions
