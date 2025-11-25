@@ -191,7 +191,7 @@ const DICE = (function() {
 
         var vector = { x: (rnd() * 2 - 1) * box.w, y: -(rnd() * 2 - 1) * box.h };
         var dist = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
-        var boost = (rnd() + 3) * dist;
+        var boost = (rnd() + 5) * dist; // Increased from 3 to 5 for more horizontal force
         throw_dices(box, vector, boost, dist, before_roll, after_roll);
     }
 
