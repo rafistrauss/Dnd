@@ -221,6 +221,10 @@ function setupEventListeners() {
         character.hitDice.max = parseInt(e.target.value) || 1;
     });
     
+    document.getElementById('hitDicePlus').addEventListener('click', adjustHitDiceCount.bind(null, 'add'));
+    document.getElementById('hitDiceMinus').addEventListener('click', adjustHitDiceCount.bind(null, 'subtract'));
+    document.getElementById('rollHitDice').addEventListener('click', rollHitDice);
+    
     // HP adjustment buttons
     document.getElementById('hpPlus').addEventListener('click', adjustHP.bind(null, 'add'));
     document.getElementById('hpMinus').addEventListener('click', adjustHP.bind(null, 'subtract'));
@@ -1219,6 +1223,73 @@ function resetChannelDivinity() {
     document.getElementById('channelDivinity').checked = false;
 }
 
+function adjustHitDiceCount(operation) {
+    const countInput = document.getElementById('hitDiceCount');
+    const currentValue = parseInt(countInput.value) || 1;
+    const maxAvailable = character.hitDice.current;
+    
+    if (operation === 'add') {
+        countInput.value = Math.min(maxAvailable, currentValue + 1);
+    } else if (operation === 'subtract') {
+        countInput.value = Math.max(1, currentValue - 1);
+    }
+}
+
+function rollHitDice() {
+    const count = parseInt(document.getElementById('hitDiceCount').value) || 1;
+    
+    if (count > character.hitDice.current) {
+        alert(`You only have ${character.hitDice.current} hit dice available!`);
+        return;
+    }
+    
+    if (character.hitDice.current <= 0) {
+        alert('No hit dice available! Take a long rest to restore them.');
+        return;
+    }
+    
+    // Roll the dice
+    const conMod = calculateModifier(character.abilities.constitution);
+    const diceNotation = `${count}d10`;
+    
+    // Use the dice animation
+    showRollResult(
+        `Hit Dice (${count}d10 + ${count * conMod} CON)`,
+        0,
+        null,
+        diceNotation,
+        0,
+        'healing'
+    );
+    
+    // We need to handle the result differently, so let's do manual calculation
+    let total = 0;
+    const rolls = [];
+    for (let i = 0; i < count; i++) {
+        const roll = Math.floor(Math.random() * 10) + 1;
+        rolls.push(roll);
+        total += roll;
+    }
+    
+    // Add constitution modifier per die
+    const healing = total + (count * conMod);
+    
+    // Apply healing
+    character.currentHP = Math.min(character.currentHP + healing, character.maxHP);
+    document.getElementById('currentHP').value = character.currentHP;
+    
+    // Decrease hit dice
+    character.hitDice.current -= count;
+    document.getElementById('hitDiceCurrent').value = character.hitDice.current;
+    
+    // Reset count input
+    document.getElementById('hitDiceCount').value = 1;
+    
+    // Auto-save
+    saveToLocalStorage(true);
+    
+}
+
 function longRest() {
     if (!confirm('Take a long rest? This will restore HP, hit dice, and all class features.')) {
         return;
@@ -1472,3 +1543,5 @@ window.rollDivineSmite = rollDivineSmite;
 window.rollCustomDice = rollCustomDice;
 window.commitHPAdjustment = commitHPAdjustment;
 window.longRest = longRest;
+window.adjustHitDiceCount = adjustHitDiceCount;
+window.rollHitDice = rollHitDice;

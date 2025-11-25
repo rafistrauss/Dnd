@@ -224,7 +224,8 @@ body.use-mode #layOnHandsPool,
 body.use-mode #tempHP,
 body.use-mode #hpAdjust,
 body.use-mode #hitDiceCurrent,
-body.use-mode #hitDiceMax {
+body.use-mode #hitDiceMax,
+body.use-mode #hitDiceCount {
     pointer-events: auto;
     background-color: white;
     border-color: var(--border-color);
@@ -254,7 +255,8 @@ body.use-mode .attack-actions .btn-primary,
 body.use-mode .smite-calculator .btn-primary,
 body.use-mode .dice-roll-actions .btn-primary,
 body.use-mode .hp-commit-btn,
-body.use-mode .long-rest-btn {
+body.use-mode .long-rest-btn,
+body.use-mode .hit-dice-roll-btn {
     background-color: var(--primary-color) !important;
     color: white !important;
     opacity: 1 !important;
@@ -265,7 +267,8 @@ body.use-mode .attack-actions .btn-primary:hover,
 body.use-mode .smite-calculator .btn-primary:hover,
 body.use-mode .dice-roll-actions .btn-primary:hover,
 body.use-mode .hp-commit-btn:hover,
-body.use-mode .long-rest-btn:hover {
+body.use-mode .long-rest-btn:hover,
+body.use-mode .hit-dice-roll-btn:hover {
     background-color: var(--primary-color-hover) !important;
 }
 
@@ -477,7 +480,7 @@ body.use-mode .hp-box .hp-inputs #currentHP {
 }
 
 .hp-adjust-input {
-    width: 60px;
+    width: 60px !important;
     text-align: center;
     font-size: 1rem;
     padding: 5px;
@@ -506,6 +509,21 @@ body.use-mode .hp-box .hp-inputs #currentHP {
 
 .hit-dice-box label {
     color: #e65100;
+}
+
+.hit-dice-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.hit-dice-roll-btn {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .long-rest-box {
