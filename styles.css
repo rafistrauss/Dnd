@@ -395,14 +395,14 @@ textarea {
     font-weight: bold;
 }
 
-.hp-box .hp-inputs {
+.hp-inputs {
     display: flex;
     align-items: center;
     gap: 5px;
     justify-content: center;
 }
 
-.hp-box .hp-inputs span {
+.hp-inputs span {
     font-size: 1.2rem;
     font-weight: bold;
 }
@@ -501,6 +501,7 @@ body.use-mode .hp-box .hp-inputs #currentHP {
     border: 2px solid #ff9800;
     border-radius: 8px;
     padding: 10px;
+    grid-column: span 2;
 }
 
 .hit-dice-box label {
