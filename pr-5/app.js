@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     updateAllModifiers();
     setupCollapsibleSections();
-    initializeDiceBox();
+    // Don't initialize dice box here - wait until modal is shown
     
     // Load saved mode or default to use mode
     const savedMode = localStorage.getItem('dndMode');
@@ -109,15 +109,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Initialize the 3D dice box
+// Initialize the 3D dice box - must be called when container is visible
 function initializeDiceBox() {
     const container = document.getElementById('diceContainer');
-    if (container && typeof DICE !== 'undefined') {
-        try {
-            diceBox = new DICE.dice_box(container);
-        } catch (error) {
-            console.log('Failed to initialize dice box:', error);
-        }
+    if (!container || typeof DICE === 'undefined') {
+        console.log('Cannot initialize dice box - container or DICE library not found');
+        return false;
+    }
+    
+    // Make sure container has dimensions
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+        console.log('Cannot initialize dice box - container has no dimensions');
+        return false;
+    }
+    
+    try {
+        diceBox = new DICE.dice_box(container);
+        console.log('Dice box initialized successfully');
+        return true;
+    } catch (error) {
+        console.log('Failed to initialize dice box:', error);
+        return false;
     }
 }
 
@@ -483,22 +496,31 @@ function showRollResult(title, result, details, diceNotation = null) {
     // Show the modal first
     modal.style.display = 'block';
     
-    // Initialize dice box if not already done - must be done after modal is visible
-    if (!diceBox) {
-        // Small delay to ensure modal is rendered
-        setTimeout(() => {
-            initializeDiceBox();
-            if (diceBox && diceNotation) {
-                rollDiceAnimation(title, result, details, diceNotation, resultDiv);
-            }
-        }, 100);
-    } else if (diceNotation) {
-        rollDiceAnimation(title, result, details, diceNotation, resultDiv);
-    }
-    
-    // Show initial rolling message if we have dice notation
+    // Try to use 3D dice animation if notation provided
     if (diceNotation) {
-        resultDiv.innerHTML = `<h3>${title}</h3><p>Rolling...</p>`;
+        // Initialize dice box if not already done - must be done after modal is visible
+        if (!diceBox) {
+            // Show rolling message
+            resultDiv.innerHTML = `<h3>${title}</h3><p>Rolling...</p>`;
+            
+            // Small delay to ensure modal is fully rendered
+            setTimeout(() => {
+                const initialized = initializeDiceBox();
+                if (initialized) {
+                    rollDiceAnimation(title, result, details, diceNotation, resultDiv);
+                } else {
+                    // Fallback to instant result if initialization fails
+                    resultDiv.innerHTML = `
+                        <h3>${title}</h3>
+                        <div class="dice-roll">${result}</div>
+                        <div class="roll-details">${details}</div>
+                    `;
+                }
+            }, 150);
+        } else {
+            // Dice box already initialized, use it
+            rollDiceAnimation(title, result, details, diceNotation, resultDiv);
+        }
     } else {
         // No dice animation, just show the result
         resultDiv.innerHTML = `
@@ -510,7 +532,20 @@ function showRollResult(title, result, details, diceNotation = null) {
 }
 
 function rollDiceAnimation(title, result, details, diceNotation, resultDiv) {
+    if (!diceBox) {
+        // Fallback if dice box not available
+        resultDiv.innerHTML = `
+            <h3>${title}</h3>
+            <div class="dice-roll">${result}</div>
+            <div class="roll-details">${details}</div>
+        `;
+        return;
+    }
+    
     try {
+        // Show rolling message
+        resultDiv.innerHTML = `<h3>${title}</h3><p>Rolling...</p>`;
+        
         diceBox.setDice(diceNotation);
         
         // Before roll callback
@@ -518,13 +553,16 @@ function rollDiceAnimation(title, result, details, diceNotation, resultDiv) {
             return null; // Random result
         }
         
-        // After roll callback
+        // After roll callback - display the result after animation completes
         function afterRoll(notation) {
-            resultDiv.innerHTML = `
-                <h3>${title}</h3>
-                <div class="dice-roll">${result}</div>
-                <div class="roll-details">${details}</div>
-            `;
+            // Add a small delay to let the dice settle visually
+            setTimeout(() => {
+                resultDiv.innerHTML = `
+                    <h3>${title}</h3>
+                    <div class="dice-roll">${result}</div>
+                    <div class="roll-details">${details}</div>
+                `;
+            }, 500);
         }
         
         diceBox.start_throw(beforeRoll, afterRoll);
