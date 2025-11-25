@@ -261,6 +261,12 @@ const DICE = (function() {
                 }
                 notation.resultString = res;
 
+                if (result.length === 1 && result[0] === 20 && notation.set && notation.set.length === 1 && notation.set[0] === 'd20') {
+                    playCriticalSound(box.container);
+                } else if (result.length === 1 && result[0] === 1 && notation.set && notation.set.length === 1 && notation.set[0] === 'd20') {
+                    playFailureSound(box.container);
+                }
+
                 if (after_roll) after_roll(notation);
 
                 box.rolling = false;
@@ -856,6 +862,33 @@ const DICE = (function() {
           audio.remove();
         };
     }
+
+    function playCriticalSound(outerContainer) {
+        const audio = document.createElement('audio');
+        outerContainer.appendChild(audio);
+        audio.src = 'assets/trumpet-success-trimmed.mp3';
+        audio.volume = 0.7;
+        audio.play();
+        audio.onended = () => {
+          audio.remove();
+        };
+    }
+
+    function playFailureSound(outerContainer) {
+        const audio = document.createElement('audio');
+        outerContainer.appendChild(audio);
+        audio.src = 'assets/cartoon-disappoint.mp3';
+        audio.volume = 0.7;
+        audio.play();
+        audio.onended = () => {
+          audio.remove();
+        };
+    }
+
+    // Expose for testing
+    that.playCriticalSound = function() {
+        playCriticalSound(document.body);
+    };
 
     return that;
 }());
