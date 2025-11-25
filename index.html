@@ -118,6 +118,12 @@
                             <span>/</span>
                             <input type="number" id="hitDiceMax" placeholder="0" class="stat-input">
                         </div>
+                        <div class="hit-dice-controls">
+                            <button class="hp-btn" id="hitDiceMinus" title="Decrease">−</button>
+                            <input type="number" id="hitDiceCount" placeholder="1" value="1" min="1" class="hp-adjust-input">
+                            <button class="hp-btn" id="hitDicePlus" title="Increase">+</button>
+                            <button class="btn btn-primary hit-dice-roll-btn" id="rollHitDice">Roll & Heal</button>
+                        </div>
                     </div>
                     <div class="stat-box long-rest-box">
                         <label>Rest</label>
