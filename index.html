@@ -18,6 +18,7 @@
                 </div>
             </div>
             <div class="header-actions" id="headerActions">
+                <button id="diceRollerBtn" class="btn btn-secondary">🎲 Roll Dice</button>
                 <button id="saveBtn" class="btn btn-primary">Save</button>
                 <button id="exportBtn" class="btn btn-secondary">Export</button>
                 <button id="importBtn" class="btn btn-secondary">Import</button>
@@ -452,6 +453,82 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
                     </div>
                     <div id="gistStatus"></div>
                     <div id="gistList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice Roller Modal -->
+        <div id="diceRollerModal" class="modal">
+            <div class="modal-content dice-roller-modal-content">
+                <span class="close-dice">&times;</span>
+                <h3>Roll Dice</h3>
+                <div class="dice-selection-grid">
+                    <div class="dice-type-item" data-sides="4">
+                        <div class="dice-icon">🔺</div>
+                        <div class="dice-label">d4</div>
+                        <div class="dice-counter">
+                            <button class="dice-btn-down" data-sides="4">−</button>
+                            <span class="dice-count" id="count-4">0</span>
+                            <button class="dice-btn-up" data-sides="4">+</button>
+                        </div>
+                    </div>
+                    <div class="dice-type-item" data-sides="6">
+                        <div class="dice-icon">⚅</div>
+                        <div class="dice-label">d6</div>
+                        <div class="dice-counter">
+                            <button class="dice-btn-down" data-sides="6">−</button>
+                            <span class="dice-count" id="count-6">0</span>
+                            <button class="dice-btn-up" data-sides="6">+</button>
+                        </div>
+                    </div>
+                    <div class="dice-type-item" data-sides="8">
+                        <div class="dice-icon">🔷</div>
+                        <div class="dice-label">d8</div>
+                        <div class="dice-counter">
+                            <button class="dice-btn-down" data-sides="8">−</button>
+                            <span class="dice-count" id="count-8">0</span>
+                            <button class="dice-btn-up" data-sides="8">+</button>
+                        </div>
+                    </div>
+                    <div class="dice-type-item" data-sides="10">
+                        <div class="dice-icon">🔟</div>
+                        <div class="dice-label">d10</div>
+                        <div class="dice-counter">
+                            <button class="dice-btn-down" data-sides="10">−</button>
+                            <span class="dice-count" id="count-10">0</span>
+                            <button class="dice-btn-up" data-sides="10">+</button>
+                        </div>
+                    </div>
+                    <div class="dice-type-item" data-sides="12">
+                        <div class="dice-icon">🔶</div>
+                        <div class="dice-label">d12</div>
+                        <div class="dice-counter">
+                            <button class="dice-btn-down" data-sides="12">−</button>
+                            <span class="dice-count" id="count-12">0</span>
+                            <button class="dice-btn-up" data-sides="12">+</button>
+                        </div>
+                    </div>
+                    <div class="dice-type-item" data-sides="20">
+                        <div class="dice-icon">🎲</div>
+                        <div class="dice-label">d20</div>
+                        <div class="dice-counter">
+                            <button class="dice-btn-down" data-sides="20">−</button>
+                            <span class="dice-count" id="count-20">1</span>
+                            <button class="dice-btn-up" data-sides="20">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="dice-modifier-section">
+                    <label>Modifier:</label>
+                    <div class="modifier-controls">
+                        <button class="modifier-btn-down">−</button>
+                        <span class="modifier-value" id="diceModifier">0</span>
+                        <button class="modifier-btn-up">+</button>
+                    </div>
+                </div>
+                <div class="dice-roll-actions">
+                    <button class="btn btn-primary" id="rollCustomDiceBtn">Roll Dice</button>
+                    <button class="btn btn-secondary" id="clearDiceBtn">Clear</button>
                 </div>
             </div>
         </div>

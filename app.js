@@ -156,6 +156,9 @@ function setupEventListeners() {
     document.getElementById('loadGistConfirm').addEventListener('click', loadFromGist);
     document.getElementById('cancelGist').addEventListener('click', closeGistModal);
     
+    // Dice roller button
+    document.getElementById('diceRollerBtn').addEventListener('click', openDiceRollerModal);
+    
     // Character info inputs
     document.getElementById('characterName').addEventListener('change', (e) => {
         character.name = e.target.value;
@@ -325,6 +328,7 @@ function setupEventListeners() {
     // Modal close
     document.querySelector('.close').addEventListener('click', closeModal);
     document.querySelector('.close-gist').addEventListener('click', closeGistModal);
+    document.querySelector('.close-dice').addEventListener('click', closeDiceRollerModal);
     window.addEventListener('click', (e) => {
         if (e.target === document.getElementById('rollModal')) {
             closeModal();
@@ -332,7 +336,32 @@ function setupEventListeners() {
         if (e.target === document.getElementById('gistModal')) {
             closeGistModal();
         }
+        if (e.target === document.getElementById('diceRollerModal')) {
+            closeDiceRollerModal();
+        }
     });
+    
+    // Close modals with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const rollModal = document.getElementById('rollModal');
+            const gistModal = document.getElementById('gistModal');
+            const diceRollerModal = document.getElementById('diceRollerModal');
+            
+            if (rollModal.style.display === 'block') {
+                closeModal();
+            }
+            if (gistModal.style.display === 'block') {
+                closeGistModal();
+            }
+            if (diceRollerModal.style.display === 'block') {
+                closeDiceRollerModal();
+            }
+        }
+    });
+    
+    // Dice roller modal controls
+    setupDiceRollerControls();
 }
 
 // Calculate ability modifier
@@ -1084,6 +1113,96 @@ function resetChannelDivinity() {
     alert('Channel Divinity restored!');
 }
 
+// Dice Roller Modal Functions
+const diceCount = { 4: 0, 6: 0, 8: 0, 10: 0, 12: 0, 20: 1 };
+let diceModifierValue = 0;
+
+function openDiceRollerModal() {
+    document.getElementById('diceRollerModal').style.display = 'block';
+}
+
+function closeDiceRollerModal() {
+    document.getElementById('diceRollerModal').style.display = 'none';
+}
+
+function setupDiceRollerControls() {
+    // Up/down buttons for each die type
+    document.querySelectorAll('.dice-btn-up').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sides = parseInt(btn.getAttribute('data-sides'));
+            if (diceCount[sides] < 20) {
+                diceCount[sides]++;
+                document.getElementById(`count-${sides}`).textContent = diceCount[sides];
+            }
+        });
+    });
+    
+    document.querySelectorAll('.dice-btn-down').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sides = parseInt(btn.getAttribute('data-sides'));
+            if (diceCount[sides] > 0) {
+                diceCount[sides]--;
+                document.getElementById(`count-${sides}`).textContent = diceCount[sides];
+            }
+        });
+    });
+    
+    // Modifier up/down buttons
+    document.querySelector('.modifier-btn-up').addEventListener('click', () => {
+        diceModifierValue++;
+        document.getElementById('diceModifier').textContent = diceModifierValue >= 0 ? `+${diceModifierValue}` : diceModifierValue;
+    });
+    
+    document.querySelector('.modifier-btn-down').addEventListener('click', () => {
+        diceModifierValue--;
+        document.getElementById('diceModifier').textContent = diceModifierValue >= 0 ? `+${diceModifierValue}` : diceModifierValue;
+    });
+    
+    // Roll button
+    document.getElementById('rollCustomDiceBtn').addEventListener('click', rollCustomDice);
+    
+    // Clear button
+    document.getElementById('clearDiceBtn').addEventListener('click', () => {
+        Object.keys(diceCount).forEach(sides => {
+            diceCount[sides] = sides === '20' ? 1 : 0;
+            document.getElementById(`count-${sides}`).textContent = diceCount[sides];
+        });
+        diceModifierValue = 0;
+        document.getElementById('diceModifier').textContent = '0';
+    });
+}
+
+function rollCustomDice() {
+    // Build dice notation from selected dice
+    const diceParts = [];
+    Object.keys(diceCount).forEach(sides => {
+        if (diceCount[sides] > 0) {
+            diceParts.push(`${diceCount[sides]}d${sides}`);
+        }
+    });
+    
+    if (diceParts.length === 0) {
+        alert('Please select at least one die to roll!');
+        return;
+    }
+    
+    let diceNotation = diceParts.join('+');
+    if (diceModifierValue !== 0) {
+        diceNotation += diceModifierValue > 0 ? `+${diceModifierValue}` : `${diceModifierValue}`;
+    }
+    
+    closeDiceRollerModal();
+    
+    showRollResult(
+        `Custom Roll: ${diceNotation}`,
+        0,
+        null,
+        diceNotation,
+        0,
+        'damage'
+    );
+}
+
 function rollDivineSmite() {
     const level = parseInt(document.getElementById('smiteLevel').value);
     const isUndead = document.getElementById('smiteUndead').checked;
@@ -1208,3 +1327,4 @@ window.resetLayOnHands = resetLayOnHands;
 window.resetSpellSlots = resetSpellSlots;
 window.resetChannelDivinity = resetChannelDivinity;
 window.rollDivineSmite = rollDivineSmite;
+window.rollCustomDice = rollCustomDice;
