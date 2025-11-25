@@ -86,12 +86,16 @@ const skillAbilities = {
 // Mode state
 let isEditMode = true;
 
+// Dice box instance
+let diceBox = null;
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadFromLocalStorage();
     setupEventListeners();
     updateAllModifiers();
     setupCollapsibleSections();
+    // Don't initialize dice box here - wait until modal is shown
     
     // Load saved mode or default to use mode
     const savedMode = localStorage.getItem('dndMode');
@@ -104,6 +108,31 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleMode();
     }
 });
+
+// Initialize the 3D dice box - must be called when container is visible
+function initializeDiceBox() {
+    const container = document.getElementById('diceContainer');
+    if (!container || typeof DICE === 'undefined') {
+        console.log('Cannot initialize dice box - container or DICE library not found');
+        return false;
+    }
+    
+    // Make sure container has dimensions
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+        console.log('Cannot initialize dice box - container has no dimensions');
+        return false;
+    }
+    
+    try {
+        diceBox = new DICE.dice_box(container);
+        console.log('Dice box initialized successfully');
+        return true;
+    } catch (error) {
+        console.log('Failed to initialize dice box:', error);
+        return false;
+    }
+}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -126,6 +155,9 @@ function setupEventListeners() {
     document.getElementById('saveGistConfirm').addEventListener('click', saveToGist);
     document.getElementById('loadGistConfirm').addEventListener('click', loadFromGist);
     document.getElementById('cancelGist').addEventListener('click', closeGistModal);
+    
+    // Dice roller button
+    document.getElementById('diceRollerBtn').addEventListener('click', openDiceRollerModal);
     
     // Character info inputs
     document.getElementById('characterName').addEventListener('change', (e) => {
@@ -296,6 +328,7 @@ function setupEventListeners() {
     // Modal close
     document.querySelector('.close').addEventListener('click', closeModal);
     document.querySelector('.close-gist').addEventListener('click', closeGistModal);
+    document.querySelector('.close-dice').addEventListener('click', closeDiceRollerModal);
     window.addEventListener('click', (e) => {
         if (e.target === document.getElementById('rollModal')) {
             closeModal();
@@ -303,7 +336,32 @@ function setupEventListeners() {
         if (e.target === document.getElementById('gistModal')) {
             closeGistModal();
         }
+        if (e.target === document.getElementById('diceRollerModal')) {
+            closeDiceRollerModal();
+        }
     });
+    
+    // Close modals with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const rollModal = document.getElementById('rollModal');
+            const gistModal = document.getElementById('gistModal');
+            const diceRollerModal = document.getElementById('diceRollerModal');
+            
+            if (rollModal.style.display === 'block') {
+                closeModal();
+            }
+            if (gistModal.style.display === 'block') {
+                closeGistModal();
+            }
+            if (diceRollerModal.style.display === 'block') {
+                closeDiceRollerModal();
+            }
+        }
+    });
+    
+    // Dice roller modal controls
+    setupDiceRollerControls();
 }
 
 // Calculate ability modifier
@@ -365,15 +423,14 @@ function rollDice(sides, count = 1) {
 
 function rollAbilityCheck(ability) {
     const modifier = calculateModifier(character.abilities[ability]);
-    const d20 = rollDice(20);
-    const total = d20.total + modifier;
-    
     const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
     
     showRollResult(
         `${abilityName} Check`,
-        total,
-        `d20: ${d20.total} ${formatModifier(modifier)} = ${total}`
+        modifier,
+        null,
+        '1d20',
+        modifier
     );
 }
 
@@ -381,15 +438,14 @@ function rollSavingThrow(ability) {
     const modifier = calculateModifier(character.abilities[ability]);
     const profBonus = character.saveProficiencies[ability] ? character.proficiencyBonus : 0;
     const totalMod = modifier + profBonus;
-    const d20 = rollDice(20);
-    const total = d20.total + totalMod;
-    
     const abilityName = ability.charAt(0).toUpperCase() + ability.slice(1);
     
     showRollResult(
         `${abilityName} Save`,
-        total,
-        `d20: ${d20.total} ${formatModifier(totalMod)} = ${total}`
+        totalMod,
+        null,
+        '1d20',
+        totalMod
     );
 }
 
@@ -398,28 +454,29 @@ function rollSkillCheck(skill) {
     const abilityMod = calculateModifier(character.abilities[ability]);
     const profBonus = character.skillProficiencies[skill] ? character.proficiencyBonus : 0;
     const totalMod = abilityMod + profBonus;
-    const d20 = rollDice(20);
-    const total = d20.total + totalMod;
     
     const skillName = skill.replace(/([A-Z])/g, ' $1').trim();
     const formattedSkillName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
     
     showRollResult(
         `${formattedSkillName} Check`,
-        total,
-        `d20: ${d20.total} ${formatModifier(totalMod)} = ${total}`
+        totalMod,
+        null,
+        '1d20',
+        totalMod
     );
 }
 
 function rollAttack(attackIndex) {
     const attack = character.attacks[attackIndex];
-    const d20 = rollDice(20);
-    const total = d20.total + parseInt(attack.attackBonus || 0);
+    const attackBonus = parseInt(attack.attackBonus || 0);
     
     showRollResult(
         `${attack.name} Attack`,
-        total,
-        `d20: ${d20.total} + ${attack.attackBonus} = ${total}${d20.total === 20 ? ' (CRITICAL HIT!)' : ''}${d20.total === 1 ? ' (Critical Miss)' : ''}`
+        attackBonus,
+        null,
+        '1d20',
+        attackBonus
     );
 }
 
@@ -434,31 +491,129 @@ function rollDamage(attackIndex) {
         return;
     }
     
-    const count = parseInt(match[1]);
-    const sides = parseInt(match[2]);
-    const bonus = parseInt(match[3] || 0);
-    
-    const dice = rollDice(sides, count);
-    const total = dice.total + bonus;
-    
+    // The dice library will handle the rolling
     showRollResult(
         `${attack.name} Damage`,
-        total,
-        `${count}d${sides}: [${dice.results.join(', ')}] ${bonus !== 0 ? formatModifier(bonus) : ''} = ${total}`
+        0, // Not used when using dice animation
+        null,
+        damageStr, // Pass the damage notation directly
+        0, // No additional modifier (already in notation)
+        'damage' // Type of roll
     );
 }
 
-function showRollResult(title, result, details) {
+function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20') {
     const modal = document.getElementById('rollModal');
     const resultDiv = document.getElementById('rollResult');
+    const diceContainer = document.getElementById('diceContainer');
     
-    resultDiv.innerHTML = `
-        <h3>${title}</h3>
-        <div class="dice-roll">${result}</div>
-        <div class="roll-details">${details}</div>
-    `;
-    
+    // Show the modal first
     modal.style.display = 'block';
+    
+    // Try to use 3D dice animation if notation provided
+    if (diceNotation) {
+        // Initialize dice box if not already done - must be done after modal is visible
+        if (!diceBox) {
+            // Show rolling message
+            resultDiv.innerHTML = `<h3>${title}</h3><p>Rolling...</p>`;
+            
+            // Small delay to ensure modal is fully rendered
+            setTimeout(() => {
+                const initialized = initializeDiceBox();
+                if (initialized) {
+                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
+                } else {
+                    // Fallback to instant result if initialization fails
+                    const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
+                    resultDiv.innerHTML = `
+                        <h3>${title}</h3>
+                        <div class="dice-roll">${fallbackResult}</div>
+                        <div class="roll-details">d20: ${fallbackResult - modifier} ${formatModifier(modifier)} = ${fallbackResult}</div>
+                    `;
+                }
+            }, 150);
+        } else {
+            // Dice box already initialized, use it
+            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
+        }
+    } else {
+        // No dice animation, just show the result
+        resultDiv.innerHTML = `
+            <h3>${title}</h3>
+            <div class="dice-roll">${modifier}</div>
+            <div class="roll-details">${details || ''}</div>
+        `;
+    }
+}
+
+function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20') {
+    if (!diceBox) {
+        // Fallback if dice box not available
+        const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
+        resultDiv.innerHTML = `
+            <h3>${title}</h3>
+            <div class="dice-roll">${fallbackResult}</div>
+            <div class="roll-details">d20: ${fallbackResult - modifier} ${formatModifier(modifier)} = ${fallbackResult}</div>
+        `;
+        return;
+    }
+    
+    try {
+        // Show rolling message
+        resultDiv.innerHTML = `<h3>${title}</h3><p>Rolling...</p>`;
+        
+        diceBox.setDice(diceNotation);
+        
+        // Before roll callback
+        function beforeRoll(notation) {
+            return null; // Random result
+        }
+        
+        // After roll callback - display the result after animation completes
+        function afterRoll(notation) {
+            // Add a small delay to let the dice settle visually
+            setTimeout(() => {
+                // Use the actual dice result from the notation
+                const diceTotal = notation.resultTotal - (notation.constant || 0);
+                const constant = notation.constant || 0;
+                
+                let finalTotal, details;
+                if (rollType === 'damage') {
+                    // For damage rolls, just show the dice result
+                    finalTotal = notation.resultTotal;
+                    details = `${notation.resultString}`;
+                } else {
+                    // For d20 rolls, add the modifier
+                    finalTotal = diceTotal + modifier;
+                    details = `d20: ${diceTotal} ${formatModifier(modifier)} = ${finalTotal}`;
+                    
+                    // Add critical hit/miss for d20 rolls
+                    if (diceTotal === 20) {
+                        details += ' (CRITICAL HIT!)';
+                    } else if (diceTotal === 1) {
+                        details += ' (Critical Miss)';
+                    }
+                }
+                
+                resultDiv.innerHTML = `
+                    <h3>${title}</h3>
+                    <div class="dice-roll">${finalTotal}</div>
+                    <div class="roll-details">${details}</div>
+                `;
+            }, 500);
+        }
+        
+        diceBox.start_throw(beforeRoll, afterRoll);
+    } catch (error) {
+        console.log('Failed to roll dice:', error);
+        // Fall back to showing result without animation
+        const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
+        resultDiv.innerHTML = `
+            <h3>${title}</h3>
+            <div class="dice-roll">${result}</div>
+            <div class="roll-details">${details}</div>
+        `;
+    }
 }
 
 function closeModal() {
@@ -958,27 +1113,116 @@ function resetChannelDivinity() {
     alert('Channel Divinity restored!');
 }
 
+// Dice Roller Modal Functions
+const diceCount = { 4: 0, 6: 0, 8: 0, 10: 0, 12: 0, 20: 1 };
+let diceModifierValue = 0;
+
+function openDiceRollerModal() {
+    document.getElementById('diceRollerModal').style.display = 'block';
+}
+
+function closeDiceRollerModal() {
+    document.getElementById('diceRollerModal').style.display = 'none';
+}
+
+function setupDiceRollerControls() {
+    // Up/down buttons for each die type
+    document.querySelectorAll('.dice-btn-up').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sides = parseInt(btn.getAttribute('data-sides'));
+            if (diceCount[sides] < 20) {
+                diceCount[sides]++;
+                document.getElementById(`count-${sides}`).textContent = diceCount[sides];
+            }
+        });
+    });
+    
+    document.querySelectorAll('.dice-btn-down').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sides = parseInt(btn.getAttribute('data-sides'));
+            if (diceCount[sides] > 0) {
+                diceCount[sides]--;
+                document.getElementById(`count-${sides}`).textContent = diceCount[sides];
+            }
+        });
+    });
+    
+    // Modifier up/down buttons
+    document.querySelector('.modifier-btn-up').addEventListener('click', () => {
+        diceModifierValue++;
+        document.getElementById('diceModifier').textContent = diceModifierValue >= 0 ? `+${diceModifierValue}` : diceModifierValue;
+    });
+    
+    document.querySelector('.modifier-btn-down').addEventListener('click', () => {
+        diceModifierValue--;
+        document.getElementById('diceModifier').textContent = diceModifierValue >= 0 ? `+${diceModifierValue}` : diceModifierValue;
+    });
+    
+    // Roll button
+    document.getElementById('rollCustomDiceBtn').addEventListener('click', rollCustomDice);
+    
+    // Clear button
+    document.getElementById('clearDiceBtn').addEventListener('click', () => {
+        Object.keys(diceCount).forEach(sides => {
+            diceCount[sides] = sides === '20' ? 1 : 0;
+            document.getElementById(`count-${sides}`).textContent = diceCount[sides];
+        });
+        diceModifierValue = 0;
+        document.getElementById('diceModifier').textContent = '0';
+    });
+}
+
+function rollCustomDice() {
+    // Build dice notation from selected dice
+    const diceParts = [];
+    Object.keys(diceCount).forEach(sides => {
+        if (diceCount[sides] > 0) {
+            diceParts.push(`${diceCount[sides]}d${sides}`);
+        }
+    });
+    
+    if (diceParts.length === 0) {
+        alert('Please select at least one die to roll!');
+        return;
+    }
+    
+    let diceNotation = diceParts.join('+');
+    if (diceModifierValue !== 0) {
+        diceNotation += diceModifierValue > 0 ? `+${diceModifierValue}` : `${diceModifierValue}`;
+    }
+    
+    closeDiceRollerModal();
+    
+    showRollResult(
+        `Custom Roll: ${diceNotation}`,
+        0,
+        null,
+        diceNotation,
+        0,
+        'damage'
+    );
+}
+
 function rollDivineSmite() {
     const level = parseInt(document.getElementById('smiteLevel').value);
     const isUndead = document.getElementById('smiteUndead').checked;
     
     // Base damage: 2d8 for 1st level, +1d8 per level above 1st
     const diceCount = 1 + level;
-    const baseDice = rollDice(8, diceCount);
     
-    // Extra 1d8 for undead/fiend
-    let extraDice = { results: [], total: 0 };
+    // Build dice notation
+    let diceNotation = `${diceCount}d8`;
     if (isUndead) {
-        extraDice = rollDice(8, 1);
+        diceNotation += '+1d8';
     }
-    
-    const total = baseDice.total + extraDice.total;
-    const allResults = [...baseDice.results, ...extraDice.results];
     
     showRollResult(
         `Divine Smite (${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} Level)`,
-        total,
-        `${diceCount}d8${isUndead ? ' + 1d8' : ''}: [${allResults.join(', ')}] = ${total} radiant damage`
+        0, // Not used when using dice animation
+        null,
+        diceNotation,
+        0,
+        'damage'
     );
 }
 
@@ -1083,3 +1327,4 @@ window.resetLayOnHands = resetLayOnHands;
 window.resetSpellSlots = resetSpellSlots;
 window.resetChannelDivinity = resetChannelDivinity;
 window.rollDivineSmite = rollDivineSmite;
+window.rollCustomDice = rollCustomDice;
