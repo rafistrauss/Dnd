@@ -232,8 +232,8 @@ const DICE = (function() {
         let numDice = vectors.length;
         numDice = numDice > 10 ? 10 : numDice;
         for(let i = 0; i < numDice; i++) {
-            let volume = i/10;
-            if(volume <= 0) volume = 0.1;
+            let volume = (i/10) * 1.5; // Increased volume by 50%
+            if(volume <= 0) volume = 0.15;
             if(volume > 1) volume = 1;
             playSound(box.container, volume);
             //todo: find a better way to do this
