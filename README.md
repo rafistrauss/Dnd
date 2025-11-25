@@ -7,8 +7,7 @@ A mobile-friendly web application for managing your D&D 5e character sheet with 
 - ✅ **Mobile-Responsive Design** - Works perfectly on phones, tablets, and desktop
 - 💾 **Local Storage** - Automatically saves your character data in your browser
 - 📤 **Export/Import** - Save character sheets as JSON files and import them later
-- 🎲 **3D Dice Rolling** - Roll ability checks, saving throws, skills, attacks, and damage with animated 3D dice
-- 🔊 **Sound Effects** - Realistic dice rolling sounds for immersive gameplay
+- 🎲 **3D Dice Rolling** - Realistic physics-based 3D dice with sound effects using [sarahRosannaBusch/dice](https://github.com/sarahRosannaBusch/dice)
 - ⚔️ **Attack Management** - Add and manage multiple attacks with custom modifiers
 - 📊 **Auto-Calculations** - Automatically calculates modifiers, saves, and skill bonuses
 
@@ -25,10 +24,10 @@ A mobile-friendly web application for managing your D&D 5e character sheet with 
 ### Rolling Dice
 
 - Click any "Roll" button next to abilities, saves, or skills
-- Watch the 3D animated dice roll with realistic sound effects
-- Results appear in a modal with the d20 roll and total
-- For attacks, roll separately for attack and damage
-- The dice animation displays the actual rolled value on all faces
+- Watch realistic 3D dice roll with physics simulation
+- Hear authentic dice rolling sound effects
+- Results appear after the dice settle
+- For attacks, roll separately for attack and damage with appropriate dice
 
 ### Managing Attacks
 
