@@ -12,6 +12,7 @@ let character = {
     currentHP: 0,
     maxHP: 0,
     tempHP: 0,
+    hitDice: { current: 3, max: 3 },
     abilities: {
         strength: 10,
         dexterity: 10,
@@ -209,6 +210,15 @@ function setupEventListeners() {
     
     document.getElementById('tempHP').addEventListener('change', (e) => {
         character.tempHP = parseInt(e.target.value) || 0;
+    });
+    
+    // Hit dice
+    document.getElementById('hitDiceCurrent').addEventListener('change', (e) => {
+        character.hitDice.current = parseInt(e.target.value) || 0;
+    });
+    
+    document.getElementById('hitDiceMax').addEventListener('change', (e) => {
+        character.hitDice.max = parseInt(e.target.value) || 1;
     });
     
     // HP adjustment buttons
@@ -942,6 +952,37 @@ function renderAttacks() {
     character.attacks.forEach((attack, index) => {
         const attackDiv = document.createElement('div');
         attackDiv.className = 'attack-item';
+        
+        // Check if this is a melee weapon for divine smite
+        const isMelee = attack.name.toLowerCase().includes('longsword') || 
+                        attack.name.toLowerCase().includes('greatsword') ||
+                        attack.name.toLowerCase().includes('sword') ||
+                        attack.name.toLowerCase().includes('mace') ||
+                        attack.damageType.toLowerCase().includes('melee');
+        
+        let smiteSection = '';
+        if (isMelee) {
+            smiteSection = `
+                <div class="divine-smite-section">
+                    <h4>Divine Smite</h4>
+                    <div class="smite-calculator">
+                        <label>Spell Slot Level:</label>
+                        <select id="smiteLevel_${index}" class="smite-select">
+                            <option value="1">1st Level (2d8)</option>
+                            <option value="2">2nd Level (3d8)</option>
+                            <option value="3">3rd Level (4d8)</option>
+                            <option value="4">4th Level (5d8)</option>
+                        </select>
+                        <label>
+                            <input type="checkbox" id="smiteUndead_${index}">
+                            Target is undead/fiend (+1d8)
+                        </label>
+                        <button class="btn btn-primary" onclick="rollDivineSmite(${index})">Roll Smite Damage</button>
+                    </div>
+                </div>
+            `;
+        }
+        
         attackDiv.innerHTML = `
             <div class="attack-header">
                 <input type="text" value="${attack.name}" placeholder="Attack name" 
@@ -969,6 +1010,7 @@ function renderAttacks() {
                 <button class="btn btn-primary" onclick="rollAttack(${index})">Roll Attack</button>
                 <button class="btn btn-primary" onclick="rollDamage(${index})">Roll Damage</button>
             </div>
+            ${smiteSection}
         `;
         container.appendChild(attackDiv);
     });
@@ -1046,6 +1088,8 @@ function populateForm() {
     document.getElementById('currentHP').value = character.currentHP || 0;
     document.getElementById('maxHP').value = character.maxHP || 0;
     document.getElementById('tempHP').value = character.tempHP || 0;
+    document.getElementById('hitDiceCurrent').value = character.hitDice?.current || 0;
+    document.getElementById('hitDiceMax').value = character.hitDice?.max || 0;
     
     // Ability scores
     ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
@@ -1175,6 +1219,32 @@ function resetChannelDivinity() {
     document.getElementById('channelDivinity').checked = false;
 }
 
+function longRest() {
+    if (!confirm('Take a long rest? This will restore HP, hit dice, and all class features.')) {
+        return;
+    }
+    
+    // Restore HP to max
+    character.currentHP = character.maxHP;
+    document.getElementById('currentHP').value = character.maxHP;
+    
+    // Restore hit dice (at least half)
+    const restoredDice = Math.max(1, Math.floor(character.hitDice.max / 2));
+    character.hitDice.current = Math.min(character.hitDice.max, character.hitDice.current + restoredDice);
+    document.getElementById('hitDiceCurrent').value = character.hitDice.current;
+    
+    // Reset all class features
+    resetDivineSense();
+    resetLayOnHands();
+    resetSpellSlots();
+    resetChannelDivinity();
+    
+    // Auto-save
+    saveToLocalStorage(true);
+    
+    alert('Long rest completed! HP, hit dice, and class features restored.');
+}
+
 // Dice Roller Modal Functions
 const diceCount = { 4: 0, 6: 0, 8: 0, 10: 0, 12: 0, 20: 1 };
 
@@ -1248,9 +1318,21 @@ function rollCustomDice() {
     );
 }
 
-function rollDivineSmite() {
-    const level = parseInt(document.getElementById('smiteLevel').value);
-    const isUndead = document.getElementById('smiteUndead').checked;
+function rollDivineSmite(attackIndex) {
+    const level = parseInt(document.getElementById(`smiteLevel_${attackIndex}`).value);
+    const isUndead = document.getElementById(`smiteUndead_${attackIndex}`).checked;
+    
+    // Find an available spell slot of the selected level
+    const slotIndex = findAvailableSpellSlot(level);
+    if (slotIndex === -1) {
+        alert(`No available ${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} level spell slots!`);
+        return;
+    }
+    
+    // Mark spell slot as used
+    character.classFeatures.spellSlots[slotIndex] = true;
+    document.getElementById(`spellSlot1_${slotIndex + 1}`).checked = true;
+    saveToLocalStorage(true);
     
     // Base damage: 2d8 for 1st level, +1d8 per level above 1st
     const diceCount = 1 + level;
@@ -1269,6 +1351,18 @@ function rollDivineSmite() {
         0,
         'damage'
     );
+}
+
+function findAvailableSpellSlot(level) {
+    // For now, we only have 1st level slots, so just find first unused
+    if (level === 1) {
+        for (let i = 0; i < character.classFeatures.spellSlots.length; i++) {
+            if (!character.classFeatures.spellSlots[i]) {
+                return i;
+            }
+        }
+    }
+    return -1; // No available slots
 }
 
 function updateSpellSaveDC() {
@@ -1377,3 +1471,4 @@ window.resetChannelDivinity = resetChannelDivinity;
 window.rollDivineSmite = rollDivineSmite;
 window.rollCustomDice = rollCustomDice;
 window.commitHPAdjustment = commitHPAdjustment;
+window.longRest = longRest;

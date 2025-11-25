@@ -173,7 +173,7 @@ section h2 {
 .form-group {
     margin-bottom: 15px;
     flex: 1;
-    min-width: 150px;
+    min-width: 50px;
 }
 
 .form-group label {
@@ -222,7 +222,9 @@ body.use-mode input[type="checkbox"].use-checkbox {
 body.use-mode #currentHP,
 body.use-mode #layOnHandsPool,
 body.use-mode #tempHP,
-body.use-mode #hpAdjust {
+body.use-mode #hpAdjust,
+body.use-mode #hitDiceCurrent,
+body.use-mode #hitDiceMax {
     pointer-events: auto;
     background-color: white;
     border-color: var(--border-color);
@@ -251,7 +253,8 @@ body.use-mode .btn-danger {
 body.use-mode .attack-actions .btn-primary,
 body.use-mode .smite-calculator .btn-primary,
 body.use-mode .dice-roll-actions .btn-primary,
-body.use-mode .hp-commit-btn {
+body.use-mode .hp-commit-btn,
+body.use-mode .long-rest-btn {
     background-color: var(--primary-color) !important;
     color: white !important;
     opacity: 1 !important;
@@ -261,7 +264,8 @@ body.use-mode .hp-commit-btn {
 body.use-mode .attack-actions .btn-primary:hover,
 body.use-mode .smite-calculator .btn-primary:hover,
 body.use-mode .dice-roll-actions .btn-primary:hover,
-body.use-mode .hp-commit-btn:hover {
+body.use-mode .hp-commit-btn:hover,
+body.use-mode .long-rest-btn:hover {
     background-color: var(--primary-color-hover) !important;
 }
 
@@ -492,6 +496,38 @@ body.use-mode .hp-box .hp-inputs #currentHP {
     color: #1976d2;
 }
 
+.hit-dice-box {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border: 2px solid #ff9800;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.hit-dice-box label {
+    color: #e65100;
+}
+
+.long-rest-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.long-rest-btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary-color), #a00000);
+    border: none;
+}
+
+.long-rest-btn:hover {
+    background: linear-gradient(135deg, var(--primary-color-hover), #b50000);
+    transform: translateY(-2px);
+}
+
 /* Hide HP controls in edit mode */
 body:not(.use-mode) .hp-controls {
     display: none;
@@ -617,6 +653,20 @@ body:not(.use-mode) .hp-controls {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+.divine-smite-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, #fff9e6, #fff3cc);
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+}
+
+.divine-smite-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    font-size: 1rem;
 }
 
 .btn-danger {
