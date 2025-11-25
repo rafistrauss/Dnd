@@ -86,12 +86,16 @@ const skillAbilities = {
 // Mode state
 let isEditMode = true;
 
+// Dice box instance
+let diceBox = null;
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadFromLocalStorage();
     setupEventListeners();
     updateAllModifiers();
     setupCollapsibleSections();
+    initializeDiceBox();
     
     // Load saved mode or default to use mode
     const savedMode = localStorage.getItem('dndMode');
@@ -104,6 +108,18 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleMode();
     }
 });
+
+// Initialize the 3D dice box
+function initializeDiceBox() {
+    const container = document.getElementById('diceContainer');
+    if (container && typeof DICE !== 'undefined') {
+        try {
+            diceBox = new DICE.dice_box(container);
+        } catch (error) {
+            console.log('Failed to initialize dice box:', error);
+        }
+    }
+}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -351,72 +367,6 @@ function updateProficiencyBonus() {
     updateAllModifiers();
 }
 
-// Audio context for sound effects
-let audioContext = null;
-let diceRollBuffer = null;
-
-// Initialize audio on first user interaction
-function initAudio() {
-    if (!audioContext) {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            // Generate dice roll sound
-            generateDiceRollSound();
-        } catch (error) {
-            console.log('Audio initialization failed:', error);
-        }
-    }
-}
-
-// Generate a dice roll sound effect
-function generateDiceRollSound() {
-    const sampleRate = audioContext.sampleRate;
-    const duration = 1.5; // seconds
-    const bufferSize = sampleRate * duration;
-    diceRollBuffer = audioContext.createBuffer(1, bufferSize, sampleRate);
-    const data = diceRollBuffer.getChannelData(0);
-    
-    // Generate rolling sound with multiple bounces
-    for (let i = 0; i < bufferSize; i++) {
-        const t = i / sampleRate;
-        // Multiple impacts with decay
-        let sample = 0;
-        const impacts = [0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3];
-        impacts.forEach(impactTime => {
-            if (t > impactTime) {
-                const timeSinceImpact = t - impactTime;
-                const envelope = Math.exp(-timeSinceImpact * 15);
-                const noise = (Math.random() * 2 - 1) * envelope;
-                const tone = Math.sin(2 * Math.PI * (100 + Math.random() * 200) * timeSinceImpact) * envelope * 0.3;
-                sample += (noise + tone) * (1 - impactTime / 1.5);
-            }
-        });
-        data[i] = Math.max(-1, Math.min(1, sample * 0.3));
-    }
-}
-
-// Play dice roll sound
-function playDiceRollSound() {
-    if (!audioContext || !diceRollBuffer) {
-        initAudio();
-        if (!diceRollBuffer) return;
-    }
-    
-    try {
-        const source = audioContext.createBufferSource();
-        source.buffer = diceRollBuffer;
-        
-        const gainNode = audioContext.createGain();
-        gainNode.gain.value = 0.3; // Volume
-        
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        source.start();
-    } catch (error) {
-        console.log('Audio playback failed:', error);
-    }
-}
-
 // Dice rolling functions
 function rollDice(sides, count = 1) {
     let results = [];
@@ -440,7 +390,7 @@ function rollAbilityCheck(ability) {
         `${abilityName} Check`,
         total,
         `d20: ${d20.total} ${formatModifier(modifier)} = ${total}`,
-        d20.total
+        '1d20'
     );
 }
 
@@ -457,7 +407,7 @@ function rollSavingThrow(ability) {
         `${abilityName} Save`,
         total,
         `d20: ${d20.total} ${formatModifier(totalMod)} = ${total}`,
-        d20.total
+        '1d20'
     );
 }
 
@@ -476,7 +426,7 @@ function rollSkillCheck(skill) {
         `${formattedSkillName} Check`,
         total,
         `d20: ${d20.total} ${formatModifier(totalMod)} = ${total}`,
-        d20.total
+        '1d20'
     );
 }
 
@@ -489,7 +439,7 @@ function rollAttack(attackIndex) {
         `${attack.name} Attack`,
         total,
         `d20: ${d20.total} + ${attack.attackBonus} = ${total}${d20.total === 20 ? ' (CRITICAL HIT!)' : ''}${d20.total === 1 ? ' (Critical Miss)' : ''}`,
-        d20.total
+        '1d20'
     );
 }
 
@@ -511,80 +461,82 @@ function rollDamage(attackIndex) {
     const dice = rollDice(sides, count);
     const total = dice.total + bonus;
     
-    // Use the first die roll for animation, or average if multiple
-    const displayValue = count === 1 ? dice.results[0] : Math.round(dice.total / count);
+    // Build dice notation for the 3D dice (e.g., "2d6+3" or "2d6")
+    let diceNotation = `${count}d${sides}`;
+    if (bonus !== 0) {
+        diceNotation += `${bonus >= 0 ? '+' : ''}${bonus}`;
+    }
     
     showRollResult(
         `${attack.name} Damage`,
         total,
         `${count}d${sides}: [${dice.results.join(', ')}] ${bonus !== 0 ? formatModifier(bonus) : ''} = ${total}`,
-        displayValue
+        diceNotation
     );
 }
 
-function showRollResult(title, result, details, diceValue = null) {
-    // Initialize audio on first roll
-    initAudio();
-    
-    // Play dice roll sound
-    playDiceRollSound();
-    
+function showRollResult(title, result, details, diceNotation = null) {
     const modal = document.getElementById('rollModal');
     const resultDiv = document.getElementById('rollResult');
+    const diceContainer = document.getElementById('diceContainer');
     
-    // Create 3D dice animation
-    const diceHtml = create3DDice(diceValue || result);
-    
-    resultDiv.innerHTML = `
-        <h3>${title}</h3>
-        ${diceHtml}
-        <div class="dice-roll">${result}</div>
-        <div class="roll-details">${details}</div>
-    `;
-    
+    // Show the modal first
     modal.style.display = 'block';
+    
+    // Initialize dice box if not already done - must be done after modal is visible
+    if (!diceBox) {
+        // Small delay to ensure modal is rendered
+        setTimeout(() => {
+            initializeDiceBox();
+            if (diceBox && diceNotation) {
+                rollDiceAnimation(title, result, details, diceNotation, resultDiv);
+            }
+        }, 100);
+    } else if (diceNotation) {
+        rollDiceAnimation(title, result, details, diceNotation, resultDiv);
+    }
+    
+    // Show initial rolling message if we have dice notation
+    if (diceNotation) {
+        resultDiv.innerHTML = `<h3>${title}</h3><p>Rolling...</p>`;
+    } else {
+        // No dice animation, just show the result
+        resultDiv.innerHTML = `
+            <h3>${title}</h3>
+            <div class="dice-roll">${result}</div>
+            <div class="roll-details">${details}</div>
+        `;
+    }
 }
 
-function create3DDice(value) {
-    // Calculate rotation angles based on the dice value to show correct face
-    const rotations = {
-        1: { x: 0, y: 0, z: 0 },
-        2: { x: 0, y: 180, z: 0 },
-        3: { x: 0, y: 90, z: 0 },
-        4: { x: 0, y: -90, z: 0 },
-        5: { x: -90, y: 0, z: 0 },
-        6: { x: 90, y: 0, z: 0 },
-        7: { x: 45, y: 45, z: 0 },
-        8: { x: -45, y: 45, z: 0 },
-        9: { x: 45, y: -45, z: 0 },
-        10: { x: 90, y: 90, z: 0 },
-        11: { x: -90, y: 90, z: 0 },
-        12: { x: 90, y: -90, z: 0 },
-        13: { x: 135, y: 45, z: 0 },
-        14: { x: -135, y: 45, z: 0 },
-        15: { x: 135, y: -45, z: 0 },
-        16: { x: 45, y: 135, z: 0 },
-        17: { x: -45, y: 135, z: 0 },
-        18: { x: 45, y: -135, z: 0 },
-        19: { x: 90, y: 135, z: 0 },
-        20: { x: 0, y: 0, z: 0 }
-    };
-    
-    // For values > 20, use the default rotation (same as 20)
-    const rotation = rotations[Math.min(value, 20)] || rotations[20];
-    
-    return `
-        <div class="dice-container">
-            <div class="dice-3d" style="--final-x: ${rotation.x}deg; --final-y: ${rotation.y}deg; --final-z: ${rotation.z}deg;">
-                <div class="dice-face dice-face-front">${value}</div>
-                <div class="dice-face dice-face-back">${value}</div>
-                <div class="dice-face dice-face-right">${value}</div>
-                <div class="dice-face dice-face-left">${value}</div>
-                <div class="dice-face dice-face-top">${value}</div>
-                <div class="dice-face dice-face-bottom">${value}</div>
-            </div>
-        </div>
-    `;
+function rollDiceAnimation(title, result, details, diceNotation, resultDiv) {
+    try {
+        diceBox.setDice(diceNotation);
+        
+        // Before roll callback
+        function beforeRoll(notation) {
+            return null; // Random result
+        }
+        
+        // After roll callback
+        function afterRoll(notation) {
+            resultDiv.innerHTML = `
+                <h3>${title}</h3>
+                <div class="dice-roll">${result}</div>
+                <div class="roll-details">${details}</div>
+            `;
+        }
+        
+        diceBox.start_throw(beforeRoll, afterRoll);
+    } catch (error) {
+        console.log('Failed to roll dice:', error);
+        // Fall back to showing result without animation
+        resultDiv.innerHTML = `
+            <h3>${title}</h3>
+            <div class="dice-roll">${result}</div>
+            <div class="roll-details">${details}</div>
+        `;
+    }
 }
 
 function closeModal() {
@@ -1101,14 +1053,17 @@ function rollDivineSmite() {
     const total = baseDice.total + extraDice.total;
     const allResults = [...baseDice.results, ...extraDice.results];
     
-    // Use average of dice for display value
-    const displayValue = Math.round(total / allResults.length);
+    // Build dice notation
+    let diceNotation = `${diceCount}d8`;
+    if (isUndead) {
+        diceNotation += '+1d8';
+    }
     
     showRollResult(
         `Divine Smite (${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} Level)`,
         total,
         `${diceCount}d8${isUndead ? ' + 1d8' : ''}: [${allResults.join(', ')}] = ${total} radiant damage`,
-        displayValue
+        diceNotation
     );
 }
 
