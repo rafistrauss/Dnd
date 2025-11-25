@@ -220,10 +220,22 @@ body.use-mode input[type="checkbox"].use-checkbox {
 }
 
 body.use-mode #currentHP,
-body.use-mode #layOnHandsPool {
+body.use-mode #layOnHandsPool,
+body.use-mode #tempHP,
+body.use-mode #hpAdjust {
     pointer-events: auto;
     background-color: white;
     border-color: var(--border-color);
+}
+
+body.use-mode input[type="radio"][name="hpOperation"] {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+body.use-mode .hp-operation-select label {
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 body.use-mode .btn-primary,
@@ -238,7 +250,8 @@ body.use-mode .btn-danger {
 
 body.use-mode .attack-actions .btn-primary,
 body.use-mode .smite-calculator .btn-primary,
-body.use-mode .dice-roll-actions .btn-primary {
+body.use-mode .dice-roll-actions .btn-primary,
+body.use-mode .hp-commit-btn {
     background-color: var(--primary-color) !important;
     color: white !important;
     opacity: 1 !important;
@@ -247,7 +260,8 @@ body.use-mode .dice-roll-actions .btn-primary {
 
 body.use-mode .attack-actions .btn-primary:hover,
 body.use-mode .smite-calculator .btn-primary:hover,
-body.use-mode .dice-roll-actions .btn-primary:hover {
+body.use-mode .dice-roll-actions .btn-primary:hover,
+body.use-mode .hp-commit-btn:hover {
     background-color: var(--primary-color-hover) !important;
 }
 
@@ -343,9 +357,19 @@ textarea {
 
 /* Combat Stats */
 .combat-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 15px;
+}
+
+.combat-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.combat-stats-row.hp-row {
+    grid-template-columns: 2fr 1fr;
 }
 
 .stat-box {
@@ -377,6 +401,100 @@ textarea {
 .hp-box .hp-inputs span {
     font-size: 1.2rem;
     font-weight: bold;
+}
+
+/* Current HP is read-only in use mode (temp HP and adjust input remain editable) */
+body.use-mode .hp-box .hp-inputs #currentHP {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+}
+
+.hp-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.hp-adjust-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: center;
+}
+
+.hp-operation-select {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.hp-operation-select label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.hp-operation-select input[type="radio"] {
+    cursor: pointer;
+}
+
+.hp-commit-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.hp-btn {
+    width: 35px;
+    height: 35px;
+    border: 2px solid var(--border-color);
+    background: var(--primary-color);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.hp-btn:hover {
+    background: #8b6914;
+    transform: scale(1.1);
+}
+
+.hp-btn:active {
+    transform: scale(0.95);
+}
+
+.hp-adjust-input {
+    width: 60px;
+    text-align: center;
+    font-size: 1rem;
+    padding: 5px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+}
+
+.temp-hp-box {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border: 2px solid #2196f3;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.temp-hp-box label {
+    color: #1976d2;
+}
+
+/* Hide HP controls in edit mode */
+body:not(.use-mode) .hp-controls {
+    display: none;
 }
 
 /* Ability Scores */
@@ -802,9 +920,12 @@ textarea {
     }
 
     /* Compact combat stats */
-    .combat-stats {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+    .combat-stats-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .combat-stats-row.hp-row {
+        grid-template-columns: 2fr 1fr;
     }
 
     .stat-box label {

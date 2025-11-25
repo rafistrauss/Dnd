@@ -69,24 +69,44 @@
 
             <!-- HP and AC Section -->
             <section class="combat-stats">
-                <div class="stat-box">
-                    <label>Armor Class</label>
-                    <input type="number" id="armorClass" placeholder="10" class="stat-input">
+                <div class="combat-stats-row">
+                    <div class="stat-box">
+                        <label>Armor Class</label>
+                        <input type="number" id="armorClass" placeholder="10" class="stat-input">
+                    </div>
+                    <div class="stat-box">
+                        <label>Initiative</label>
+                        <input type="number" id="initiative" placeholder="+0" class="stat-input">
+                    </div>
+                    <div class="stat-box">
+                        <label>Speed</label>
+                        <input type="text" id="speed" placeholder="30 ft" class="stat-input">
+                    </div>
                 </div>
-                <div class="stat-box">
-                    <label>Initiative</label>
-                    <input type="number" id="initiative" placeholder="+0" class="stat-input">
-                </div>
-                <div class="stat-box">
-                    <label>Speed</label>
-                    <input type="text" id="speed" placeholder="30 ft" class="stat-input">
-                </div>
-                <div class="stat-box hp-box">
-                    <label>Hit Points</label>
-                    <div class="hp-inputs">
-                        <input type="number" id="currentHP" placeholder="0" class="stat-input">
-                        <span>/</span>
-                        <input type="number" id="maxHP" placeholder="0" class="stat-input">
+                <div class="combat-stats-row hp-row">
+                    <div class="stat-box hp-box">
+                        <label>Hit Points</label>
+                        <div class="hp-inputs">
+                            <input type="number" id="currentHP" placeholder="0" class="stat-input">
+                            <span>/</span>
+                            <input type="number" id="maxHP" placeholder="0" class="stat-input">
+                        </div>
+                        <div class="hp-controls">
+                            <div class="hp-adjust-controls">
+                                <button class="hp-btn" id="hpMinus" title="Decrease">−</button>
+                                <input type="number" id="hpAdjust" placeholder="0" class="hp-adjust-input">
+                                <button class="hp-btn" id="hpPlus" title="Increase">+</button>
+                            </div>
+                            <div class="hp-operation-select">
+                                <label><input type="radio" name="hpOperation" value="heal" checked> Heal</label>
+                                <label><input type="radio" name="hpOperation" value="damage"> Damage</label>
+                            </div>
+                            <button class="btn btn-primary hp-commit-btn" id="hpCommit">Apply</button>
+                        </div>
+                    </div>
+                    <div class="stat-box temp-hp-box">
+                        <label>Temp HP</label>
+                        <input type="number" id="tempHP" placeholder="0" min="0" class="stat-input">
                     </div>
                 </div>
             </section>

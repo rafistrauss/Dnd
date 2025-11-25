@@ -11,6 +11,7 @@ let character = {
     speed: '30 ft',
     currentHP: 0,
     maxHP: 0,
+    tempHP: 0,
     abilities: {
         strength: 10,
         dexterity: 10,
@@ -205,6 +206,15 @@ function setupEventListeners() {
     document.getElementById('maxHP').addEventListener('change', (e) => {
         character.maxHP = parseInt(e.target.value) || 0;
     });
+    
+    document.getElementById('tempHP').addEventListener('change', (e) => {
+        character.tempHP = parseInt(e.target.value) || 0;
+    });
+    
+    // HP adjustment buttons
+    document.getElementById('hpPlus').addEventListener('click', adjustHP.bind(null, 'add'));
+    document.getElementById('hpMinus').addEventListener('click', adjustHP.bind(null, 'subtract'));
+    document.getElementById('hpCommit').addEventListener('click', commitHPAdjustment);
     
     // Ability scores
     ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
@@ -618,6 +628,63 @@ function closeModal() {
     document.getElementById('rollModal').style.display = 'none';
 }
 
+// HP adjustment function - increment/decrement the adjust input
+function adjustHP(operation) {
+    const adjustInput = document.getElementById('hpAdjust');
+    const currentValue = parseInt(adjustInput.value) || 0;
+    
+    if (operation === 'add') {
+        adjustInput.value = Math.max(0, currentValue + 1);
+    } else if (operation === 'subtract') {
+        adjustInput.value = Math.max(0, currentValue - 1);
+    }
+}
+
+// Commit HP adjustment
+function commitHPAdjustment() {
+    const adjustValue = parseInt(document.getElementById('hpAdjust').value) || 0;
+    const operation = document.querySelector('input[name="hpOperation"]:checked')?.value;
+    
+    if (adjustValue === 0) {
+        alert('Please enter an amount to adjust HP');
+        return;
+    }
+    
+    if (!operation) {
+        alert('Please select Heal or Damage');
+        return;
+    }
+    
+    if (operation === 'heal') {
+        // Add HP (healing)
+        character.currentHP = Math.min(character.currentHP + adjustValue, character.maxHP);
+    } else if (operation === 'damage') {
+        // Subtract HP (damage)
+        // First subtract from temp HP
+        if (character.tempHP > 0) {
+            if (adjustValue <= character.tempHP) {
+                character.tempHP -= adjustValue;
+            } else {
+                const overflow = adjustValue - character.tempHP;
+                character.tempHP = 0;
+                character.currentHP = Math.max(0, character.currentHP - overflow);
+            }
+        } else {
+            character.currentHP = Math.max(0, character.currentHP - adjustValue);
+        }
+    }
+    
+    // Update display
+    document.getElementById('currentHP').value = character.currentHP;
+    document.getElementById('tempHP').value = character.tempHP;
+    
+    // Clear adjustment input
+    document.getElementById('hpAdjust').value = '';
+    
+    // Auto-save
+    saveToLocalStorage(true);
+}
+
 // Gist Integration
 function openGistModal(mode) {
     const modal = document.getElementById('gistModal');
@@ -978,6 +1045,7 @@ function populateForm() {
     document.getElementById('speed').value = character.speed || '30 ft';
     document.getElementById('currentHP').value = character.currentHP || 0;
     document.getElementById('maxHP').value = character.maxHP || 0;
+    document.getElementById('tempHP').value = character.tempHP || 0;
     
     // Ability scores
     ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].forEach(ability => {
@@ -1220,15 +1288,18 @@ function updateSpellSaveDC() {
 function toggleMode() {
     isEditMode = !isEditMode;
     const btn = document.getElementById('modeToggle');
+    const currentHPInput = document.getElementById('currentHP');
     
     if (isEditMode) {
         document.body.classList.remove('use-mode');
         btn.textContent = '📝 Edit Mode';
         btn.classList.remove('use-mode');
+        currentHPInput.removeAttribute('readonly');
     } else {
         document.body.classList.add('use-mode');
         btn.textContent = '🎲 Use Mode';
         btn.classList.add('use-mode');
+        currentHPInput.setAttribute('readonly', true);
     }
     
     // Save mode state to localStorage
@@ -1305,3 +1376,4 @@ window.resetSpellSlots = resetSpellSlots;
 window.resetChannelDivinity = resetChannelDivinity;
 window.rollDivineSmite = rollDivineSmite;
 window.rollCustomDice = rollCustomDice;
+window.commitHPAdjustment = commitHPAdjustment;
