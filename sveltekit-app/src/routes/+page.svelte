@@ -20,14 +20,22 @@
 	let diceRollerComponent: any;
 
 	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string }) {
+		// Reset notation first to ensure Svelte sees a change even if same value
+		diceNotation = '';
+		
 		if (typeof detail === 'string') {
-			diceNotation = detail;
-			diceDamageNotation = '';
-			diceAttackName = '';
+			// Use nextTick to ensure reset is processed first
+			setTimeout(() => {
+				diceNotation = detail;
+				diceDamageNotation = '';
+				diceAttackName = '';
+			}, 0);
 		} else {
-			diceNotation = detail.notation;
-			diceDamageNotation = detail.damageNotation || '';
-			diceAttackName = detail.attackName || '';
+			setTimeout(() => {
+				diceNotation = detail.notation;
+				diceDamageNotation = detail.damageNotation || '';
+				diceAttackName = detail.attackName || '';
+			}, 0);
 		}
 		showDiceRoller = true;
 	}

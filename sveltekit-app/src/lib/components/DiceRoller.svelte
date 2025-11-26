@@ -233,9 +233,9 @@
 		isCritical = false;
 		rollType = 'other';
 	}
-
-	// Auto-roll when notation changes and component is initialized
-	$: if (notation && isInitialized && notation !== lastRolledNotation) {
+	
+	// Auto-roll when notation is set and modal is visible
+	$: if (notation && isInitialized && visible) {
 		lastRolledNotation = notation;
 		rollResult = null;
 		followUpActions = [];
@@ -247,7 +247,7 @@
 
 	function close() {
 		dispatch('close');
-		// Reset state when closing
+		// Reset state when closing (clear lastRolledNotation to force re-roll)
 		notation = '';
 		damageNotation = '';
 		attackName = '';
