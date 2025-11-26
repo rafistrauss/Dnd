@@ -43,7 +43,15 @@
                     </div>
                     <div class="form-group">
                         <label>Class</label>
-                        <input type="text" id="characterClass" placeholder="e.g., Fighter">
+                        <select id="characterClass">
+                            <option value="">Select Class</option>
+                            <option value="barbarian">Barbarian</option>
+                            <option value="cleric">Cleric</option>
+                            <option value="fighter">Fighter</option>
+                            <option value="paladin">Paladin</option>
+                            <option value="rogue">Rogue</option>
+                            <option value="wizard">Wizard</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Level</label>
@@ -346,81 +354,12 @@
 
             <!-- Class Features Section -->
             <section class="class-features-section">
-                <h2>Class Features</h2>
-                
-                <!-- Divine Sense -->
-                <div class="feature-tracker">
-                    <h3>Divine Sense (3/day)</h3>
-                    <p class="feature-description">Detect celestials, fiends, undead within 60 ft.</p>
-                    <div class="use-tracker">
-                        <input type="checkbox" id="divineSense1" class="use-checkbox">
-                        <input type="checkbox" id="divineSense2" class="use-checkbox">
-                        <input type="checkbox" id="divineSense3" class="use-checkbox">
-                    </div>
-                </div>
-
-                <!-- Lay on Hands -->
-                <div class="feature-tracker">
-                    <h3>Lay on Hands (15 HP Pool)</h3>
-                    <p class="feature-description">Heal or cure disease/poison (5 HP to cure)</p>
-                    <div class="hp-pool-tracker">
-                        <label>Remaining HP:</label>
-                        <input type="number" id="layOnHandsPool" value="15" min="0" max="15" class="pool-input">
-                    </div>
-                </div>
-
-                <!-- Spellcasting -->
-                <div class="feature-tracker">
-                    <h3>Spellcasting (CHA + Prof)</h3>
-                    <p class="feature-description">Prepared Spells: <span id="preparedSpellsCount">3</span> (CHA mod + 1)</p>
-                    <div class="spell-slots">
-                        <div class="spell-slot-level">
-                            <label>1st Level Slots (4 total):</label>
-                            <div class="use-tracker">
-                                <input type="checkbox" id="spellSlot1_1" class="use-checkbox">
-                                <input type="checkbox" id="spellSlot1_2" class="use-checkbox">
-                                <input type="checkbox" id="spellSlot1_3" class="use-checkbox">
-                                <input type="checkbox" id="spellSlot1_4" class="use-checkbox">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="prepared-spells">
-                        <label>Prepared Spells:</label>
-                        <textarea id="preparedSpells" placeholder="List your prepared spells...
-e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
-                    </div>
-                </div>
-
-                <!-- Sacred Oath -->
-                <div class="feature-tracker">
-                    <h3>Sacred Oath: Oath of the Ancients</h3>
-                    <p class="feature-description">Channel Divinity (1/short rest)</p>
-                    <div class="oath-features">
-                        <div class="channel-divinity">
-                            <input type="checkbox" id="channelDivinity" class="use-checkbox">
-                            <label for="channelDivinity">Channel Divinity Available</label>
-                            <button class="btn-small btn-secondary" onclick="resetChannelDivinity()">Short Rest</button>
-                        </div>
-                        <div class="channel-options">
-                            <div class="channel-option">
-                                <strong>Nature's Wrath:</strong>
-                                <p>Restrain a creature you can see within 10 ft. (STR/DEX save, DC <span id="spellSaveDC">13</span>)</p>
-                            </div>
-                            <div class="channel-option">
-                                <strong>Turn the Faithless:</strong>
-                                <p>Turn fey and fiends within 30 ft. (WIS save, DC <span id="spellSaveDC2">13</span>)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Oath Spells -->
-                <div class="feature-tracker">
-                    <h3>Oath Spells (Always Prepared)</h3>
-                    <ul class="oath-spells-list">
-                        <li><strong>Ensnaring Strike</strong> - Restrain target with magical vines</li>
-                        <li><strong>Speak with Animals</strong> - Communicate with beasts</li>
-                    </ul>
+                <h2 class="collapsible-header" data-target="classFeaturesContent">
+                    Class Features
+                    <span class="collapse-icon toggle-icon">▼</span>
+                </h2>
+                <div id="classFeaturesContent" class="collapsible-content">
+                    <p class="no-features">Select a class to see available features</p>
                 </div>
             </section>
 
@@ -549,6 +488,8 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
     <script src="libs/cannon.min.js"></script>
     <script src="libs/teal.js"></script>
     <script src="dice.js"></script>
+    <script src="classConfig.js"></script>
+    <script src="classFeatures.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
