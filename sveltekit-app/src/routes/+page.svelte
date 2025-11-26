@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { character, isEditMode, exportCharacter, importCharacter } from '$lib/stores';
 	import CharacterInfo from '$lib/components/CharacterInfo.svelte';
 	import AbilityScores from '$lib/components/AbilityScores.svelte';
@@ -41,8 +42,35 @@
 	}
 
 	function toggleMode() {
-		isEditMode.update(v => !v);
+		console.log('toggleMode called, current isEditMode:', $isEditMode);
+		isEditMode.update(v => {
+			console.log('Updating isEditMode from', v, 'to', !v);
+			return !v;
+		});
 	}
+
+	// Apply use-mode class to body when mode changes
+	onMount(() => {
+		console.log('onMount - initial isEditMode:', $isEditMode);
+		console.log('onMount - body classes:', document.body.className);
+		
+		const unsubscribe = isEditMode.subscribe(value => {
+			console.log('isEditMode subscription triggered, value:', value);
+			console.log('Body classes before:', document.body.className);
+			
+			if (value) {
+				document.body.classList.remove('use-mode');
+				console.log('Removed use-mode class (Edit Mode)');
+			} else {
+				document.body.classList.add('use-mode');
+				console.log('Added use-mode class (Use Mode)');
+			}
+			
+			console.log('Body classes after:', document.body.className);
+		});
+
+		return unsubscribe;
+	});
 
 	function handleExport() {
 		exportCharacter($character);
@@ -77,7 +105,7 @@
 		<div class="header-top">
 			<h1>D&D Character Sheet</h1>
 			<div class="mode-toggle">
-				<button on:click={toggleMode} class="btn btn-mode">
+				<button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
 					{$isEditMode ? '📝 Edit Mode' : '🎲 Use Mode'}
 				</button>
 			</div>
