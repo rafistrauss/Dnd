@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { onMount, afterUpdate } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { base } from '$app/paths';
 
 	const dispatch = createEventDispatcher();
 
 	export let notation = '';
 	export let visible = false;
+	export let damageNotation = ''; // Optional damage notation for attacks
+	export let attackName = ''; // Optional attack name for context
 
 	let diceBox: any = null;
 	let diceContainer: HTMLDivElement | undefined = undefined;
@@ -21,6 +24,11 @@
 	let d12Count = 0;
 	let d20Count = 0;
 	let modifier = 0;
+
+	// Follow-up actions for multi-step rolls
+	let followUpActions: Array<{label: string, notation: string}> = [];
+	let isCritical = false;
+	let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
 
 	// Reactive notation that updates when any dice count changes
 	$: currentNotation = (() => {
@@ -92,10 +100,11 @@
 		// Wait a bit for the container to be ready
 		setTimeout(() => {
 			// Load in sequence: THREE and CANNON first, then teal, then dice.js
-			loadScript('/libs/three.min.js')
-				.then(() => loadScript('/libs/cannon.min.js'))
-				.then(() => loadScript('/libs/teal.js'))
-				.then(() => loadScript('/dice.js'))
+			// Use base path for GitHub Pages deployment
+			loadScript(`${base}/libs/three.min.js`)
+				.then(() => loadScript(`${base}/libs/cannon.min.js`))
+				.then(() => loadScript(`${base}/libs/teal.js`))
+				.then(() => loadScript(`${base}/dice.js`))
 				.then(() => {
 					console.log('All scripts loaded, initializing dice box...');
 					console.log('DICE available:', !!(window as any).DICE);
@@ -124,12 +133,13 @@
 		};
 	});
 
-	function rollDice(notation: string) {
+	function rollDice(notation: string, type: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other') {
 		if (!diceBox || !isInitialized) {
 			return;
 		}
 
-		console.log('Rolling dice:', notation);
+		console.log('Rolling dice:', notation, 'type:', type);
+		rollType = type;
 		
 		// Set the dice notation before throwing
 		diceBox.diceToRoll = notation;
@@ -145,6 +155,36 @@
 			console.log('After roll:', notationObj);
 			console.log('Result:', notationObj.resultTotal);
 			rollResult = notationObj;
+			
+			// Detect critical hits/fails on d20 rolls
+			if (type === 'attack' || type === 'check' || type === 'save') {
+				const d20Rolls = notationObj.results?.filter((r: any) => r.sides === 20) || [];
+				if (d20Rolls.length > 0) {
+					const d20Value = d20Rolls[0].value;
+					isCritical = d20Value === 20;
+				}
+			}
+			
+			// Set up follow-up actions based on roll type
+			followUpActions = [];
+			if (type === 'attack') {
+				// If damage notation is provided, offer to roll damage
+				if (damageNotation) {
+					if (isCritical) {
+						// Double dice for critical hits (5e rules)
+						const critDamage = doubleDiceNotation(damageNotation);
+						followUpActions.push({ 
+							label: `Roll Critical Damage (${critDamage})`, 
+							notation: critDamage 
+						});
+					} else {
+						followUpActions.push({ 
+							label: `Roll Damage (${damageNotation})`, 
+							notation: damageNotation 
+						});
+					}
+				}
+			}
 		};
 		
 		diceBox.start_throw(beforeRoll, afterRoll);
@@ -171,6 +211,15 @@
 		rollDice(notation);
 	}
 	
+	// Helper function to double dice for critical hits
+	function doubleDiceNotation(notation: string): string {
+		// Parse notation like "2d6+3" or "1d8+2d4+5"
+		return notation.replace(/(\d+)d(\d+)/g, (match, count, sides) => {
+			const doubledCount = parseInt(count) * 2;
+			return `${doubledCount}d${sides}`;
+		});
+	}
+	
 	function resetDice() {
 		d4Count = 0;
 		d6Count = 0;
@@ -180,19 +229,28 @@
 		d20Count = 0;
 		modifier = 0;
 		rollResult = null;
+		followUpActions = [];
+		isCritical = false;
+		rollType = 'other';
 	}
 
 	// Auto-roll when notation changes and component is initialized
 	$: if (notation && isInitialized && notation !== lastRolledNotation) {
 		lastRolledNotation = notation;
 		rollResult = null;
-		setTimeout(() => rollDice(notation), 200);
+		followUpActions = [];
+		isCritical = false;
+		// Detect roll type from notation pattern (simple heuristic)
+		const detectedType = notation.includes('1d20') ? 'attack' : 'other';
+		setTimeout(() => rollDice(notation, detectedType), 200);
 	}
 
 	function close() {
 		dispatch('close');
 		// Reset state when closing
 		notation = '';
+		damageNotation = '';
+		attackName = '';
 		lastRolledNotation = '';
 		rollResult = null;
 		resetDice();
@@ -212,50 +270,57 @@
 			</div>
 		{/if}
 
-		<div class="dice-container" bind:this={diceContainer}></div>
+		<div class="dice-main-area">
+			<div class="dice-container" bind:this={diceContainer}></div>
 
-		{#if !notation}
-			<!-- Custom dice selector when not auto-rolling -->
-			<div class="custom-dice-selector">
-				<h3>Choose Dice to Roll</h3>
-				<div class="dice-inputs">
-					<div class="dice-input-group">
-						<label for="d4">d4</label>
-						<input type="number" id="d4" bind:value={d4Count} min="0" max="10" />
+			{#if !notation}
+				<!-- Custom dice selector when not auto-rolling -->
+				<div class="custom-dice-selector">
+					<h3>Choose Dice to Roll</h3>
+					<div class="dice-inputs">
+						<div class="dice-input-group">
+							<label for="d4">d4</label>
+							<input type="number" id="d4" bind:value={d4Count} min="0" max="10" />
+						</div>
+						<div class="dice-input-group">
+							<label for="d6">d6</label>
+							<input type="number" id="d6" bind:value={d6Count} min="0" max="10" />
+						</div>
+						<div class="dice-input-group">
+							<label for="d8">d8</label>
+							<input type="number" id="d8" bind:value={d8Count} min="0" max="10" />
+						</div>
+						<div class="dice-input-group">
+							<label for="d10">d10</label>
+							<input type="number" id="d10" bind:value={d10Count} min="0" max="10" />
+						</div>
+						<div class="dice-input-group">
+							<label for="d12">d12</label>
+							<input type="number" id="d12" bind:value={d12Count} min="0" max="10" />
+						</div>
+						<div class="dice-input-group">
+							<label for="d20">d20</label>
+							<input type="number" id="d20" bind:value={d20Count} min="0" max="10" />
+						</div>
 					</div>
-					<div class="dice-input-group">
-						<label for="d6">d6</label>
-						<input type="number" id="d6" bind:value={d6Count} min="0" max="10" />
-					</div>
-					<div class="dice-input-group">
-						<label for="d8">d8</label>
-						<input type="number" id="d8" bind:value={d8Count} min="0" max="10" />
-					</div>
-					<div class="dice-input-group">
-						<label for="d10">d10</label>
-						<input type="number" id="d10" bind:value={d10Count} min="0" max="10" />
-					</div>
-					<div class="dice-input-group">
-						<label for="d12">d12</label>
-						<input type="number" id="d12" bind:value={d12Count} min="0" max="10" />
-					</div>
-					<div class="dice-input-group">
-						<label for="d20">d20</label>
-						<input type="number" id="d20" bind:value={d20Count} min="0" max="10" />
+					<div class="dice-controls">
+						<button on:click={rollCustom} class="btn btn-primary" disabled={!isInitialized}>
+							Roll {currentNotation}
+						</button>
+						<button on:click={resetDice} class="btn btn-secondary">Reset</button>
 					</div>
 				</div>
-				<div class="dice-controls">
-					<button on:click={rollCustom} class="btn btn-primary" disabled={!isInitialized}>
-						Roll {currentNotation}
-					</button>
-					<button on:click={resetDice} class="btn btn-secondary">Reset</button>
-				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 
-		{#if rollResult}
-			<div class="roll-result">
-				<h3>Result</h3>
+		<div class="roll-result" class:has-result={rollResult}>
+			{#if rollResult}
+				<div class="result-header">
+					<h3>{attackName ? `${attackName} - Result` : 'Result'}</h3>
+					{#if isCritical}
+						<span class="crit-badge">CRITICAL!</span>
+					{/if}
+				</div>
 				<div class="result-total">{rollResult.resultTotal}</div>
 				<div class="result-details">
 					{#if rollResult.resultString}
@@ -265,8 +330,17 @@
 						<p class="modifier-text">Modifier: {rollResult.constant >= 0 ? '+' : ''}{rollResult.constant}</p>
 					{/if}
 				</div>
-			</div>
-		{/if}
+				{#if followUpActions.length > 0}
+					<div class="follow-up-actions">
+						{#each followUpActions as action}
+							<button class="btn btn-follow-up" on:click={() => rollDice(action.notation, 'damage')}>
+								{action.label}
+							</button>
+						{/each}
+					</div>
+				{/if}
+			{/if}
+		</div>
 	</div>
 </div>
 
@@ -297,7 +371,8 @@
 		background-color: white;
 		border-radius: 8px;
 		padding: 20px;
-		width: 750px;
+		width: 900px;
+		max-width: 95vw;
 		height: 700px;
 		display: flex;
 		flex-direction: column;
@@ -332,12 +407,19 @@
 		color: #000;
 	}
 
+	.dice-main-area {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		flex: 1;
+		min-height: 0;
+	}
+
 	.dice-container {
 		width: 100%;
 		height: 400px;
 		background-color: #2a1810;
 		border-radius: 8px;
-		margin-bottom: 12px;
 		flex-shrink: 0;
 	}
 
@@ -368,6 +450,7 @@
 		padding: 12px;
 		background: #f9f9f9;
 		border-radius: 8px;
+		flex-shrink: 0;
 	}
 
 	.custom-dice-selector h3 {
@@ -415,11 +498,21 @@
 	.roll-result {
 		margin-top: 8px;
 		padding: 12px;
-		background: #e8f5e9;
-		border: 3px solid #4caf50;
 		border-radius: 8px;
 		text-align: center;
 		flex-shrink: 0;
+		min-height: 120px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		background: transparent;
+		border: 3px solid transparent;
+		transition: all 0.2s ease;
+	}
+
+	.roll-result.has-result {
+		background: #e8f5e9;
+		border-color: #4caf50;
 	}
 
 	.roll-result h3 {
@@ -450,6 +543,81 @@
 		font-style: italic;
 		color: #666;
 		font-size: 0.9rem;
+	}
+
+	.result-header {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		margin-bottom: 6px;
+	}
+
+	.crit-badge {
+		background: linear-gradient(135deg, #ffd700, #ffed4e);
+		color: #8b0000;
+		padding: 4px 12px;
+		border-radius: 12px;
+		font-weight: bold;
+		font-size: 0.85rem;
+		box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+		animation: pulse 0.5s ease-in-out;
+	}
+
+	@keyframes pulse {
+		0%, 100% { transform: scale(1); }
+		50% { transform: scale(1.1); }
+	}
+
+	.follow-up-actions {
+		margin-top: 12px;
+		display: flex;
+		gap: 8px;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+
+	.btn-follow-up {
+		background: linear-gradient(135deg, #2196f3, #1976d2);
+		color: white;
+		border: none;
+		padding: 8px 16px;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+		box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+	}
+
+	.btn-follow-up:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+	}
+
+	/* Side-by-side layout for wider screens */
+	@media (min-width: 769px) {
+		.dice-main-area {
+			flex-direction: row;
+		}
+
+		.dice-container {
+			flex: 1;
+			min-width: 0;
+			margin-bottom: 0;
+		}
+
+		.custom-dice-selector {
+			width: 280px;
+			flex-shrink: 0;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+		}
+
+		.dice-inputs {
+			grid-template-columns: repeat(2, 1fr);
+		}
 	}
 
 	@media (max-width: 768px) {

@@ -30,7 +30,11 @@
 
 	function rollAttack(attack: Attack) {
 		const notation = `1d20${attack.bonus >= 0 ? '+' : ''}${attack.bonus}`;
-		dispatch('roll', notation);
+		dispatch('roll', { 
+			notation, 
+			damageNotation: attack.damage,
+			attackName: attack.name 
+		});
 	}
 
 	function rollDamage(attack: Attack) {
@@ -39,7 +43,7 @@
 			return;
 		}
 
-		dispatch('roll', attack.damage);
+		dispatch('roll', { notation: attack.damage });
 	}
 </script>
 

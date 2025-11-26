@@ -18,11 +18,24 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: cd sveltekit-app && bun install
+
+      - name: Build SvelteKit app
+        run: cd sveltekit-app && bun run build
+        env:
+          NODE_ENV: production
+
       - name: Deploy to GitHub Pages (PR Preview)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+          publish_dir: ./sveltekit-app/build
           destination_dir: pr-${{ github.event.pull_request.number }}
           keep_files: true
           exclude_assets: '.github'

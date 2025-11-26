@@ -15,10 +15,20 @@
 	let gistMode: 'save' | 'load' = 'save';
 	let fileInput: HTMLInputElement | undefined = undefined;
 	let diceNotation = '';
+	let diceDamageNotation = '';
+	let diceAttackName = '';
 	let diceRollerComponent: any;
 
-	function openDiceRoller(notation: string) {
-		diceNotation = notation;
+	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string }) {
+		if (typeof detail === 'string') {
+			diceNotation = detail;
+			diceDamageNotation = '';
+			diceAttackName = '';
+		} else {
+			diceNotation = detail.notation;
+			diceDamageNotation = detail.damageNotation || '';
+			diceAttackName = detail.attackName || '';
+		}
 		showDiceRoller = true;
 	}
 
@@ -100,6 +110,8 @@
 <DiceRoller 
 	bind:this={diceRollerComponent}
 	notation={diceNotation}
+	damageNotation={diceDamageNotation}
+	attackName={diceAttackName}
 	visible={showDiceRoller}
 	on:close={() => showDiceRoller = false} 
 />
