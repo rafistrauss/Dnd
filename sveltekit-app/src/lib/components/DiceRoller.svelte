@@ -16,6 +16,11 @@
 	let lastRolledNotation = '';
 	let rollResult: any = null;
 	
+	// Export function to get last roll total
+	export function getLastRollTotal(): number | null {
+		return rollResult?.resultTotal ?? null;
+	}
+	
 	// Custom dice selector
 	let d4Count = 0;
 	let d6Count = 0;

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { character, abilityModifiers, searchFilter } from '$lib/stores';
+	import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
 	import type { Attack } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
-	let isCollapsed = false;
 
 	function addAttack() {
 		character.update(c => {
@@ -48,7 +47,7 @@
 	}
 
 	function toggleCollapse() {
-		isCollapsed = !isCollapsed;
+		collapsedStates.update(s => ({ ...s, attacks: !s.attacks }));
 	}
 
 	$: filteredAttacks = $character.attacks.filter((attack) => {
@@ -66,11 +65,11 @@
 <section class="attacks" class:hidden={!hasVisibleContent}>
 	<div class="header">
 		<h2>Attacks & Spells</h2>
-		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
-			{isCollapsed ? '▼' : '▲'}
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.attacks ? 'Expand' : 'Collapse'}>
+			{$collapsedStates.attacks ? '▼' : '▲'}
 		</button>
 	</div>
-	{#if !isCollapsed}
+	{#if !$collapsedStates.attacks}
 	<button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
 
 	<div class="attacks-list">

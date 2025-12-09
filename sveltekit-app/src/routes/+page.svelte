@@ -10,6 +10,7 @@
 	import Notes from '$lib/components/Notes.svelte';
 	import DiceRoller from '$lib/components/DiceRoller.svelte';
 	import GistModal from '$lib/components/GistModal.svelte';
+	import type { Character } from '$lib/types';
 
 	let showDiceRoller = false;
 	let showGistModal = false;
@@ -19,10 +20,12 @@
 	let diceDamageNotation = '';
 	let diceAttackName = '';
 	let diceRollerComponent: any;
+	let isHitDiceRoll = false;
 
 	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string }) {
 		// Reset notation first to ensure Svelte sees a change even if same value
 		diceNotation = '';
+		isHitDiceRoll = false;
 		
 		if (typeof detail === 'string') {
 			// Use nextTick to ensure reset is processed first
@@ -39,6 +42,41 @@
 			}, 0);
 		}
 		showDiceRoller = true;
+	}
+
+	function handleHitDiceRoll(event: CustomEvent) {
+		const { notation } = event.detail;
+		diceNotation = '';
+		isHitDiceRoll = true;
+		
+		setTimeout(() => {
+			diceNotation = notation;
+			diceDamageNotation = '';
+			diceAttackName = 'Hit Die';
+		}, 0);
+		
+		showDiceRoller = true;
+	}
+
+	function handleDiceRollerClose() {
+		showDiceRoller = false;
+		
+		// If this was a hit dice roll, decrement the hit dice and add HP
+		if (isHitDiceRoll && diceRollerComponent) {
+			const rollTotal = diceRollerComponent.getLastRollTotal();
+			
+			if (rollTotal !== null) {
+				const healing = Math.max(1, rollTotal);
+				
+				character.update((c: Character) => {
+					c.hitDice.current = Math.max(0, c.hitDice.current - 1);
+					c.currentHP = Math.min(c.maxHP, c.currentHP + healing);
+					return c;
+				});
+			}
+			
+			isHitDiceRoll = false;
+		}
 	}
 
 	function toggleMode() {
@@ -105,6 +143,9 @@
 		<div class="header-top">
 			<h1>D&D Character Sheet</h1>
 			<div class="header-controls">
+				<button on:click={() => showDiceRoller = true} class="btn btn-secondary use-enabled">
+				🎲 Roll Dice
+			</button>
 				<input 
 					type="text" 
 					bind:value={$searchFilter} 
@@ -119,9 +160,6 @@
 			</div>
 		</div>
 		<div class="header-actions">
-			<button on:click={() => showDiceRoller = true} class="btn btn-secondary use-enabled">
-				🎲 Roll Dice
-			</button>
 			<button on:click={() => { gistMode = 'save'; showGistModal = true; }} class="btn btn-secondary">
 				Save to Gist
 			</button>
@@ -142,7 +180,7 @@
 
 	<main>
 		<CharacterInfo />
-		<CombatStats />
+		<CombatStats on:rollHitDice={handleHitDiceRoll} />
 		<AbilityScores on:roll={(e) => openDiceRoller(e.detail)} />
 		<Skills on:roll={(e) => openDiceRoller(e.detail)} />
 		<Attacks on:roll={(e) => openDiceRoller(e.detail)} />
@@ -157,7 +195,7 @@
 	damageNotation={diceDamageNotation}
 	attackName={diceAttackName}
 	visible={showDiceRoller}
-	on:close={() => showDiceRoller = false} 
+	on:close={handleDiceRollerClose} 
 />
 
 {#if showGistModal}
@@ -249,6 +287,10 @@
 		flex-wrap: wrap;
 	}
 
+	:global(body.use-mode) .header-actions {
+		display: none;
+	}
+
 	:global(.btn) {
 		padding: 8px 16px;
 		border: none;
@@ -286,10 +328,14 @@
 	}
 
 	main {
-		margin-top: 40px;
+		margin-top: 80px;
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
+	}
+
+	:global(body.use-mode) main {
+		margin-top: 40px;
 	}
 
 	@media (max-width: 768px) {

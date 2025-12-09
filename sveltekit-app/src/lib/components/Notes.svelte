@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { character, searchFilter } from '$lib/stores';
-	let isCollapsed = false;
+	import { character, searchFilter, collapsedStates } from '$lib/stores';
 
 	function toggleCollapse() {
-		isCollapsed = !isCollapsed;
+		collapsedStates.update((s: any) => ({ ...s, notes: !s.notes }));
 	}
 
 	$: hasVisibleContent = !$searchFilter || 
@@ -19,11 +18,11 @@
 <section class="notes" class:hidden={!hasVisibleContent}>
 	<div class="header">
 		<h2>Features & Traits</h2>
-		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
-			{isCollapsed ? '▼' : '▲'}
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.notes ? 'Expand' : 'Collapse'}>
+			{$collapsedStates.notes ? '▼' : '▲'}
 		</button>
 	</div>
-	{#if !isCollapsed}
+	{#if !$collapsedStates.notes}
 	<textarea
 		bind:value={$character.features}
 		placeholder="Enter features, traits, and special abilities..."

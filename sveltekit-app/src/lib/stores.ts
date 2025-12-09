@@ -227,3 +227,60 @@ export function resetCharacter(): void {
 
 // Global search filter
 export const searchFilter = writable<string>('');
+
+// Collapsed states for all sections
+interface CollapsedStates {
+	characterInfo: boolean;
+	combatStats: boolean;
+	abilityScores: boolean;
+	skills: boolean;
+	attacks: boolean;
+	classFeatures: boolean;
+	notes: boolean;
+}
+
+function loadCollapsedStates(): CollapsedStates {
+	if (!browser) {
+		return {
+			characterInfo: false,
+			combatStats: false,
+			abilityScores: false,
+			skills: false,
+			attacks: false,
+			classFeatures: false,
+			notes: false
+		};
+	}
+	
+	try {
+		const saved = localStorage.getItem('dndCollapsedStates');
+		if (saved) {
+			return JSON.parse(saved);
+		}
+	} catch (e) {
+		console.error('Failed to load collapsed states:', e);
+	}
+	
+	return {
+		characterInfo: false,
+		combatStats: false,
+		abilityScores: false,
+		skills: false,
+		attacks: false,
+		classFeatures: false,
+		notes: false
+	};
+}
+
+export const collapsedStates = writable<CollapsedStates>(loadCollapsedStates());
+
+// Auto-save collapsed states to localStorage
+if (browser) {
+	collapsedStates.subscribe(value => {
+		try {
+			localStorage.setItem('dndCollapsedStates', JSON.stringify(value));
+		} catch (e) {
+			console.error('Failed to save collapsed states:', e);
+		}
+	});
+}

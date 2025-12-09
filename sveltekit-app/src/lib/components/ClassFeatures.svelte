@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { character, abilityModifiers, calculateModifier, searchFilter } from '$lib/stores';
+	import { character, abilityModifiers, calculateModifier, searchFilter, collapsedStates } from '$lib/stores';
 	import {
 		getClassConfig,
 		getAvailableFeatures,
@@ -8,7 +8,6 @@
 		getSpellSaveDC
 	} from '$lib/classConfig';
 	import { onMount } from 'svelte';
-	let isCollapsed = false;
 
 	$: classConfig = $character.class ? getClassConfig($character.class) : null;
 	$: features = $character.class ? getAvailableFeatures($character.class, $character.level) : [];
@@ -73,7 +72,7 @@
 	}
 
 	function toggleCollapse() {
-		isCollapsed = !isCollapsed;
+		collapsedStates.update(s => ({ ...s, classFeatures: !s.classFeatures }));
 	}
 
 	$: filteredFeatures = features.filter((feature) => {
@@ -92,11 +91,11 @@
 <section class="class-features" class:hidden={!hasVisibleContent}>
 	<div class="header">
 		<h2>Class Features</h2>
-		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
-			{isCollapsed ? '▼' : '▲'}
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.classFeatures ? 'Expand' : 'Collapse'}>
+			{$collapsedStates.classFeatures ? '▼' : '▲'}
 		</button>
 	</div>
-	{#if !isCollapsed}
+	{#if !$collapsedStates.classFeatures}
 	{#if !$character.class}
 		<p class="no-features">Select a class to see available features</p>
 	{:else if features.length === 0}

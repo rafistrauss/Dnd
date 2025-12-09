@@ -250,7 +250,7 @@ const DICE = (function() {
             box.clear();
             box.roll(vectors, request_results || notation.result, function(result) {
                 notation.result = result;
-                var res = result.join(' ');
+                var res = result.join(' + ');
                 if (notation.constant) {
                     if (notation.constant > 0) res += ' +' + notation.constant;
                     else res += ' -' + Math.abs(notation.constant);

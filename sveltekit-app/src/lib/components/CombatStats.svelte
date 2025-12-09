@@ -1,16 +1,49 @@
 <script lang="ts">
-	import { character, searchFilter } from '$lib/stores';
-	let isCollapsed = false;
+	import { createEventDispatcher } from 'svelte';
+	import { character, searchFilter, collapsedStates, abilityModifiers } from '$lib/stores';
+	import { getClassConfig } from '$lib/classConfig';
+	import type { Character } from '$lib/types';
+
+	const dispatch = createEventDispatcher();
 
 	function adjustHP(amount: number) {
-		character.update(c => {
+		character.update((c: Character) => {
 			c.currentHP = Math.max(0, Math.min(c.maxHP, c.currentHP + amount));
 			return c;
 		});
 	}
 
+	function rollHitDice() {
+		if ($character.hitDice.current <= 0) {
+			alert('No hit dice remaining!');
+			return;
+		}
+
+		if (!$character.class) {
+			alert('Please select a class first!');
+			return;
+		}
+
+		const classConfig = getClassConfig($character.class);
+		if (!classConfig) {
+			alert('Invalid class configuration!');
+			return;
+		}
+
+		// Get the hit die notation (e.g., 'd10')
+		const hitDie = classConfig.hitDice;
+		const conMod = $abilityModifiers.constitution;
+		const modString = conMod >= 0 ? `+${conMod}` : `${conMod}`;
+		
+		// Build the notation with constitution modifier
+		const notation = `1${hitDie}${modString}`;
+		
+		// Dispatch event to open dice roller with a callback to handle the result
+		dispatch('rollHitDice', { notation, hitDie });
+	}
+
 	function toggleCollapse() {
-		isCollapsed = !isCollapsed;
+		collapsedStates.update((s: any) => ({ ...s, combatStats: !s.combatStats }));
 	}
 
 	$: hasVisibleContent = !$searchFilter || 
@@ -26,11 +59,11 @@
 <section class="combat-stats" class:hidden={!hasVisibleContent}>
 	<div class="header">
 		<h2>Combat Stats</h2>
-		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
-			{isCollapsed ? '▼' : '▲'}
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.combatStats ? 'Expand' : 'Collapse'}>
+			{$collapsedStates.combatStats ? '▼' : '▲'}
 		</button>
 	</div>
-	{#if !isCollapsed}
+	{#if !$collapsedStates.combatStats}
 	<div class="stats-grid">
 		<div class="stat-box">
 			<label for="armorClass">Armor Class</label>
@@ -100,8 +133,15 @@
 				class="hit-dice-input"
 			min="0"
 		/>
+		</div>
+		<button 
+			class="btn btn-primary roll-hit-dice use-enabled" 
+			on:click={rollHitDice}
+			disabled={$character.hitDice.current <= 0 || !$character.class}
+		>
+			🎲 Roll Hit Die
+		</button>
 	</div>
-</div>
 	{/if}
 </section>
 
@@ -260,6 +300,7 @@
 		display: flex;
 		align-items: center;
 		gap: 5px;
+		margin-bottom: 10px;
 	}
 
 	.hit-dice-input {
@@ -268,6 +309,16 @@
 		border: 1px solid var(--border-color);
 		border-radius: 4px;
 		text-align: center;
+	}
+
+	.roll-hit-dice {
+		width: 100%;
+		margin-top: 5px;
+	}
+
+	.roll-hit-dice:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	input:focus {

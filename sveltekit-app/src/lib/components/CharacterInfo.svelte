@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { character, updateProficiencyBonus } from '$lib/stores';
+	import { character, updateProficiencyBonus, collapsedStates } from '$lib/stores';
 	import { getAvailableClasses } from '$lib/classConfig';
 
 	const classes = getAvailableClasses();
-	let isCollapsed = false;
 
 	function handleClassChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
@@ -23,18 +22,18 @@
 	}
 
 	function toggleCollapse() {
-		isCollapsed = !isCollapsed;
+		collapsedStates.update(s => ({ ...s, characterInfo: !s.characterInfo }));
 	}
 </script>
 
 <section class="character-info">
 	<div class="header">
 		<h2>Character Info</h2>
-		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
-			{isCollapsed ? '▼' : '▲'}
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.characterInfo ? 'Expand' : 'Collapse'}>
+			{$collapsedStates.characterInfo ? '▼' : '▲'}
 		</button>
 	</div>
-	{#if !isCollapsed}
+	{#if !$collapsedStates.characterInfo}
 	<div class="info-grid">
 		<div class="form-group">
 			<label for="characterName">Character Name</label>

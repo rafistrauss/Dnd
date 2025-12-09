@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { character, abilityModifiers, searchFilter } from '$lib/stores';
+	import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
 	import { SKILL_ABILITIES } from '$lib/types';
 	import type { SkillName } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
-	let isCollapsed = false;
 
 	const skills: { key: SkillName; label: string }[] = [
 		{ key: 'acrobatics', label: 'Acrobatics' },
@@ -42,7 +41,7 @@
 	}
 
 	function toggleCollapse() {
-		isCollapsed = !isCollapsed;
+		collapsedStates.update((s: any) => ({ ...s, skills: !s.skills }));
 	}
 
 	$: filteredSkills = skills.filter(({ label }) => {
@@ -56,11 +55,11 @@
 <section class="skills" class:hidden={!hasVisibleContent}>
 	<div class="header">
 		<h2>Skills</h2>
-		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
-			{isCollapsed ? '▼' : '▲'}
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.skills ? 'Expand' : 'Collapse'}>
+			{$collapsedStates.skills ? '▼' : '▲'}
 		</button>
 	</div>
-	{#if !isCollapsed}
+	{#if !$collapsedStates.skills}
 	<div class="skills-grid">
 		{#each filteredSkills as { key, label }}
 			{@const ability = SKILL_ABILITIES[key]}
