@@ -1143,9 +1143,14 @@ body:not(.use-mode) .hp-controls {
         overflow-y: auto;
     }
 
+    #rollResult {
+        padding: 5px 15px;
+        min-height: 50px;
+    }
+
     #rollResult .dice-roll {
         font-size: 2.5rem;
-        margin: 15px 0;
+        margin: 5px 0;
     }
 
     #rollResult .roll-details {
