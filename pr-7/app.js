@@ -498,12 +498,21 @@ function rollAttack(attackIndex) {
     const attack = character.attacks[attackIndex];
     const attackBonus = parseInt(attack.attackBonus || 0);
     
+    // Check if this is a melee weapon for divine smite
+    const isMelee = attack.name.toLowerCase().includes('longsword') || 
+                    attack.name.toLowerCase().includes('greatsword') ||
+                    attack.name.toLowerCase().includes('sword') ||
+                    attack.name.toLowerCase().includes('mace') ||
+                    attack.damageType.toLowerCase().includes('melee');
+    
     showRollResult(
         `${attack.name} Attack`,
         attackBonus,
         null,
         '1d20',
-        attackBonus
+        attackBonus,
+        'd20',
+        isMelee ? attackIndex : null
     );
 }
 
@@ -529,7 +538,7 @@ function rollDamage(attackIndex) {
     );
 }
 
-function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20') {
+function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20', attackIndex = null) {
     const modal = document.getElementById('rollModal');
     const titleDiv = document.getElementById('rollTitle');
     const resultDiv = document.getElementById('rollResult');
@@ -541,7 +550,8 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
         details: details,
         diceNotation: diceNotation,
         bonusModifier: bonusModifier,
-        rollType: rollType
+        rollType: rollType,
+        attackIndex: attackIndex
     };
     
     // Show the modal first
@@ -561,7 +571,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             setTimeout(() => {
                 const initialized = initializeDiceBox();
                 if (initialized) {
-                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
+                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex);
                 } else {
                     // Fallback to instant result if initialization fails
                     const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -573,7 +583,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             }, 150);
         } else {
             // Dice box already initialized, use it
-            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
+            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex);
         }
     } else {
         // No dice animation, just show the result
@@ -584,7 +594,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
     }
 }
 
-function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20') {
+function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20', attackIndex = null) {
     if (!diceBox) {
         // Fallback if dice box not available
         const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -642,10 +652,35 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                     `;
                 }
                 
+                // Add divine smite button for melee attacks
+                let smiteButton = '';
+                if (attackIndex !== null && rollType === 'd20') {
+                    smiteButton = `
+                        <div class="smite-in-modal">
+                            <h4>Divine Smite</h4>
+                            <div class="smite-calculator">
+                                <label>Spell Slot Level:</label>
+                                <select id="smiteLevel_modal_${attackIndex}" class="smite-select">
+                                    <option value="1">1st Level (2d8)</option>
+                                    <option value="2">2nd Level (3d8)</option>
+                                    <option value="3">3rd Level (4d8)</option>
+                                    <option value="4">4th Level (5d8)</option>
+                                </select>
+                                <label>
+                                    <input type="checkbox" id="smiteUndead_modal_${attackIndex}">
+                                    Target is undead/fiend (+1d8)
+                                </label>
+                                <button class="btn btn-primary" onclick="rollDivineSmiteFromModal(${attackIndex})">Roll Smite Damage</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 resultDiv.innerHTML = `
                     <div class="dice-roll">${finalTotal}</div>
                     <div class="roll-details">${details}</div>
                     ${rerollButtons}
+                    ${smiteButton}
                 `;
             }, 500);
         }
@@ -679,7 +714,43 @@ function rerollDice() {
         currentRollContext.details,
         currentRollContext.diceNotation,
         currentRollContext.bonusModifier,
-        currentRollContext.rollType
+        currentRollContext.rollType,
+        currentRollContext.attackIndex
+    );
+}
+
+function rollDivineSmiteFromModal(attackIndex) {
+    const level = parseInt(document.getElementById(`smiteLevel_modal_${attackIndex}`).value);
+    const isUndead = document.getElementById(`smiteUndead_modal_${attackIndex}`).checked;
+    
+    // Find an available spell slot of the selected level
+    const slotIndex = findAvailableSpellSlot(level);
+    if (slotIndex === -1) {
+        alert(`No available ${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} level spell slots!`);
+        return;
+    }
+    
+    // Mark spell slot as used
+    character.classFeatures.spellSlots[slotIndex] = true;
+    document.getElementById(`spellSlot1_${slotIndex + 1}`).checked = true;
+    saveToLocalStorage(true);
+    
+    // Base damage: 2d8 for 1st level, +1d8 per level above 1st
+    const diceCount = 1 + level;
+    
+    // Build dice notation
+    let diceNotation = `${diceCount}d8`;
+    if (isUndead) {
+        diceNotation += '+1d8';
+    }
+    
+    showRollResult(
+        `Divine Smite (${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} Level)`,
+        0, // Not used when using dice animation
+        null,
+        diceNotation,
+        0,
+        'damage'
     );
 }
 
@@ -1581,6 +1652,7 @@ window.resetLayOnHands = resetLayOnHands;
 window.resetSpellSlots = resetSpellSlots;
 window.resetChannelDivinity = resetChannelDivinity;
 window.rollDivineSmite = rollDivineSmite;
+window.rollDivineSmiteFromModal = rollDivineSmiteFromModal;
 window.rollCustomDice = rollCustomDice;
 window.commitHPAdjustment = commitHPAdjustment;
 window.longRest = longRest;

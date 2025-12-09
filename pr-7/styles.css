@@ -242,7 +242,7 @@ body.use-mode .hp-operation-select label {
 }
 
 body.use-mode .btn-primary,
-body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small):not(.btn-small):not(#diceRollerBtn) {
+body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small):not(.btn-small):not(#diceRollerBtn):not(.reroll-buttons .btn) {
     opacity: 0.5;
     pointer-events: none;
 }
@@ -832,6 +832,34 @@ body:not(.use-mode) .hp-controls {
 #rollResult .reroll-buttons .btn {
     padding: 10px 20px;
     font-size: 1rem;
+}
+
+#rollResult .smite-in-modal {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+}
+
+#rollResult .smite-in-modal h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+#rollResult .smite-calculator {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#rollResult .smite-calculator label {
+    font-size: 0.9rem;
+}
+
+#rollResult .smite-calculator .btn {
+    margin-top: 5px;
 }
 
 /* Gist Modal */
