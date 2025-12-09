@@ -822,6 +822,18 @@ body:not(.use-mode) .hp-controls {
     margin-top: 10px;
 }
 
+#rollResult .reroll-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+#rollResult .reroll-buttons .btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
 /* Gist Modal */
 #gistContent h3 {
     color: var(--primary-color);

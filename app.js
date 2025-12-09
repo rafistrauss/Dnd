@@ -91,6 +91,9 @@ let isEditMode = true;
 // Dice box instance
 let diceBox = null;
 
+// Store roll context for re-rolling
+let currentRollContext = null;
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadFromLocalStorage();
@@ -531,6 +534,16 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
     const titleDiv = document.getElementById('rollTitle');
     const resultDiv = document.getElementById('rollResult');
     
+    // Store roll context for re-rolling
+    currentRollContext = {
+        title: title,
+        modifier: modifier,
+        details: details,
+        diceNotation: diceNotation,
+        bonusModifier: bonusModifier,
+        rollType: rollType
+    };
+    
     // Show the modal first
     modal.style.display = 'block';
     
@@ -619,9 +632,20 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                     }
                 }
                 
+                // Add re-roll buttons for d20 rolls (attack rolls, ability checks, saves, skills)
+                let rerollButtons = '';
+                if (rollType === 'd20' && diceNotation === '1d20') {
+                    rerollButtons = `
+                        <div class="reroll-buttons">
+                            <button class="btn btn-secondary" onclick="rerollDice()">Re-roll</button>
+                        </div>
+                    `;
+                }
+                
                 resultDiv.innerHTML = `
                     <div class="dice-roll">${finalTotal}</div>
                     <div class="roll-details">${details}</div>
+                    ${rerollButtons}
                 `;
             }, 500);
         }
@@ -640,6 +664,23 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
 
 function closeModal() {
     document.getElementById('rollModal').style.display = 'none';
+}
+
+function rerollDice() {
+    if (!currentRollContext) {
+        console.error('No roll context available for re-roll');
+        return;
+    }
+    
+    // Re-use the stored context to perform the same roll again
+    showRollResult(
+        currentRollContext.title,
+        currentRollContext.modifier,
+        currentRollContext.details,
+        currentRollContext.diceNotation,
+        currentRollContext.bonusModifier,
+        currentRollContext.rollType
+    );
 }
 
 // HP adjustment function - increment/decrement the adjust input
@@ -1545,3 +1586,4 @@ window.commitHPAdjustment = commitHPAdjustment;
 window.longRest = longRest;
 window.adjustHitDiceCount = adjustHitDiceCount;
 window.rollHitDice = rollHitDice;
+window.rerollDice = rerollDice;
