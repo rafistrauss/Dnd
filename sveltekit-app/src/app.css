@@ -6,25 +6,40 @@
     color: white;
 }
 
-/* Disable most inputs in use mode */
-body.use-mode input[type="text"],
-body.use-mode input[type="number"],
-body.use-mode textarea,
-body.use-mode select {
+/* 
+ * Opt-in class: .use-enabled
+ * Add this class to any button or input that should remain enabled in use mode
+ */
+
+/* Disable most inputs in use mode (unless marked with .use-enabled) */
+body.use-mode input[type="text"]:not(.use-enabled),
+body.use-mode input[type="number"]:not(.use-enabled),
+body.use-mode textarea:not(.use-enabled),
+body.use-mode select:not(.use-enabled) {
     pointer-events: none;
     background-color: #f5f5f5;
     border-color: #ddd;
 }
 
-body.use-mode input[type="checkbox"] {
+body.use-mode input[type="checkbox"]:not(.use-enabled) {
     pointer-events: none;
 }
 
-body.use-mode input[type="checkbox"].use-checkbox {
+/* Keep .use-enabled inputs functional in use mode */
+body.use-mode input.use-enabled,
+body.use-mode textarea.use-enabled,
+body.use-mode select.use-enabled {
     pointer-events: auto;
+    background-color: white;
+    border-color: var(--border-color);
 }
 
-/* Allow gameplay-related inputs in use mode */
+body.use-mode input[type="checkbox"].use-enabled {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* Legacy support: allow gameplay-related inputs by ID */
 body.use-mode #currentHP,
 body.use-mode #layOnHandsPool,
 body.use-mode #tempHP,
@@ -47,18 +62,27 @@ body.use-mode .hp-operation-select label {
     cursor: pointer;
 }
 
-/* Disable most buttons in use mode */
-body.use-mode .btn-primary,
-body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small):not(.btn-small):not(#diceRollerBtn) {
+/* Disable most buttons in use mode (unless marked with .use-enabled) */
+body.use-mode .btn-primary:not(.use-enabled),
+body.use-mode .btn-secondary:not(.use-enabled):not(.roll-btn):not(.roll-btn-small):not(.btn-small):not(#diceRollerBtn) {
     opacity: 0.5;
     pointer-events: none;
 }
 
-body.use-mode .btn-danger {
+body.use-mode .btn-danger:not(.use-enabled) {
     display: none;
 }
 
-/* Keep gameplay buttons enabled in use mode */
+/* Keep .use-enabled buttons functional in use mode */
+body.use-mode .btn-primary.use-enabled,
+body.use-mode .btn-secondary.use-enabled,
+body.use-mode .btn-danger.use-enabled {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    display: inline-block !important;
+}
+
+/* Legacy support: keep gameplay buttons enabled */
 body.use-mode .attack-actions .btn-primary,
 body.use-mode .smite-calculator .btn-primary,
 body.use-mode .dice-roll-actions .btn-primary,

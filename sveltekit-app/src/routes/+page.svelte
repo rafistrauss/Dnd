@@ -111,7 +111,7 @@
 			</div>
 		</div>
 		<div class="header-actions">
-			<button on:click={() => showDiceRoller = true} class="btn btn-secondary">
+			<button on:click={() => showDiceRoller = true} class="btn btn-secondary use-enabled">
 				🎲 Roll Dice
 			</button>
 			<button on:click={() => { gistMode = 'save'; showGistModal = true; }} class="btn btn-secondary">

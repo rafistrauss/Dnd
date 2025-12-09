@@ -126,10 +126,19 @@
 			}
 		};
 
+		// Handle Escape key globally when modal is visible
+		const handleEscape = (e: KeyboardEvent) => {
+			if (visible && e.key === 'Escape') {
+				close();
+			}
+		};
+
 		window.addEventListener('resize', handleResize);
+		window.addEventListener('keydown', handleEscape);
 
 		return () => {
 			window.removeEventListener('resize', handleResize);
+			window.removeEventListener('keydown', handleEscape);
 		};
 	});
 
@@ -280,34 +289,34 @@
 					<div class="dice-inputs">
 						<div class="dice-input-group">
 							<label for="d4">d4</label>
-							<input type="number" id="d4" bind:value={d4Count} min="0" max="10" />
+							<input class="use-enabled" type="number" id="d4" bind:value={d4Count} min="0" max="10" />
 						</div>
 						<div class="dice-input-group">
 							<label for="d6">d6</label>
-							<input type="number" id="d6" bind:value={d6Count} min="0" max="10" />
+							<input class="use-enabled" type="number" id="d6" bind:value={d6Count} min="0" max="10" />
 						</div>
 						<div class="dice-input-group">
 							<label for="d8">d8</label>
-							<input type="number" id="d8" bind:value={d8Count} min="0" max="10" />
+							<input class="use-enabled" type="number" id="d8" bind:value={d8Count} min="0" max="10" />
 						</div>
 						<div class="dice-input-group">
 							<label for="d10">d10</label>
-							<input type="number" id="d10" bind:value={d10Count} min="0" max="10" />
+							<input class="use-enabled" type="number" id="d10" bind:value={d10Count} min="0" max="10" />
 						</div>
 						<div class="dice-input-group">
 							<label for="d12">d12</label>
-							<input type="number" id="d12" bind:value={d12Count} min="0" max="10" />
+							<input class="use-enabled" type="number" id="d12" bind:value={d12Count} min="0" max="10" />
 						</div>
 						<div class="dice-input-group">
 							<label for="d20">d20</label>
-							<input type="number" id="d20" bind:value={d20Count} min="0" max="10" />
+							<input class="use-enabled" type="number" id="d20" bind:value={d20Count} min="0" max="10" />
 						</div>
 					</div>
 					<div class="dice-controls">
-						<button on:click={rollCustom} class="btn btn-primary" disabled={!isInitialized}>
+						<button on:click={rollCustom} class="btn btn-primary use-enabled" disabled={!isInitialized}>
 							Roll {currentNotation}
 						</button>
-						<button on:click={resetDice} class="btn btn-secondary">Reset</button>
+						<button on:click={resetDice} class="btn btn-secondary use-enabled">Reset</button>
 					</div>
 				</div>
 			{/if}
