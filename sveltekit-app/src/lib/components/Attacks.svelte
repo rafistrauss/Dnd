@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { character, abilityModifiers } from '$lib/stores';
+	import { character, abilityModifiers, searchFilter } from '$lib/stores';
 	import type { Attack } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
+	let isCollapsed = false;
 
 	function addAttack() {
 		character.update(c => {
@@ -45,15 +46,35 @@
 
 		dispatch('roll', { notation: attack.damage });
 	}
+
+	function toggleCollapse() {
+		isCollapsed = !isCollapsed;
+	}
+
+	$: filteredAttacks = $character.attacks.filter((attack) => {
+		if (!$searchFilter) return true;
+		const filter = $searchFilter.toLowerCase();
+		return attack.name.toLowerCase().includes(filter) ||
+			attack.damageType.toLowerCase().includes(filter);
+	});
+
+	$: hasVisibleContent = !$searchFilter || filteredAttacks.length > 0 || 
+		'attack'.includes($searchFilter.toLowerCase()) ||
+		'spell'.includes($searchFilter.toLowerCase());
 </script>
 
-<section class="attacks">
-	<h2>Attacks & Spells</h2>
-	
+<section class="attacks" class:hidden={!hasVisibleContent}>
+	<div class="header">
+		<h2>Attacks & Spells</h2>
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
+			{isCollapsed ? '▼' : '▲'}
+		</button>
+	</div>
+	{#if !isCollapsed}
 	<button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
 
 	<div class="attacks-list">
-		{#each $character.attacks as attack (attack.id)}
+		{#each filteredAttacks as attack (attack.id)}
 			<div class="attack-card">
 				<div class="attack-header">
 					<input
@@ -98,8 +119,11 @@
 
 		{#if $character.attacks.length === 0}
 			<p class="no-attacks">No attacks added yet. Click "Add Attack" to create one.</p>
+		{:else if filteredAttacks.length === 0}
+			<p class="no-attacks">No attacks match your search.</p>
 		{/if}
 	</div>
+	{/if}
 </section>
 
 <style>
@@ -110,12 +134,36 @@
 		box-shadow: var(--shadow);
 	}
 
-	h2 {
-		margin-top: 0;
-		color: var(--primary-color);
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		border-bottom: 2px solid var(--border-color);
 		padding-bottom: 10px;
 		margin-bottom: 15px;
+	}
+
+	h2 {
+		margin: 0;
+		color: var(--primary-color);
+	}
+
+	.collapse-btn {
+		background: none;
+		border: none;
+		font-size: 1.2rem;
+		cursor: pointer;
+		color: var(--primary-color);
+		padding: 5px 10px;
+		transition: transform 0.2s ease;
+	}
+
+	.collapse-btn:hover {
+		transform: scale(1.1);
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	.attacks-list {

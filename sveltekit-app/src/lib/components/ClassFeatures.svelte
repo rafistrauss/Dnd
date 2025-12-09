@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { character, abilityModifiers, calculateModifier } from '$lib/stores';
+	import { character, abilityModifiers, calculateModifier, searchFilter } from '$lib/stores';
 	import {
 		getClassConfig,
 		getAvailableFeatures,
@@ -8,6 +8,7 @@
 		getSpellSaveDC
 	} from '$lib/classConfig';
 	import { onMount } from 'svelte';
+	let isCollapsed = false;
 
 	$: classConfig = $character.class ? getClassConfig($character.class) : null;
 	$: features = $character.class ? getAvailableFeatures($character.class, $character.level) : [];
@@ -70,11 +71,32 @@
 		}
 		return feature.description;
 	}
+
+	function toggleCollapse() {
+		isCollapsed = !isCollapsed;
+	}
+
+	$: filteredFeatures = features.filter((feature) => {
+		if (!$searchFilter) return true;
+		const filter = $searchFilter.toLowerCase();
+		return feature.name.toLowerCase().includes(filter) ||
+			getDescription(feature).toLowerCase().includes(filter);
+	});
+
+	$: hasVisibleContent = !$searchFilter || $character.class || 
+		'class features'.includes($searchFilter.toLowerCase()) ||
+		'spellcasting'.includes($searchFilter.toLowerCase()) ||
+		filteredFeatures.length > 0;
 </script>
 
-<section class="class-features">
-	<h2>Class Features</h2>
-
+<section class="class-features" class:hidden={!hasVisibleContent}>
+	<div class="header">
+		<h2>Class Features</h2>
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
+			{isCollapsed ? '▼' : '▲'}
+		</button>
+	</div>
+	{#if !isCollapsed}
 	{#if !$character.class}
 		<p class="no-features">Select a class to see available features</p>
 	{:else if features.length === 0}
@@ -119,7 +141,7 @@
 				</div>
 			{/if}
 
-			{#each features as feature}
+			{#each filteredFeatures as feature}
 				{@const featureKey = feature.name.replace(/\s+/g, '')}
 				{@const featureData = $character.classFeatures.features[featureKey]}
 				{@const isArrayData = Array.isArray(featureData)}
@@ -200,6 +222,7 @@
 			{/each}
 		</div>
 	{/if}
+	{/if}
 </section>
 
 <style>
@@ -210,12 +233,36 @@
 		box-shadow: var(--shadow);
 	}
 
-	h2 {
-		margin-top: 0;
-		color: var(--primary-color);
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		border-bottom: 2px solid var(--border-color);
 		padding-bottom: 10px;
 		margin-bottom: 15px;
+	}
+
+	h2 {
+		margin: 0;
+		color: var(--primary-color);
+	}
+
+	.collapse-btn {
+		background: none;
+		border: none;
+		font-size: 1.2rem;
+		cursor: pointer;
+		color: var(--primary-color);
+		padding: 5px 10px;
+		transition: transform 0.2s ease;
+	}
+
+	.collapse-btn:hover {
+		transform: scale(1.1);
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	.no-features {

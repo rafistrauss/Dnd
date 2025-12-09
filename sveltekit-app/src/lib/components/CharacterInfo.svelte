@@ -3,6 +3,7 @@
 	import { getAvailableClasses } from '$lib/classConfig';
 
 	const classes = getAvailableClasses();
+	let isCollapsed = false;
 
 	function handleClassChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
@@ -20,10 +21,20 @@
 		});
 		updateProficiencyBonus();
 	}
+
+	function toggleCollapse() {
+		isCollapsed = !isCollapsed;
+	}
 </script>
 
 <section class="character-info">
-	<h2>Character Info</h2>
+	<div class="header">
+		<h2>Character Info</h2>
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
+			{isCollapsed ? '▼' : '▲'}
+		</button>
+	</div>
+	{#if !isCollapsed}
 	<div class="info-grid">
 		<div class="form-group">
 			<label for="characterName">Character Name</label>
@@ -72,6 +83,7 @@
 			/>
 		</div>
 	</div>
+	{/if}
 </section>
 
 <style>
@@ -82,11 +94,32 @@
 		box-shadow: var(--shadow);
 	}
 
-	h2 {
-		margin-top: 0;
-		color: var(--primary-color);
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		border-bottom: 2px solid var(--border-color);
 		padding-bottom: 10px;
+		margin-bottom: 15px;
+	}
+
+	h2 {
+		margin: 0;
+		color: var(--primary-color);
+	}
+
+	.collapse-btn {
+		background: none;
+		border: none;
+		font-size: 1.2rem;
+		cursor: pointer;
+		color: var(--primary-color);
+		padding: 5px 10px;
+		transition: transform 0.2s ease;
+	}
+
+	.collapse-btn:hover {
+		transform: scale(1.1);
 	}
 
 	.info-grid {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { character, isEditMode, exportCharacter, importCharacter } from '$lib/stores';
+	import { character, isEditMode, exportCharacter, importCharacter, searchFilter } from '$lib/stores';
 	import CharacterInfo from '$lib/components/CharacterInfo.svelte';
 	import AbilityScores from '$lib/components/AbilityScores.svelte';
 	import CombatStats from '$lib/components/CombatStats.svelte';
@@ -104,10 +104,18 @@
 	<header>
 		<div class="header-top">
 			<h1>D&D Character Sheet</h1>
-			<div class="mode-toggle">
-				<button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
-					{$isEditMode ? '📝 Edit Mode' : '🎲 Use Mode'}
-				</button>
+			<div class="header-controls">
+				<input 
+					type="text" 
+					bind:value={$searchFilter} 
+					placeholder="🔍 Search (e.g., Religion, Strength, Attack...)" 
+					class="search-input"
+				/>
+				<div class="mode-toggle">
+					<button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
+						{$isEditMode ? '📝 Edit Mode' : '🎲 Use Mode'}
+					</button>
+				</div>
 			</div>
 		</div>
 		<div class="header-actions">
@@ -199,14 +207,40 @@
 
 	.header-top {
 		display: flex;
+		flex-wrap: wrap;
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 10px;
+		gap: 20px;
 	}
 
 	h1 {
 		font-size: 1.5rem;
 		margin: 0;
+		flex-shrink: 0;
+	}
+
+	.header-controls {
+		display: flex;
+		align-items: center;
+		gap: 15px;
+		flex: 1;
+	}
+
+	.search-input {
+		flex: 1;
+		max-width: 400px;
+		padding: 8px 12px;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		border-radius: 4px;
+		background-color: rgba(255, 255, 255, 0.9);
+		font-size: 0.9rem;
+	}
+
+	.search-input:focus {
+		outline: none;
+		background-color: white;
+		border-color: var(--secondary-color);
 	}
 
 	.header-actions {
@@ -252,6 +286,7 @@
 	}
 
 	main {
+		margin-top: 40px;
 		display: flex;
 		flex-direction: column;
 		gap: 20px;

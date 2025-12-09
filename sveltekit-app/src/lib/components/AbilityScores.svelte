@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { character, abilityModifiers, updateProficiencyBonus } from '$lib/stores';
+	import { character, abilityModifiers, updateProficiencyBonus, searchFilter } from '$lib/stores';
 	import type { AbilityName } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
+	let isCollapsed = false;
 
 	const abilities: { key: AbilityName; label: string }[] = [
 		{ key: 'strength', label: 'Strength' },
@@ -31,11 +32,27 @@
 		const notation = `1d20${totalMod >= 0 ? '+' : ''}${totalMod}`;
 		dispatch('roll', notation);
 	}
+
+	function toggleCollapse() {
+		isCollapsed = !isCollapsed;
+	}
+
+	$: filteredAbilities = abilities.filter(({ label }) => {
+		if (!$searchFilter) return true;
+		return label.toLowerCase().includes($searchFilter.toLowerCase());
+	});
+
+	$: hasVisibleContent = filteredAbilities.length > 0 || !$searchFilter || $searchFilter.toLowerCase().includes('proficiency');
 </script>
 
-<section class="ability-scores">
-	<h2>Ability Scores</h2>
-
+<section class="ability-scores" class:hidden={!hasVisibleContent}>
+	<div class="header">
+		<h2>Ability Scores</h2>
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
+			{isCollapsed ? '▼' : '▲'}
+		</button>
+	</div>
+	{#if !isCollapsed}
 	<div class="proficiency-bonus">
 		<label for="profBonus">Proficiency Bonus</label>
 		<input
@@ -47,7 +64,7 @@
 	</div>
 
 	<div class="abilities-grid">
-		{#each abilities as { key, label }}
+		{#each filteredAbilities as { key, label }}
 			<div class="ability-card">
 				<h3>{label.substring(0, 3).toUpperCase()}</h3>
 				<input
@@ -74,6 +91,7 @@
 			</div>
 		{/each}
 	</div>
+	{/if}
 </section>
 
 <style>
@@ -84,11 +102,36 @@
 		box-shadow: var(--shadow);
 	}
 
-	h2 {
-		margin-top: 0;
-		color: var(--primary-color);
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		border-bottom: 2px solid var(--border-color);
 		padding-bottom: 10px;
+		margin-bottom: 15px;
+	}
+
+	h2 {
+		margin: 0;
+		color: var(--primary-color);
+	}
+
+	.collapse-btn {
+		background: none;
+		border: none;
+		font-size: 1.2rem;
+		cursor: pointer;
+		color: var(--primary-color);
+		padding: 5px 10px;
+		transition: transform 0.2s ease;
+	}
+
+	.collapse-btn:hover {
+		transform: scale(1.1);
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	.proficiency-bonus {

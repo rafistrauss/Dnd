@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { character } from '$lib/stores';
+	import { character, searchFilter } from '$lib/stores';
+	let isCollapsed = false;
 
 	function adjustHP(amount: number) {
 		character.update(c => {
@@ -7,10 +8,29 @@
 			return c;
 		});
 	}
+
+	function toggleCollapse() {
+		isCollapsed = !isCollapsed;
+	}
+
+	$: hasVisibleContent = !$searchFilter || 
+		'armor class'.includes($searchFilter.toLowerCase()) ||
+		'initiative'.includes($searchFilter.toLowerCase()) ||
+		'speed'.includes($searchFilter.toLowerCase()) ||
+		'hit points'.includes($searchFilter.toLowerCase()) ||
+		'hp'.includes($searchFilter.toLowerCase()) ||
+		'hit dice'.includes($searchFilter.toLowerCase()) ||
+		'combat'.includes($searchFilter.toLowerCase());
 </script>
 
-<section class="combat-stats">
-	<h2>Combat Stats</h2>
+<section class="combat-stats" class:hidden={!hasVisibleContent}>
+	<div class="header">
+		<h2>Combat Stats</h2>
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
+			{isCollapsed ? '▼' : '▲'}
+		</button>
+	</div>
+	{#if !isCollapsed}
 	<div class="stats-grid">
 		<div class="stat-box">
 			<label for="armorClass">Armor Class</label>
@@ -78,10 +98,11 @@
 				type="number"
 				bind:value={$character.hitDice.max}
 				class="hit-dice-input"
-				min="0"
-			/>
-		</div>
+			min="0"
+		/>
 	</div>
+</div>
+	{/if}
 </section>
 
 <style>
@@ -92,11 +113,36 @@
 		box-shadow: var(--shadow);
 	}
 
-	h2 {
-		margin-top: 0;
-		color: var(--primary-color);
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		border-bottom: 2px solid var(--border-color);
 		padding-bottom: 10px;
+		margin-bottom: 15px;
+	}
+
+	h2 {
+		margin: 0;
+		color: var(--primary-color);
+	}
+
+	.collapse-btn {
+		background: none;
+		border: none;
+		font-size: 1.2rem;
+		cursor: pointer;
+		color: var(--primary-color);
+		padding: 5px 10px;
+		transition: transform 0.2s ease;
+	}
+
+	.collapse-btn:hover {
+		transform: scale(1.1);
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	h3 {

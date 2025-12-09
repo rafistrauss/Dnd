@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { character, abilityModifiers } from '$lib/stores';
+	import { character, abilityModifiers, searchFilter } from '$lib/stores';
 	import { SKILL_ABILITIES } from '$lib/types';
 	import type { SkillName } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
+	let isCollapsed = false;
 
 	const skills: { key: SkillName; label: string }[] = [
 		{ key: 'acrobatics', label: 'Acrobatics' },
@@ -39,13 +40,29 @@
 		const notation = `1d20${modifier >= 0 ? '+' : ''}${modifier}`;
 		dispatch('roll', notation);
 	}
+
+	function toggleCollapse() {
+		isCollapsed = !isCollapsed;
+	}
+
+	$: filteredSkills = skills.filter(({ label }) => {
+		if (!$searchFilter) return true;
+		return label.toLowerCase().includes($searchFilter.toLowerCase());
+	});
+
+	$: hasVisibleContent = filteredSkills.length > 0;
 </script>
 
-<section class="skills">
-	<h2>Skills</h2>
-	
+<section class="skills" class:hidden={!hasVisibleContent}>
+	<div class="header">
+		<h2>Skills</h2>
+		<button class="collapse-btn" on:click={toggleCollapse} aria-label={isCollapsed ? 'Expand' : 'Collapse'}>
+			{isCollapsed ? '▼' : '▲'}
+		</button>
+	</div>
+	{#if !isCollapsed}
 	<div class="skills-grid">
-		{#each skills as { key, label }}
+		{#each filteredSkills as { key, label }}
 			{@const ability = SKILL_ABILITIES[key]}
 			{@const modifier = getSkillModifier(key)}
 			<div class="skill-row">
@@ -59,6 +76,7 @@
 			</div>
 		{/each}
 	</div>
+	{/if}
 </section>
 
 <style>
@@ -69,11 +87,36 @@
 		box-shadow: var(--shadow);
 	}
 
-	h2 {
-		margin-top: 0;
-		color: var(--primary-color);
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		border-bottom: 2px solid var(--border-color);
 		padding-bottom: 10px;
+		margin-bottom: 15px;
+	}
+
+	h2 {
+		margin: 0;
+		color: var(--primary-color);
+	}
+
+	.collapse-btn {
+		background: none;
+		border: none;
+		font-size: 1.2rem;
+		cursor: pointer;
+		color: var(--primary-color);
+		padding: 5px 10px;
+		transition: transform 0.2s ease;
+	}
+
+	.collapse-btn:hover {
+		transform: scale(1.1);
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	.skills-grid {

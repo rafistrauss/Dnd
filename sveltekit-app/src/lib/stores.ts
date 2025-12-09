@@ -224,3 +224,6 @@ export function importCharacter(file: File): Promise<Character> {
 export function resetCharacter(): void {
 	character.set(initialCharacter);
 }
+
+// Global search filter
+export const searchFilter = writable<string>('');
