@@ -800,8 +800,8 @@ body:not(.use-mode) .hp-controls {
 
 #rollResult {
     text-align: center;
-    padding: 20px;
-    min-height: 152px;
+    padding: 10px 20px;
+    min-height: 60px;
 }
 
 #rollResult .dice-roll {
