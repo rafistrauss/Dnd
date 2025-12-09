@@ -634,7 +634,7 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                 
                 // Add re-roll buttons for d20 rolls (attack rolls, ability checks, saves, skills)
                 let rerollButtons = '';
-                if (rollType === 'd20' && diceNotation === '1d20') {
+                if (rollType === 'd20' && diceNotation && diceNotation.includes('d20')) {
                     rerollButtons = `
                         <div class="reroll-buttons">
                             <button class="btn btn-secondary" onclick="rerollDice()">Re-roll</button>
