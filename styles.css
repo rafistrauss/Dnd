@@ -805,6 +805,14 @@ body:not(.use-mode) .hp-controls {
     min-height: 152px;
 }
 
+#rollResult .roll-result-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
 #rollResult .dice-roll {
     font-size: 3rem;
     font-weight: bold;
@@ -820,7 +828,6 @@ body:not(.use-mode) .hp-controls {
 #rollResult .roll-details {
     font-size: 1rem;
     color: var(--text-color);
-    margin-top: 10px;
 }
 
 #rollResult .reroll-buttons {
