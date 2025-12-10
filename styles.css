@@ -767,7 +767,8 @@ body:not(.use-mode) .hp-controls {
 
 /* Roll Modal Specific Styling */
 .roll-modal-content {
-    min-height: 600px;
+    min-height: 700px;
+    max-width: 900px;
 }
 
 #rollTitle {
@@ -860,6 +861,17 @@ body:not(.use-mode) .hp-controls {
 
 #rollResult .smite-calculator .btn {
     margin-top: 5px;
+}
+
+#rollResult .smite-in-modal.disabled-smite {
+    opacity: 0.6;
+}
+
+#rollResult .no-slots-message {
+    color: #d32f2f;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    font-weight: bold;
 }
 
 /* Gist Modal */
