@@ -683,8 +683,10 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                 }
                 
                 resultDiv.innerHTML = `
-                    <div class="dice-roll">${finalTotal}</div>
-                    <div class="roll-details">${details}</div>
+                    <div class="roll-result-inline">
+                        <span class="dice-roll">${finalTotal}</span>
+                        <span class="roll-details">${details}</span>
+                    </div>
                     ${rerollButtons}
                     ${smiteButton}
                 `;
