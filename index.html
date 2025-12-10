@@ -64,6 +64,16 @@
                         <input type="text" id="characterAlignment" placeholder="e.g., Lawful Good">
                     </div>
                 </div>
+                <div class="info-row">
+                    <div class="form-group">
+                        <label>Languages</label>
+                        <input type="text" id="characterLanguages" placeholder="e.g., Common, Goblin" value="Common, Goblin">
+                    </div>
+                    <div class="form-group">
+                        <label>Deity</label>
+                        <input type="text" id="characterDeity" placeholder="e.g., Lathander" value="Lathander">
+                    </div>
+                </div>
                 </div>
             </section>
 
@@ -340,6 +350,17 @@
             <!-- Attacks Section -->
             <section class="attacks-section">
                 <h2>Attacks & Spells</h2>
+                
+                <!-- Oath Spells -->
+                <div class="feature-tracker">
+                    <h3>Oath Spells (Always Prepared)</h3>
+                    <p class="feature-description">These spells are always prepared and don't count against your prepared spell limit.</p>
+                    <ul class="oath-spells-list">
+                        <li><strong>Bane</strong> - Up to 3 creatures must subtract d4 from attack rolls and saving throws</li>
+                        <li><strong>Hunter's Mark</strong> - Deal extra 1d6 damage to marked target, advantage on tracking</li>
+                    </ul>
+                </div>
+                
                 <button id="addAttackBtn" class="btn btn-secondary">Add Attack</button>
                 <div id="attacksList"></div>
             </section>
@@ -347,6 +368,12 @@
             <!-- Class Features Section -->
             <section class="class-features-section">
                 <h2>Class Features</h2>
+                
+                <!-- Fighting Style -->
+                <div class="feature-tracker">
+                    <h3>Fighting Style: Protection</h3>
+                    <p class="feature-description">When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.</p>
+                </div>
                 
                 <!-- Divine Sense -->
                 <div class="feature-tracker">
@@ -357,6 +384,12 @@
                         <input type="checkbox" id="divineSense2" class="use-checkbox">
                         <input type="checkbox" id="divineSense3" class="use-checkbox">
                     </div>
+                </div>
+
+                <!-- Divine Health -->
+                <div class="feature-tracker">
+                    <h3>Divine Health</h3>
+                    <p class="feature-description">You are immune to disease.</p>
                 </div>
 
                 <!-- Lay on Hands -->
@@ -393,7 +426,7 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
 
                 <!-- Sacred Oath -->
                 <div class="feature-tracker">
-                    <h3>Sacred Oath: Oath of the Ancients</h3>
+                    <h3>Sacred Oath: Oath of Vengeance</h3>
                     <p class="feature-description">Channel Divinity (1/short rest)</p>
                     <div class="oath-features">
                         <div class="channel-divinity">
@@ -403,24 +436,18 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
                         </div>
                         <div class="channel-options">
                             <div class="channel-option">
-                                <strong>Nature's Wrath:</strong>
-                                <p>Restrain a creature you can see within 10 ft. (STR/DEX save, DC <span id="spellSaveDC">13</span>)</p>
+                                <strong>Abjure Enemy:</strong>
+                                <p>As an action, choose one creature within 60 feet that you can see. That creature must make a Wisdom saving throw (DC <span id="spellSaveDC">13</span>), unless it is immune to being frightened. Fiends and undead have disadvantage on this saving throw.</p>
+                                <p>On a failed save, the creature is frightened for 1 minute or until it takes any damage. While frightened, the creature's speed is 0, and it can't benefit from any bonus to its speed.</p>
+                                <p>On a successful save, the creature's speed is halved for 1 minute or until the creature takes any damage.</p>
                             </div>
                             <div class="channel-option">
-                                <strong>Turn the Faithless:</strong>
-                                <p>Turn fey and fiends within 30 ft. (WIS save, DC <span id="spellSaveDC2">13</span>)</p>
+                                <strong>Vow of Enmity:</strong>
+                                <p>As a bonus action, you can utter a vow of enmity against a creature you can see within 10 feet of you. You gain advantage on attack rolls against the creature for 1 minute or until it drops to 0 hit points or falls unconscious.</p>
+                                <p style="display:none;">Spell Save DC: <span id="spellSaveDC2">13</span></p>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Oath Spells -->
-                <div class="feature-tracker">
-                    <h3>Oath Spells (Always Prepared)</h3>
-                    <ul class="oath-spells-list">
-                        <li><strong>Ensnaring Strike</strong> - Restrain target with magical vines</li>
-                        <li><strong>Speak with Animals</strong> - Communicate with beasts</li>
-                    </ul>
                 </div>
             </section>
 
