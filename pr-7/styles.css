@@ -959,6 +959,71 @@ body:not(.use-mode) .hp-controls {
     color: #666;
 }
 
+/* Mobile-specific modal adjustments */
+@media (max-width: 768px) {
+    .roll-modal-content {
+        min-height: 85vh;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    #diceContainer {
+        height: 350px;
+    }
+    
+    #rollResult {
+        padding: 15px 10px;
+        min-height: auto;
+    }
+    
+    #rollResult .dice-roll {
+        font-size: 2.2rem;
+    }
+    
+    #rollResult .roll-details {
+        font-size: 0.9rem;
+    }
+    
+    #rollResult .smite-in-modal {
+        padding: 12px;
+        margin-top: 15px;
+    }
+    
+    #rollResult .smite-in-modal h4 {
+        font-size: 1rem;
+    }
+    
+    #rollResult .smite-calculator {
+        gap: 8px;
+    }
+    
+    #rollResult .smite-calculator label {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .roll-modal-content {
+        min-height: 90vh;
+    }
+    
+    #diceContainer {
+        height: 300px;
+    }
+    
+    #rollResult .dice-roll {
+        font-size: 1.8rem;
+    }
+    
+    #rollResult .roll-details {
+        font-size: 0.85rem;
+    }
+    
+    #rollTitle {
+        font-size: 1.1rem;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
