@@ -498,21 +498,13 @@ function rollAttack(attackIndex) {
     const attack = character.attacks[attackIndex];
     const attackBonus = parseInt(attack.attackBonus || 0);
     
-    // Check if this is a melee weapon for divine smite
-    const isMelee = attack.name.toLowerCase().includes('longsword') || 
-                    attack.name.toLowerCase().includes('greatsword') ||
-                    attack.name.toLowerCase().includes('sword') ||
-                    attack.name.toLowerCase().includes('mace') ||
-                    attack.damageType.toLowerCase().includes('melee');
-    
     showRollResult(
         `${attack.name} Attack`,
         attackBonus,
         null,
         '1d20',
         attackBonus,
-        'd20',
-        isMelee ? attackIndex : null
+        'd20'
     );
 }
 
@@ -527,6 +519,13 @@ function rollDamage(attackIndex) {
         return;
     }
     
+    // Check if this is a melee weapon for divine smite
+    const isMelee = attack.name.toLowerCase().includes('longsword') || 
+                    attack.name.toLowerCase().includes('greatsword') ||
+                    attack.name.toLowerCase().includes('sword') ||
+                    attack.name.toLowerCase().includes('mace') ||
+                    attack.damageType.toLowerCase().includes('melee');
+    
     // The dice library will handle the rolling
     showRollResult(
         `${attack.name} Damage`,
@@ -534,7 +533,8 @@ function rollDamage(attackIndex) {
         null,
         damageStr, // Pass the damage notation directly
         0, // No additional modifier (already in notation)
-        'damage' // Type of roll
+        'damage', // Type of roll
+        isMelee ? attackIndex : null
     );
 }
 
@@ -652,25 +652,31 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                     `;
                 }
                 
-                // Add divine smite button for melee attacks
+                // Add divine smite button for melee damage rolls
                 let smiteButton = '';
-                if (attackIndex !== null && rollType === 'd20') {
+                if (attackIndex !== null && rollType === 'damage') {
+                    // Check if any spell slots are available
+                    const hasSpellSlots = findAvailableSpellSlot(1) !== -1;
+                    const disabledAttr = hasSpellSlots ? '' : ' disabled';
+                    const disabledClass = hasSpellSlots ? '' : ' disabled-smite';
+                    
                     smiteButton = `
-                        <div class="smite-in-modal">
+                        <div class="smite-in-modal${disabledClass}">
                             <h4>Divine Smite</h4>
                             <div class="smite-calculator">
                                 <label>Spell Slot Level:</label>
-                                <select id="smiteLevel_modal_${attackIndex}" class="smite-select">
+                                <select id="smiteLevel_modal_${attackIndex}" class="smite-select"${disabledAttr}>
                                     <option value="1">1st Level (2d8)</option>
                                     <option value="2">2nd Level (3d8)</option>
                                     <option value="3">3rd Level (4d8)</option>
                                     <option value="4">4th Level (5d8)</option>
                                 </select>
                                 <label>
-                                    <input type="checkbox" id="smiteUndead_modal_${attackIndex}">
+                                    <input type="checkbox" id="smiteUndead_modal_${attackIndex}"${disabledAttr}>
                                     Target is undead/fiend (+1d8)
                                 </label>
-                                <button class="btn btn-primary" onclick="rollDivineSmiteFromModal(${attackIndex})">Roll Smite Damage</button>
+                                <button class="btn btn-primary" onclick="rollDivineSmiteFromModal(${attackIndex})"${disabledAttr}>Roll Smite Damage</button>
+                                ${!hasSpellSlots ? '<p class="no-slots-message">No spell slots available</p>' : ''}
                             </div>
                         </div>
                     `;
