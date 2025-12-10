@@ -84,6 +84,7 @@ body.use-mode .btn-danger.use-enabled {
 
 /* Legacy support: keep gameplay buttons enabled */
 body.use-mode .attack-actions .btn-primary,
+body.use-mode .attack-actions .btn-secondary,
 body.use-mode .smite-calculator .btn-primary,
 body.use-mode .dice-roll-actions .btn-primary,
 body.use-mode .hp-commit-btn,
@@ -96,6 +97,7 @@ body.use-mode .hit-dice-roll-btn {
 }
 
 body.use-mode .attack-actions .btn-primary:hover,
+body.use-mode .attack-actions .btn-secondary:hover,
 body.use-mode .smite-calculator .btn-primary:hover,
 body.use-mode .dice-roll-actions .btn-primary:hover,
 body.use-mode .hp-commit-btn:hover,
