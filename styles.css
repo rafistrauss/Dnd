@@ -242,7 +242,7 @@ body.use-mode .hp-operation-select label {
 }
 
 body.use-mode .btn-primary,
-body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small):not(.btn-small):not(#diceRollerBtn) {
+body.use-mode .btn-secondary:not(.roll-btn):not(.roll-btn-small):not(.btn-small):not(#diceRollerBtn):not(.reroll-buttons .btn) {
     opacity: 0.5;
     pointer-events: none;
 }
@@ -767,7 +767,8 @@ body:not(.use-mode) .hp-controls {
 
 /* Roll Modal Specific Styling */
 .roll-modal-content {
-    min-height: 600px;
+    min-height: 700px;
+    max-width: 900px;
 }
 
 #rollTitle {
@@ -804,6 +805,14 @@ body:not(.use-mode) .hp-controls {
     min-height: 152px;
 }
 
+#rollResult .roll-result-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
 #rollResult .dice-roll {
     font-size: 3rem;
     font-weight: bold;
@@ -819,7 +828,57 @@ body:not(.use-mode) .hp-controls {
 #rollResult .roll-details {
     font-size: 1rem;
     color: var(--text-color);
+}
+
+#rollResult .reroll-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+#rollResult .reroll-buttons .btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+#rollResult .smite-in-modal {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+}
+
+#rollResult .smite-in-modal h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+#rollResult .smite-calculator {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#rollResult .smite-calculator label {
+    font-size: 0.9rem;
+}
+
+#rollResult .smite-calculator .btn {
+    margin-top: 5px;
+}
+
+#rollResult .smite-in-modal.disabled-smite {
+    opacity: 0.6;
+}
+
+#rollResult .no-slots-message {
+    color: #d32f2f;
+    font-size: 0.9rem;
     margin-top: 10px;
+    font-weight: bold;
 }
 
 /* Gist Modal */
@@ -905,6 +964,71 @@ body:not(.use-mode) .hp-controls {
 .gist-item-date {
     font-size: 0.85rem;
     color: #666;
+}
+
+/* Mobile-specific modal adjustments */
+@media (max-width: 768px) {
+    .roll-modal-content {
+        min-height: 85vh;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    #diceContainer {
+        height: 350px;
+    }
+    
+    #rollResult {
+        padding: 15px 10px;
+        min-height: auto;
+    }
+    
+    #rollResult .dice-roll {
+        font-size: 2.2rem;
+    }
+    
+    #rollResult .roll-details {
+        font-size: 0.9rem;
+    }
+    
+    #rollResult .smite-in-modal {
+        padding: 12px;
+        margin-top: 15px;
+    }
+    
+    #rollResult .smite-in-modal h4 {
+        font-size: 1rem;
+    }
+    
+    #rollResult .smite-calculator {
+        gap: 8px;
+    }
+    
+    #rollResult .smite-calculator label {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .roll-modal-content {
+        min-height: 90vh;
+    }
+    
+    #diceContainer {
+        height: 300px;
+    }
+    
+    #rollResult .dice-roll {
+        font-size: 1.8rem;
+    }
+    
+    #rollResult .roll-details {
+        font-size: 0.85rem;
+    }
+    
+    #rollTitle {
+        font-size: 1.1rem;
+    }
 }
 
 /* Responsive Design */
