@@ -64,6 +64,16 @@
                         <input type="text" id="characterAlignment" placeholder="e.g., Lawful Good">
                     </div>
                 </div>
+                <div class="info-row">
+                    <div class="form-group">
+                        <label>Languages</label>
+                        <input type="text" id="characterLanguages" placeholder="e.g., Common, Goblin" value="Common, Goblin">
+                    </div>
+                    <div class="form-group">
+                        <label>Deity</label>
+                        <input type="text" id="characterDeity" placeholder="e.g., Lathander" value="Lathander">
+                    </div>
+                </div>
                 </div>
             </section>
 
@@ -340,6 +350,17 @@
             <!-- Attacks Section -->
             <section class="attacks-section">
                 <h2>Attacks & Spells</h2>
+                
+                <!-- Oath Spells -->
+                <div class="feature-tracker">
+                    <h3>Oath Spells (Always Prepared)</h3>
+                    <p class="feature-description">These spells are always prepared and don't count against your prepared spell limit.</p>
+                    <ul class="oath-spells-list">
+                        <li><strong>Bane</strong> - Up to 3 creatures must subtract d4 from attack rolls and saving throws</li>
+                        <li><strong>Hunter's Mark</strong> - Deal extra 1d6 damage to marked target, advantage on tracking</li>
+                    </ul>
+                </div>
+                
                 <button id="addAttackBtn" class="btn btn-secondary">Add Attack</button>
                 <div id="attacksList"></div>
             </section>
@@ -363,6 +384,12 @@
                         <input type="checkbox" id="divineSense2" class="use-checkbox">
                         <input type="checkbox" id="divineSense3" class="use-checkbox">
                     </div>
+                </div>
+
+                <!-- Divine Health -->
+                <div class="feature-tracker">
+                    <h3>Divine Health</h3>
+                    <p class="feature-description">You are immune to disease.</p>
                 </div>
 
                 <!-- Lay on Hands -->
@@ -420,15 +447,6 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Oath Spells -->
-                <div class="feature-tracker">
-                    <h3>Oath Spells (Always Prepared)</h3>
-                    <ul class="oath-spells-list">
-                        <li><strong>Bane</strong> - Up to 3 creatures must subtract d4 from attack rolls and saving throws</li>
-                        <li><strong>Hunter's Mark</strong> - Deal extra 1d6 damage to marked target, advantage on tracking</li>
-                    </ul>
                 </div>
             </section>
 

@@ -6,6 +6,8 @@ let character = {
     race: '',
     background: '',
     alignment: '',
+    languages: 'Common, Goblin',
+    deity: 'Lathander',
     armorClass: 10,
     initiative: 0,
     speed: '30 ft',
@@ -188,6 +190,14 @@ function setupEventListeners() {
     
     document.getElementById('characterAlignment').addEventListener('change', (e) => {
         character.alignment = e.target.value;
+    });
+    
+    document.getElementById('characterLanguages').addEventListener('change', (e) => {
+        character.languages = e.target.value;
+    });
+    
+    document.getElementById('characterDeity').addEventListener('change', (e) => {
+        character.deity = e.target.value;
     });
     
     // Combat stats
@@ -1204,6 +1214,8 @@ function populateForm() {
     document.getElementById('characterRace').value = character.race || '';
     document.getElementById('characterBackground').value = character.background || '';
     document.getElementById('characterAlignment').value = character.alignment || '';
+    document.getElementById('characterLanguages').value = character.languages || 'Common, Goblin';
+    document.getElementById('characterDeity').value = character.deity || 'Lathander';
     
     // Combat stats
     document.getElementById('armorClass').value = character.armorClass || 10;
