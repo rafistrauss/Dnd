@@ -31,6 +31,19 @@
 	}
 
 	function rollAttack(attack: Attack) {
+		// If this is a spell attack, consume a spell slot
+		if (attack.spellRef) {
+			const spell = getSpellByName(attack.spellRef);
+			if (spell && spell.level > 0) {
+				const castLevel = attack.castAtLevel || spell.level;
+				const hasSlot = checkAndConsumeSpellSlot(castLevel);
+				if (!hasSlot) {
+					alert(`No level ${castLevel} spell slots available!`);
+					return;
+				}
+			}
+		}
+		
 		const notation = `1d20${attack.bonus >= 0 ? '+' : ''}${attack.bonus}`;
 		dispatch('roll', { 
 			notation, 
@@ -61,12 +74,108 @@
 		return spells.find(s => s.name === name);
 	}
 
-	$: filteredAttacks = $character.attacks.filter((attack) => {
-		if (!$searchFilter) return true;
-		const filter = $searchFilter.toLowerCase();
-		return attack.name.toLowerCase().includes(filter) ||
-			attack.damageType.toLowerCase().includes(filter);
-	});
+	function checkAndConsumeSpellSlot(level: number): boolean {
+		// Initialize spell slots structure if needed
+		if (!$character.classFeatures.spellSlotsByLevel) {
+			$character.classFeatures.spellSlotsByLevel = {};
+		}
+		
+		// Get or initialize slots for this level
+		if (!$character.classFeatures.spellSlotsByLevel[level]) {
+			// Default to 2 slots for any level if not configured
+			$character.classFeatures.spellSlotsByLevel[level] = Array(2).fill(false);
+		}
+		
+		const slots = $character.classFeatures.spellSlotsByLevel[level];
+		// Find first unused slot
+		const availableIndex = slots.findIndex(used => !used);
+		
+		if (availableIndex === -1) {
+			return false; // No slots available
+		}
+		
+		// Mark slot as used
+		character.update(c => {
+			if (!c.classFeatures.spellSlotsByLevel) {
+				c.classFeatures.spellSlotsByLevel = {};
+			}
+			if (!c.classFeatures.spellSlotsByLevel[level]) {
+				c.classFeatures.spellSlotsByLevel[level] = Array(2).fill(false);
+			}
+			c.classFeatures.spellSlotsByLevel[level][availableIndex] = true;
+			return c;
+		});
+		
+		return true;
+	}
+
+	function getScaledSpellDamage(attack: Attack, spell: Spell): string {
+		if (!spell.higherLevelSlot || !attack.castAtLevel) {
+			return attack.damage;
+		}
+		
+		const baseLevel = spell.level;
+		const castLevel = attack.castAtLevel || baseLevel;
+		const levelDiff = castLevel - baseLevel;
+		
+		if (levelDiff <= 0) {
+			return attack.damage;
+		}
+		
+		// Parse the base damage (e.g., "3d6")
+		const damageMatch = attack.damage.match(/(\d+)d(\d+)/);
+		if (!damageMatch) {
+			return attack.damage;
+		}
+		
+		const [, numDice, dieSize] = damageMatch;
+		
+		// Look for common patterns in higherLevelSlot like "increases by 1d6 for each spell slot level above"
+		const increaseMatch = spell.higherLevelSlot.match(/(\d+)d(\d+)\s+for\s+each.*?level\s+above/i);
+		if (!increaseMatch) {
+			return attack.damage;
+		}
+		
+		const [, increaseDice, increaseDie] = increaseMatch;
+		const totalDice = parseInt(numDice) + (levelDiff * parseInt(increaseDice));
+		
+		return `${totalDice}d${dieSize}`;
+	}
+
+	function rollSpellDamage(attack: Attack) {
+		const spell = getSpellByName(attack.spellRef!);
+		if (!spell) {
+			rollDamage(attack);
+			return;
+		}
+		
+		// Check if we have spell slots available
+		const castLevel = attack.castAtLevel || spell.level;
+		if (castLevel > 0) { // Cantrips don't use slots
+			const hasSlot = checkAndConsumeSpellSlot(castLevel);
+			if (!hasSlot) {
+				alert(`No level ${castLevel} spell slots available!`);
+				return;
+			}
+		}
+		
+		const scaledDamage = getScaledSpellDamage(attack, spell);
+		dispatch('roll', { notation: scaledDamage });
+	}
+
+	$: filteredAttacks = $character.attacks
+		.filter((attack) => {
+			if (!$searchFilter) return true;
+			const filter = $searchFilter.toLowerCase();
+			return attack.name.toLowerCase().includes(filter) ||
+				attack.damageType.toLowerCase().includes(filter);
+		})
+		.sort((a, b) => {
+			// Attacks without spellRef come first
+			if (!a.spellRef && b.spellRef) return -1;
+			if (a.spellRef && !b.spellRef) return 1;
+			return 0;
+		});
 
 	$: hasVisibleContent = !$searchFilter || filteredAttacks.length > 0 || 
 		'attack'.includes($searchFilter.toLowerCase()) ||
@@ -417,5 +526,55 @@
 		color: #721c24;
 		font-size: 0.9rem;
 		text-align: center;
+	}
+
+	.spell-level-selector {
+		margin-top: 10px;
+		padding: 10px;
+		background-color: #e7f3ff;
+		border: 1px solid #b3d9ff;
+		border-radius: 4px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.spell-level-selector label {
+		font-weight: bold;
+		font-size: 0.9rem;
+	}
+
+	.spell-level-select {
+		padding: 5px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		font-size: 0.9rem;
+	}
+
+	.scaled-damage {
+		font-weight: bold;
+		color: #007bff;
+		font-size: 0.9rem;
+	}
+
+	.hit-dice-controls {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-top: 10px;
+	}
+
+	.hit-dice-count-input {
+		width: 60px;
+		padding: 5px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		text-align: center;
+	}
+
+	.hit-dice-type {
+		font-size: 0.9rem;
+		color: #666;
+		margin-left: 5px;
 	}
 </style>

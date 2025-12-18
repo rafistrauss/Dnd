@@ -13,7 +13,7 @@
 		});
 	}
 
-	function rollHitDice() {
+	function rollHitDice(count: number = 1) {
 		if ($character.hitDice.current <= 0) {
 			alert('No hit dice remaining!');
 			return;
@@ -30,16 +30,19 @@
 			return;
 		}
 
+		// Clamp count to available dice
+		const actualCount = Math.min(count, $character.hitDice.current);
+
 		// Get the hit die notation (e.g., 'd10')
 		const hitDie = classConfig.hitDice;
 		const conMod = $abilityModifiers.constitution;
 		const modString = conMod >= 0 ? `+${conMod}` : `${conMod}`;
 		
-		// Build the notation with constitution modifier
-		const notation = `1${hitDie}${modString}`;
+		// Build the notation with constitution modifier for multiple dice
+		const notation = `${actualCount}${hitDie}${modString}`;
 		
 		// Dispatch event to open dice roller with a callback to handle the result
-		dispatch('rollHitDice', { notation, hitDie });
+		dispatch('rollHitDice', { notation, hitDie, count: actualCount });
 	}
 
 	function toggleCollapse() {
@@ -131,16 +134,44 @@
 				type="number"
 				bind:value={$character.hitDice.max}
 				class="hit-dice-input"
-			min="0"
-		/>
+				min="0"
+			/>
+			{#if $character.class}
+				{@const classConfig = getClassConfig($character.class)}
+				{#if classConfig}
+					{@const conMod = $abilityModifiers.constitution}
+					<span class="hit-dice-type">({classConfig.hitDice}{conMod >= 0 ? `+${conMod}` : conMod})</span>
+				{/if}
+			{/if}
 		</div>
-		<button 
-			class="btn btn-primary roll-hit-dice use-enabled" 
-			on:click={rollHitDice}
-			disabled={$character.hitDice.current <= 0 || !$character.class}
-		>
-			🎲 Roll Hit Die
-		</button>
+		<div class="hit-dice-controls">
+			<label for="hitDiceCount">Roll</label>
+			<input
+				type="number"
+				id="hitDiceCount"
+				class="hit-dice-count-input"
+				min="1"
+				max={$character.hitDice.current}
+				value="1"
+				on:input={(e) => {
+					const input = e.target as HTMLInputElement;
+					const val = parseInt(input.value);
+					if (val > $character.hitDice.current) input.value = String($character.hitDice.current);
+					if (val < 1) input.value = '1';
+				}}
+			/>
+			<button 
+				class="btn btn-primary roll-hit-dice use-enabled" 
+				on:click={() => {
+					const countInput = document.getElementById('hitDiceCount') as HTMLInputElement;
+					const count = parseInt(countInput?.value || '1');
+					rollHitDice(count);
+				}}
+				disabled={$character.hitDice.current <= 0 || !$character.class}
+			>
+				🎲 Roll
+			</button>
+		</div>
 	</div>
 	{/if}
 </section>

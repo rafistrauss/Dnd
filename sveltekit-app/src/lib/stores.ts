@@ -17,8 +17,7 @@ const initialCharacter: Character = {
 	currentHP: 0,
 	maxHP: 0,
 	tempHP: 0,
-	hitDice: { current: 3, max: 3 },
-	abilities: {
+	hitDice: { current: 3, max: 3 },	attacks: [],	abilities: {
 		strength: 10,
 		dexterity: 10,
 		constitution: 10,
@@ -62,6 +61,7 @@ const initialCharacter: Character = {
 	classFeatures: {
 		features: {},
 		spellSlots: [],
+		spellSlotsByLevel: {},
 		preparedSpells: ''
 	}
 };
@@ -75,8 +75,10 @@ function loadFromStorage(): Character {
 		if (saved) {
 			const loaded = { ...initialCharacter, ...JSON.parse(saved) };
 			
-			// Migrate: ensure all attacks have IDs
-			if (loaded.attacks && Array.isArray(loaded.attacks)) {
+			// Migrate: ensure all attacks have IDs and array exists
+			if (!loaded.attacks || !Array.isArray(loaded.attacks)) {
+				loaded.attacks = [];
+			} else {
 				loaded.attacks = loaded.attacks.map((attack: any) => ({
 					...attack,
 					id: attack.id || crypto.randomUUID()
@@ -88,6 +90,7 @@ function loadFromStorage(): Character {
 				loaded.classFeatures = {
 					features: {},
 					spellSlots: [],
+					spellSlotsByLevel: {},
 					preparedSpells: ''
 				};
 			} else {
@@ -96,6 +99,9 @@ function loadFromStorage(): Character {
 				}
 				if (!loaded.classFeatures.spellSlots) {
 					loaded.classFeatures.spellSlots = [];
+				}
+				if (!loaded.classFeatures.spellSlotsByLevel) {
+					loaded.classFeatures.spellSlotsByLevel = {};
 				}
 				if (loaded.classFeatures.preparedSpells === undefined) {
 					loaded.classFeatures.preparedSpells = '';
@@ -198,6 +204,7 @@ export function importCharacter(file: File): Promise<Character> {
 					merged.classFeatures = {
 						features: {},
 						spellSlots: [],
+						spellSlotsByLevel: {},
 						preparedSpells: ''
 					};
 				} else {
@@ -206,6 +213,9 @@ export function importCharacter(file: File): Promise<Character> {
 					}
 					if (!merged.classFeatures.spellSlots) {
 						merged.classFeatures.spellSlots = [];
+					}
+					if (!merged.classFeatures.spellSlotsByLevel) {
+						merged.classFeatures.spellSlotsByLevel = {};
 					}
 					if (merged.classFeatures.preparedSpells === undefined) {
 						merged.classFeatures.preparedSpells = '';

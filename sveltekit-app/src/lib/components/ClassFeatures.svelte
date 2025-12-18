@@ -13,6 +13,27 @@
 	$: features = $character.class ? getAvailableFeatures($character.class, $character.level, $character.subclass) : [];
 	$: spellSlots = $character.class ? getSpellSlots($character.class, $character.level) : 0;
 
+	// Get all spell slot levels available to this character
+	// For now, show levels 1-3 with slots based on character level
+	$: availableSpellLevels = (() => {
+		if (!classConfig?.spellcaster) return [];
+		const charLevel = $character.level;
+		const levels: Array<{level: number, slots: number}> = [];
+		
+		// Simple progression: more slots at higher character levels
+		if (charLevel >= 1) levels.push({ level: 1, slots: Math.min(4, 2 + Math.floor(charLevel / 3)) });
+		if (charLevel >= 3) levels.push({ level: 2, slots: Math.min(3, 2 + Math.floor((charLevel - 3) / 4)) });
+		if (charLevel >= 5) levels.push({ level: 3, slots: Math.min(3, 2 + Math.floor((charLevel - 5) / 5)) });
+		if (charLevel >= 7) levels.push({ level: 4, slots: Math.min(3, 1 + Math.floor((charLevel - 7) / 6)) });
+		if (charLevel >= 9) levels.push({ level: 5, slots: Math.min(2, 1 + Math.floor((charLevel - 9) / 8)) });
+		if (charLevel >= 11) levels.push({ level: 6, slots: 1 });
+		if (charLevel >= 13) levels.push({ level: 7, slots: 1 });
+		if (charLevel >= 15) levels.push({ level: 8, slots: 1 });
+		if (charLevel >= 17) levels.push({ level: 9, slots: 1 });
+		
+		return levels;
+	})();
+
 	let spellSaveDC = 0;
 	let preparedCount = 0;
 
@@ -44,6 +65,35 @@
 			c.classFeatures.spellSlots = Array(spellSlots).fill(false);
 			return c;
 		});
+	}
+
+	function resetSpellSlotLevel(level: number, slotCount: number) {
+		character.update(c => {
+			if (!c.classFeatures.spellSlotsByLevel) {
+				c.classFeatures.spellSlotsByLevel = {};
+			}
+			c.classFeatures.spellSlotsByLevel[level] = Array(slotCount).fill(false);
+			return c;
+		});
+	}
+
+	function initializeSpellSlots() {
+		character.update(c => {
+			if (!c.classFeatures.spellSlotsByLevel) {
+				c.classFeatures.spellSlotsByLevel = {};
+			}
+			availableSpellLevels.forEach(({level, slots}) => {
+				if (!c.classFeatures.spellSlotsByLevel![level]) {
+					c.classFeatures.spellSlotsByLevel![level] = Array(slots).fill(false);
+				}
+			});
+			return c;
+		});
+	}
+
+	// Initialize spell slots when component mounts or class/level changes
+	$: if ($character.class && classConfig?.spellcaster && availableSpellLevels.length > 0) {
+		initializeSpellSlots();
 	}
 
 	function getMaxUses(feature: any): number {
@@ -116,19 +166,38 @@
 							<div class="spell-value">{preparedCount}</div>
 						</div>
 					</div>
-					{#if spellSlots > 0}
-						<div class="spell-slots">
-							<label>1st Level Spell Slots</label>
-							<div class="slots-tracker">
-								{#each Array(spellSlots) as _, i}
-									<input
-										type="checkbox"
-										bind:checked={$character.classFeatures.spellSlots[i]}
-										class="slot-checkbox"
-									/>
-								{/each}
-								<button on:click={resetSpellSlots} class="btn-small">Long Rest</button>
+				{#if availableSpellLevels.length > 0}
+					<div class="all-spell-slots">
+						{#each availableSpellLevels as {level, slots}}
+							{@const levelSlots = $character.classFeatures.spellSlotsByLevel?.[level] || Array(slots).fill(false)}
+							<div class="spell-slots">
+								<label>
+									{level === 1 ? '1st' : level === 2 ? '2nd' : level === 3 ? '3rd' : `${level}th`} Level Spell Slots
+								</label>
+								<div class="slots-tracker">
+									{#each Array(slots) as _, i}
+										<input
+											type="checkbox"
+											checked={levelSlots[i] || false}
+											on:change={(e) => {
+												character.update(c => {
+													if (!c.classFeatures.spellSlotsByLevel) {
+														c.classFeatures.spellSlotsByLevel = {};
+													}
+													if (!c.classFeatures.spellSlotsByLevel[level]) {
+														c.classFeatures.spellSlotsByLevel[level] = Array(slots).fill(false);
+													}
+													c.classFeatures.spellSlotsByLevel[level][i] = e.currentTarget.checked;
+													return c;
+												});
+											}}
+											class="slot-checkbox"
+										/>
+									{/each}
+									<button on:click={() => resetSpellSlotLevel(level, slots)} class="btn-small">Long Rest</button>
+								</div>
 							</div>
+						{/each}
 						</div>
 					{/if}
 					<div class="prepared-spells">

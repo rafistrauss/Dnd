@@ -52,6 +52,8 @@ export interface Attack {
 	spellRef?: string; // canonical spell name
 	infoNotes?: string; // Range, Duration, Components, etc.
 	generalNotes?: string; // summary/effects
+	castAtLevel?: number; // for spells that can be cast at higher levels
+	notes?: string; // for non-spell attacks
 }
 
 export interface Spell {
@@ -80,7 +82,8 @@ export interface HitDice {
 
 export interface ClassFeatures {
 	features: Record<string, boolean[] | number>;
-	spellSlots: boolean[];
+	spellSlots: boolean[]; // Legacy - 1st level only
+	spellSlotsByLevel?: Record<number, boolean[]>; // Slots by level 1-9
 	preparedSpells: string;
 }
 
@@ -137,7 +140,8 @@ export interface ClassConfig {
 	hitDice: string;
 	spellcaster: boolean;
 	spellcastingAbility?: AbilityName;
-	spellSlotsByLevel?: Record<number, number>;
+	spellSlotsByLevel?: Record<number, number>; // Legacy: character level -> 1st level slots
+	spellSlotProgression?: Record<number, number[]>; // character level -> [slots for spell level 1-9]
 	features: ClassFeature[];
 	subclasses?: Record<string, SubclassConfig>;
 }

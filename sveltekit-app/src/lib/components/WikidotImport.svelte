@@ -78,6 +78,7 @@
 					infoParts.push(`Material: ${spell.material}`);
 				}
 				const infoNotes = infoParts.join(' | ');
+				const generalNotes = extractSpellSummary(spell.description);
 				const spellAttack: Attack = {
 					id: crypto.randomUUID(),
 					name: `${spell.name}${spell.concentration ? ' (C)' : ''}${spell.ritual ? ' (R)' : ''}`,
@@ -86,6 +87,8 @@
 					damageType: `${spell.school} (Lvl ${spell.level})`,
 					spellRef: spell.name,
 					infoNotes,
+					generalNotes,
+					castAtLevel: spell.level
 				};
 				c.attacks = [...c.attacks, spellAttack];
 				return c;
