@@ -1,13 +1,24 @@
 <script lang="ts">
 	import { character, updateProficiencyBonus, collapsedStates } from '$lib/stores';
-	import { getAvailableClasses } from '$lib/classConfig';
+	import { getAvailableClasses, getAvailableSubclasses } from '$lib/classConfig';
 
 	const classes = getAvailableClasses();
+	
+	$: subclasses = $character.class ? getAvailableSubclasses($character.class) : [];
 
 	function handleClassChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
 		character.update(c => {
 			c.class = target.value;
+			c.subclass = ''; // Reset subclass when class changes
+			return c;
+		});
+	}
+
+	function handleSubclassChange(event: Event) {
+		const target = event.target as HTMLSelectElement;
+		character.update(c => {
+			c.subclass = target.value;
 			return c;
 		});
 	}
@@ -48,6 +59,17 @@
 				{/each}
 			</select>
 		</div>
+		{#if subclasses.length > 0}
+		<div class="form-group">
+			<label for="characterSubclass">Subclass</label>
+			<select id="characterSubclass" value={$character.subclass} on:change={handleSubclassChange}>
+				<option value="">Select Subclass</option>
+				{#each subclasses as subcls}
+					<option value={subcls.id}>{subcls.name}</option>
+				{/each}
+			</select>
+		</div>
+		{/if}
 		<div class="form-group">
 			<label for="characterLevel">Level</label>
 			<input

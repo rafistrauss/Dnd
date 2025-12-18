@@ -10,7 +10,7 @@
 	import { onMount } from 'svelte';
 
 	$: classConfig = $character.class ? getClassConfig($character.class) : null;
-	$: features = $character.class ? getAvailableFeatures($character.class, $character.level) : [];
+	$: features = $character.class ? getAvailableFeatures($character.class, $character.level, $character.subclass) : [];
 	$: spellSlots = $character.class ? getSpellSlots($character.class, $character.level) : 0;
 
 	let spellSaveDC = 0;
@@ -48,7 +48,8 @@
 
 	function getMaxUses(feature: any): number {
 		if (typeof feature.maxUses === 'function') {
-			if (feature.name === 'Divine Sense' && classConfig?.spellcastingAbility) {
+			// Check if feature needs ability modifier (Divine Sense, War Priest, etc.)
+			if ((feature.name === 'Divine Sense' || feature.name === 'War Priest') && classConfig?.spellcastingAbility) {
 				const abilityMod = $abilityModifiers[classConfig.spellcastingAbility];
 				return feature.maxUses($character.level, abilityMod);
 			}

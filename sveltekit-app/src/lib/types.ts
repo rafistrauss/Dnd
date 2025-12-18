@@ -65,6 +65,7 @@ export interface ClassFeatures {
 export interface Character {
 	name: string;
 	class: string;
+	subclass?: string;
 	level: number;
 	race: string;
 	background: string;
@@ -104,6 +105,11 @@ export interface ClassFeature {
 	rollFormula?: string | ((level: number) => string);
 }
 
+export interface SubclassConfig {
+	name: string;
+	features: ClassFeature[];
+}
+
 export interface ClassConfig {
 	name: string;
 	hitDice: string;
@@ -111,6 +117,7 @@ export interface ClassConfig {
 	spellcastingAbility?: AbilityName;
 	spellSlotsByLevel?: Record<number, number>;
 	features: ClassFeature[];
+	subclasses?: Record<string, SubclassConfig>;
 }
 
 export type ClassName = 'paladin' | 'fighter' | 'rogue' | 'wizard' | 'cleric' | 'barbarian';

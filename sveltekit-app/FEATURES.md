@@ -7,7 +7,12 @@ This is a fully functional D&D 5th Edition character sheet built with SvelteKit,
 
 ### 1. Character Management
 - **Multiple Classes**: Supports Paladin, Fighter, Rogue, Wizard, Cleric, and Barbarian
-- **Dynamic Features**: Class features automatically appear based on selected class and level
+- **Subclass Support**: Choose from various subclasses for enhanced character customization
+  - **Cleric**: War Domain, Life Domain
+  - **Fighter**: Champion, Battle Master
+  - **Barbarian**: Path of the Berserker
+  - More subclasses can be easily added through the configuration system
+- **Dynamic Features**: Class and subclass features automatically appear based on selected class, subclass, and level
 - **Ability Scores**: All 6 abilities with automatic modifier calculations
 - **Skills**: 18 skills with proficiency tracking and modifier calculations
 - **Combat Stats**: HP, AC, Initiative tracking

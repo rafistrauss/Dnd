@@ -6,6 +6,7 @@ import { browser } from '$app/environment';
 const initialCharacter: Character = {
 	name: '',
 	class: '',
+	subclass: '',
 	level: 1,
 	race: '',
 	background: '',
