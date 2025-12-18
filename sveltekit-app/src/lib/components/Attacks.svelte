@@ -129,12 +129,15 @@
 								<h4>Spell Info</h4>
 								<ul>
 									<li><strong>Level:</strong> {spell.level}</li>
-									<li><strong>School:</strong> {spell.school}</li>
 									<li><strong>Casting Time:</strong> {spell.castingTime || spell.actionType}</li>
 									<li><strong>Range:</strong> {spell.range}</li>
 									<li><strong>Components:</strong> {spell.components.join(', ')}{#if spell.material} ({spell.material}){/if}</li>
 									<li><strong>Duration:</strong> {#if spell.concentration}Concentration, {/if}{spell.duration}</li>
 									<li><strong>Description:</strong> {spell.description}</li>
+									{#if spell.higherLevelSlot}
+										<li><strong>At Higher Levels:</strong> {spell.higherLevelSlot}</li>
+									{/if}
+	
 								</ul>
 							</div>
 							{#if attack.generalNotes}
