@@ -10,10 +10,12 @@
 	import Notes from '$lib/components/Notes.svelte';
 	import DiceRoller from '$lib/components/DiceRoller.svelte';
 	import GistModal from '$lib/components/GistModal.svelte';
+	import WikidotImport from '$lib/components/WikidotImport.svelte';
 	import type { Character } from '$lib/types';
 
 	let showDiceRoller = false;
 	let showGistModal = false;
+	let showWikidotImport = false;
 	let gistMode: 'save' | 'load' = 'save';
 	let fileInput: HTMLInputElement | undefined = undefined;
 	let diceNotation = '';
@@ -160,6 +162,9 @@
 			</div>
 		</div>
 		<div class="header-actions">
+			<button on:click={() => showWikidotImport = true} class="btn btn-primary">
+				📚 Browse Spells & Feats
+			</button>
 			<button on:click={() => { gistMode = 'save'; showGistModal = true; }} class="btn btn-secondary">
 				Save to Gist
 			</button>
@@ -200,6 +205,10 @@
 
 {#if showGistModal}
 	<GistModal mode={gistMode} on:close={() => showGistModal = false} />
+{/if}
+
+{#if showWikidotImport}
+	<WikidotImport onClose={() => showWikidotImport = false} />
 {/if}
 
 <style>

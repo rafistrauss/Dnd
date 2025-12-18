@@ -28,13 +28,21 @@ This is a fully functional D&D 5th Edition character sheet built with SvelteKit,
   - Attack rolls
   - Damage rolls
 
-### 3. GitHub Gist Integration
+### 3. D&D Wiki Integration
+- **Import Spells**: Fetch spell details from dnd5e.wikidot.com URLs
+- **Import Feats**: Import feat descriptions and prerequisites
+- **Import Weapons/Attacks**: Add weapons with damage dice from the wiki
+- **Auto-parsing**: Automatically extracts relevant stats and descriptions
+- **Source Links**: Maintains reference links to original wiki pages
+- **Supported URLs**: Works with spell:, feat:, and weapon: pages from dnd5e.wikidot.com
+
+### 4. GitHub Gist Integration
 - **Save to Gist**: Export your character to a GitHub Gist (public or private with token)
 - **Load from Gist**: Import character data from any Gist ID
 - **Update Existing**: Can update previously saved Gists
 - **Config Persistence**: Remembers your GitHub token and last Gist ID in localStorage
 
-### 4. Data Persistence
+### 5. Data Persistence
 - **Auto-save**: Character data automatically saved to localStorage
 - **Export/Import JSON**: Download/upload character files as JSON
 - **Gist Sync**: Alternative cloud storage via GitHub Gists
@@ -60,12 +68,14 @@ sveltekit-app/
 │   │   │   ├── DiceRoller.svelte       # 3D dice modal (optional)
 │   │   │   ├── GistModal.svelte        # GitHub Gist save/load UI
 │   │   │   ├── Notes.svelte            # Features, equipment, notes
-│   │   │   └── Skills.svelte           # 18 skills with proficiency
-│   │   ├── classConfig.ts              # Class configurations
+│   │   │   ├── Skills.svelte           # 18 skills with proficiency
+│   │   │   └── WikidotImport.svelte    # D&D Wiki import modal
+│   │   ├── classConfig.ts              # Class & subclass configurations
 │   │   ├── diceUtils.ts                # Dice notation parser & roller
 │   │   ├── gistUtils.ts                # GitHub Gist API integration
 │   │   ├── stores.ts                   # Reactive character store
-│   │   └── types.ts                    # TypeScript type definitions
+│   │   ├── types.ts                    # TypeScript type definitions
+│   │   └── wikidotUtils.ts             # D&D Wiki scraping utilities
 │   └── routes/
 │       └── +page.svelte                # Main application page
 ├── static/

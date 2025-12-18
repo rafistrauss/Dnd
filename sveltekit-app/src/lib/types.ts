@@ -49,6 +49,7 @@ export interface Attack {
 	bonus: number;
 	damage: string;
 	damageType: string;
+	notes?: string;
 }
 
 export interface HitDice {

@@ -1,6 +1,6 @@
-# sv
+# D&D 5e Character Sheet - SvelteKit
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A fully functional D&D 5th Edition character sheet built with SvelteKit, featuring class/subclass support, dice rolling, and integration with dnd5e.wikidot.com for importing spells, feats, and items.
 
 ## Creating a project
 
@@ -36,3 +36,40 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Features
+
+### Browse & Add D&D Content
+
+Click the **"📚 Import from D&D Wiki"** button to browse and add spells and feats to your character:
+
+1. **Spells**: 
+   - Browse a library of pre-loaded spells
+   - Filter by spell level (Cantrip through Level 9)
+   - Search by name, school, or description
+   - View full spell details before adding
+   - Adds to your prepared spells list
+
+2. **Feats**:
+   - Browse all available feats
+   - Search by name or description
+   - View prerequisites and benefits
+   - Adds to your character's features section
+
+**Note**: The spell/feat data is fetched during development and stored locally. To update or add more content, run:
+
+```bash
+npm run fetch-data
+```
+
+This will fetch the latest data from dnd5e.wikidot.com and update the local JSON files.
+
+### Other Features
+
+- **Subclass Support**: Choose from various subclasses (War Domain Cleric, Champion Fighter, etc.)
+- **Dice Rolling**: Integrated dice roller with proper D&D notation support
+- **Data Persistence**: Auto-save to localStorage
+- **GitHub Gist Integration**: Save/load characters to the cloud
+- **Import/Export**: JSON file support for sharing characters
+
+See [FEATURES.md](FEATURES.md) for complete feature list.

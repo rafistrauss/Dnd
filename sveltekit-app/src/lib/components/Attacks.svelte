@@ -14,7 +14,8 @@
 					name: '',
 					bonus: 0,
 					damage: '',
-					damageType: ''
+					damageType: '',
+					notes: ''
 				}
 			];
 			return c;
@@ -107,6 +108,15 @@
 							class="attack-type"
 						/>
 					</div>
+				</div>
+				<div class="attack-notes">
+					<label>Notes</label>
+					<textarea
+						bind:value={attack.notes}
+						placeholder="e.g., DC 15 Dex save, Range 120 ft, Concentration"
+						class="notes-input"
+						rows="2"
+					/>
 				</div>
 				<div class="attack-actions">
 					<button on:click={() => rollAttack(attack)} class="btn btn-primary">Roll Attack</button>
@@ -233,6 +243,32 @@
 		padding: 6px;
 		border: 1px solid var(--border-color);
 		border-radius: 4px;
+	}
+
+	.attack-notes {
+		margin-top: 10px;
+	}
+
+	.attack-notes label {
+		font-size: 0.85rem;
+		font-weight: bold;
+		margin-bottom: 4px;
+		display: block;
+	}
+
+	.notes-input {
+		width: 100%;
+		padding: 6px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		font-family: inherit;
+		resize: vertical;
+		min-height: 40px;
+	}
+
+	.notes-input:focus {
+		outline: none;
+		border-color: var(--primary-color);
 	}
 
 	.attack-bonus {
