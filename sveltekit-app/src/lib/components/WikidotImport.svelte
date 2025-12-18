@@ -45,41 +45,48 @@
 		return damageMatch ? damageMatch[1] : '';
 	}
 	
+	function extractSpellSummary(description: string): string {
+		// Get first sentence
+		const firstSentence = description.split(/\.( |$)/)[0].trim();
+		// Get bolded effect names (e.g., **Beckon Air.**)
+		const boldMatches = Array.from(description.matchAll(/\*\*(.*?)\*\*/g)).map(m => m[1].replace(/\.$/, ''));
+		let summary = firstSentence;
+		if (boldMatches.length) {
+			summary += ' | Effects: ' + boldMatches.join(', ');
+		}
+		return summary;
+	}
+	
 	function handleImport() {
 		if (!selectedItem) return;
-		
+
 		if (contentType === 'spell') {
 			const spell = selectedItem as Spell;
-			// Add to attacks/spells
 			character.update(c => {
-				// Determine spell attack bonus (using default spellcasting modifier +5)
-				const spellBonus = 5; // This could be calculated from character stats
-				
-				// Build notes with spell details
-				const noteParts = [];
-				if (spell.range) noteParts.push(`Range: ${spell.range}`);
-				if (spell.castingTime) noteParts.push(`Cast: ${spell.castingTime}`);
-				if (spell.duration) noteParts.push(`Duration: ${spell.duration}`);
+				const spellBonus = 5;
+				const infoParts = [];
+				if (spell.range) infoParts.push(`Range: ${spell.range}`);
+				if (spell.castingTime) infoParts.push(`Cast: ${spell.castingTime}`);
+				if (spell.duration) infoParts.push(`Duration: ${spell.duration}`);
 				if (spell.actionType === 'Save') {
-					noteParts.push('Saving throw spell');
+					infoParts.push('Saving throw spell');
 				}
 				if (spell.components && spell.components.length > 0) {
-					noteParts.push(`Components: ${spell.components.join(', ')}`);
+					infoParts.push(`Components: ${spell.components.join(', ')}`);
 				}
 				if (spell.material) {
-					noteParts.push(`Material: ${spell.material}`);
+					infoParts.push(`Material: ${spell.material}`);
 				}
-				
-				// Create attack entry for the spell
+				const infoNotes = infoParts.join(' | ');
 				const spellAttack: Attack = {
 					id: crypto.randomUUID(),
 					name: `${spell.name}${spell.concentration ? ' (C)' : ''}${spell.ritual ? ' (R)' : ''}`,
 					bonus: spell.actionType === 'Attack' ? spellBonus : 0,
 					damage: extractDamage(spell.description),
 					damageType: `${spell.school} (Lvl ${spell.level})`,
-					notes: noteParts.join(' | ')
+					spellRef: spell.name,
+					infoNotes,
 				};
-				
 				c.attacks = [...c.attacks, spellAttack];
 				return c;
 			});

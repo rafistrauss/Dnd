@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
-	import type { Attack } from '$lib/types';
+	import type { Attack, Spell } from '$lib/types';
+	import { loadSpells } from '$lib/dndData';
 
 	const dispatch = createEventDispatcher();
 
@@ -49,6 +50,15 @@
 
 	function toggleCollapse() {
 		collapsedStates.update(s => ({ ...s, attacks: !s.attacks }));
+	}
+
+	let spells: Spell[] = [];
+	onMount(async () => {
+		spells = await loadSpells();
+	});
+
+	function getSpellByName(name: string) {
+		return spells.find(s => s.name === name);
 	}
 
 	$: filteredAttacks = $character.attacks.filter((attack) => {
@@ -109,15 +119,46 @@
 						/>
 					</div>
 				</div>
-				<div class="attack-notes">
-					<label>Notes</label>
-					<textarea
-						bind:value={attack.notes}
-						placeholder="e.g., DC 15 Dex save, Range 120 ft, Concentration"
-						class="notes-input"
-						rows="2"
-					/>
-				</div>
+				{#if attack.spellRef}
+					{#if spells.length === 0}
+						<div class="spell-info-loading">Loading spell info...</div>
+					{:else}
+						{@const spell = getSpellByName(attack.spellRef)}
+						{#if spell}
+							<div class="spell-info">
+								<h4>Spell Info</h4>
+								<ul>
+									<li><strong>Level:</strong> {spell.level}</li>
+									<li><strong>School:</strong> {spell.school}</li>
+									<li><strong>Casting Time:</strong> {spell.castingTime || spell.actionType}</li>
+									<li><strong>Range:</strong> {spell.range}</li>
+									<li><strong>Components:</strong> {spell.components.join(', ')}{#if spell.material} ({spell.material}){/if}</li>
+									<li><strong>Duration:</strong> {#if spell.concentration}Concentration, {/if}{spell.duration}</li>
+									<li><strong>Description:</strong> {spell.description}</li>
+								</ul>
+							</div>
+							{#if attack.generalNotes}
+								 <div class="spell-notes">
+									 <h4>General Notes</h4>
+									 <p>{attack.generalNotes}</p>
+								 </div>
+							{/if}
+						{:else}
+							<div class="spell-info-missing">Spell info not found.</div>
+						{/if}
+					{/if}
+				{/if}
+				{#if !attack.spellRef}
+					<div class="attack-notes">
+						<label>Notes</label>
+						<textarea
+							bind:value={attack.notes}
+							placeholder="e.g., DC 15 Dex save, Range 120 ft, Concentration"
+							class="notes-input"
+							rows="2"
+						/>
+					</div>
+				{/if}
 				<div class="attack-actions">
 					<button on:click={() => rollAttack(attack)} class="btn btn-primary">Roll Attack</button>
 					<button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button
@@ -313,5 +354,65 @@
 			opacity: 1;
 			transform: translateY(0);
 		}
+	}
+
+	.spell-info {
+		margin-top: 10px;
+		padding: 10px;
+		background-color: #e9f5ff;
+		border: 1px solid #b3e0ff;
+		border-radius: 4px;
+	}
+
+	.spell-info h4 {
+		margin: 0 0 10px 0;
+		font-size: 1.1rem;
+		color: #007bff;
+	}
+
+	.spell-info ul {
+		list-style-type: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.spell-info li {
+		margin-bottom: 5px;
+	}
+
+	.spell-notes {
+		margin-top: 10px;
+		padding: 10px;
+		background-color: #fff3cd;
+		border: 1px solid #ffeeba;
+		border-radius: 4px;
+	}
+
+	.spell-notes h4 {
+		margin: 0 0 10px 0;
+		font-size: 1.1rem;
+		color: #856404;
+	}
+
+	.spell-info-loading {
+		margin-top: 10px;
+		padding: 10px;
+		background-color: #e2e3e5;
+		border: 1px solid #ced4da;
+		border-radius: 4px;
+		color: #495057;
+		font-size: 0.9rem;
+		text-align: center;
+	}
+
+	.spell-info-missing {
+		margin-top: 10px;
+		padding: 10px;
+		background-color: #f8d7da;
+		border: 1px solid #f5c6cb;
+		border-radius: 4px;
+		color: #721c24;
+		font-size: 0.9rem;
+		text-align: center;
 	}
 </style>

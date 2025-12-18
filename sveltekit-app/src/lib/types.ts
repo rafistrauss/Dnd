@@ -49,7 +49,28 @@ export interface Attack {
 	bonus: number;
 	damage: string;
 	damageType: string;
-	notes?: string;
+	spellRef?: string; // canonical spell name
+	infoNotes?: string; // Range, Duration, Components, etc.
+	generalNotes?: string; // summary/effects
+}
+
+export interface Spell {
+  name: string
+  level: number
+  school: string
+  classes: string[]
+  actionType: string
+  concentration: boolean
+  ritual: boolean
+  range: string
+  components: string[]
+  duration: string
+  description: string
+  cantripUpgrade?: string
+  material?: string
+  castingTime?: string
+  higherLevelSlot?: string
+  castingTrigger?: string
 }
 
 export interface HitDice {
