@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
+	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
 	import type { Attack, Spell } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
 
@@ -202,7 +202,9 @@
 						placeholder="Attack name"
 						class="attack-name"
 					/>
-					<button on:click={() => removeAttack(attack.id)} class="btn-remove">×</button>
+					{#if $isEditMode}
+						<button on:click={() => removeAttack(attack.id)} class="btn-remove">×</button>
+					{/if}
 				</div>
 				<div class="attack-details">
 					<div class="attack-field">
