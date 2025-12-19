@@ -243,48 +243,44 @@
 
 					{#if feature.type === 'uses'}
 						{@const maxUses = getMaxUses(feature)}
+						{@const usesRemaining = (() => {
+							if (!isArrayData) return maxUses;
+							const uses = featureData as boolean[];
+							return uses.filter(u => !u).length;
+						})()}
 						<div class="uses-tracker">
 							{#if maxUses === Infinity}
 								<p class="unlimited">Unlimited Uses</p>
 							{:else}
-								{#each Array(maxUses) as _, i}
-									{#if isArrayData}
-										<input
-											type="checkbox"
-											checked={(featureData && featureData[i]) || false}
-											on:change={(e) => {
-												character.update(c => {
-													if (!c.classFeatures.features[featureKey]) {
-														c.classFeatures.features[featureKey] = [];
-													}
-													const arr = c.classFeatures.features[featureKey] as boolean[];
-													arr[i] = e.currentTarget.checked;
-													return c;
-												});
-											}}
-											class="use-checkbox"
-										/>
-									{:else}
-										<input
-											type="checkbox"
-											checked={false}
-											on:change={(e) => {
-												character.update(c => {
-													if (!c.classFeatures.features[featureKey]) {
-														c.classFeatures.features[featureKey] = [];
-													}
-													const arr = c.classFeatures.features[featureKey] as boolean[];
-													arr[i] = e.currentTarget.checked;
-													return c;
-												});
-											}}
-											class="use-checkbox"
-										/>
+								<div class="uses-with-button">
+									<button 
+										on:click={() => {
+											character.update(c => {
+												if (!c.classFeatures.features[featureKey]) {
+													c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+												}
+												const arr = c.classFeatures.features[featureKey] as boolean[];
+												// Find first unused slot and mark it as used
+												const firstUnused = arr.findIndex(u => !u);
+												if (firstUnused !== -1) {
+													arr[firstUnused] = true;
+												}
+												return c;
+											});
+										}}
+										disabled={usesRemaining <= 0}
+										class="btn btn-primary use-enabled"
+									>
+										Use {feature.name}
+									</button>
+									<div class="uses-info">
+										<span class="uses-remaining">{usesRemaining} / {maxUses} uses</span>
+										<span class="reset-info">Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span>
+									</div>
+									{#if usesRemaining <= 0}
+										<p class="no-uses">No uses remaining</p>
 									{/if}
-								{/each}
-								<!-- <button on:click={() => resetFeature(featureKey, maxUses)} class="btn-small">
-									{feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}
-								</button> -->
+								</div>
 							{/if}
 						</div>
 					{:else if feature.type === 'pool'}
@@ -317,6 +313,9 @@
 							>
 								Use Channel Divinity
 							</button>
+							<div class="uses-info">
+								<span class="reset-info">Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span>
+							</div>
 							{#if channelDivinityRemaining <= 0}
 								<p class="no-uses">No Channel Divinity uses remaining</p>
 							{/if}
@@ -532,5 +531,29 @@
 		font-size: 0.85rem;
 		font-style: italic;
 		margin: 0;
+	}
+
+	.uses-with-button {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.uses-info {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		font-size: 0.9rem;
+	}
+
+	.uses-remaining {
+		font-weight: bold;
+		color: var(--primary-color);
+	}
+
+	.reset-info {
+		color: #666;
+		font-size: 0.85rem;
+		font-style: italic;
 	}
 </style>
