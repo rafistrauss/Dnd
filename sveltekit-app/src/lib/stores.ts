@@ -2,6 +2,44 @@ import { writable, derived } from 'svelte/store';
 import type { Character } from './types';
 import { browser } from '$app/environment';
 
+// Toast notification store
+export interface Toast {
+	id: number;
+	message: string;
+	type: 'success' | 'error' | 'info';
+	duration?: number;
+}
+
+function createToastStore() {
+	const { subscribe, update } = writable<Toast[]>([]);
+
+	let nextId = 0;
+
+	return {
+		subscribe,
+		add: (message: string, type: Toast['type'] = 'info', duration: number = 3000) => {
+			const id = nextId++;
+			const toast: Toast = { id, message, type, duration };
+			
+			update(toasts => [...toasts, toast]);
+			
+			if (duration > 0) {
+				setTimeout(() => {
+					update(toasts => toasts.filter(t => t.id !== id));
+				}, duration);
+			}
+		},
+		remove: (id: number) => {
+			update(toasts => toasts.filter(t => t.id !== id));
+		},
+		clear: () => {
+			update(() => []);
+		}
+	};
+}
+
+export const toasts = createToastStore();
+
 // Initial character state
 const initialCharacter: Character = {
 	name: '',
@@ -17,7 +55,8 @@ const initialCharacter: Character = {
 	currentHP: 0,
 	maxHP: 0,
 	tempHP: 0,
-	hitDice: { current: 3, max: 3 },	attacks: [],	abilities: {
+	hitDice: { current: 3, max: 3 },
+	abilities: {
 		strength: 10,
 		dexterity: 10,
 		constitution: 10,

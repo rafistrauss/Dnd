@@ -160,3 +160,34 @@ export function loadGistConfig(): GistConfig {
 	}
 	return {};
 }
+
+// List user's gists
+export interface GistInfo {
+	id: string;
+	description: string;
+	created_at: string;
+	updated_at: string;
+	public: boolean;
+	files: Record<string, { filename: string }>;
+}
+
+export async function listUserGists(token: string, perPage: number = 30): Promise<GistInfo[]> {
+	if (!token) {
+		throw new Error('GitHub token is required to list gists');
+	}
+
+	const response = await fetch(`${GIST_API}?per_page=${perPage}`, {
+		method: 'GET',
+		headers: {
+			'Authorization': `token ${token}`,
+			'Content-Type': 'application/json',
+		}
+	});
+
+	if (!response.ok) {
+		throw new Error(`Failed to list gists: ${response.statusText}`);
+	}
+
+	const data = await response.json();
+	return data;
+}
