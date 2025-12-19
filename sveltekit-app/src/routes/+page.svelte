@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { character, isEditMode, exportCharacter, importCharacter, searchFilter } from '$lib/stores';
+	import { getClassConfig, getAvailableFeatures } from '$lib/classConfig';
 	import CharacterInfo from '$lib/components/CharacterInfo.svelte';
 	import AbilityScores from '$lib/components/AbilityScores.svelte';
 	import CombatStats from '$lib/components/CombatStats.svelte';
@@ -23,25 +24,106 @@
 	let diceAttackName = '';
 	let diceRollerComponent: any;
 	let isHitDiceRoll = false;
+	let showRestMenu = false;
+
+	function takeShortRest() {
+		character.update(c => {
+			// Restore hit dice (up to half of max)
+			c.hitDice.current = Math.min(c.hitDice.max, c.hitDice.current + Math.max(1, Math.floor(c.hitDice.max / 2)));
+			
+			// Reset features that recharge on short rest
+			if (c.classFeatures.features) {
+				Object.keys(c.classFeatures.features).forEach(key => {
+					const featureConfig = getFeatureConfig(key);
+					if (featureConfig?.resetOn === 'short') {
+						if (Array.isArray(c.classFeatures.features[key])) {
+							const maxUses = featureConfig.maxUses;
+							const uses = typeof maxUses === 'function' ? maxUses(c.level) : maxUses;
+							c.classFeatures.features[key] = Array(uses).fill(false);
+						} else if (typeof c.classFeatures.features[key] === 'number') {
+							const maxPool = featureConfig.maxPool;
+						const poolValue = typeof maxPool === 'function' ? maxPool(c.level) : maxPool;
+						if (poolValue !== undefined) {
+							c.classFeatures.features[key] = poolValue;
+						}
+						}
+					}
+				});
+			}
+			
+			return c;
+		});
+		showRestMenu = false;
+	}
+
+	function takeLongRest() {
+		character.update(c => {
+			// Restore all HP
+			c.currentHP = c.maxHP;
+			c.tempHP = 0;
+			
+			// Restore all hit dice
+			c.hitDice.current = c.hitDice.max;
+			
+			// Reset all spell slots
+			if (c.classFeatures.spellSlotsByLevel) {
+				Object.keys(c.classFeatures.spellSlotsByLevel).forEach(level => {
+					const slots = c.classFeatures.spellSlotsByLevel![parseInt(level)];
+					if (slots) {
+						c.classFeatures.spellSlotsByLevel![parseInt(level)] = Array(slots.length).fill(false);
+					}
+				});
+			}
+			
+			// Reset all class features
+			if (c.classFeatures.features) {
+				Object.keys(c.classFeatures.features).forEach(key => {
+					const featureConfig = getFeatureConfig(key);
+					if (featureConfig) {
+						if (Array.isArray(c.classFeatures.features[key])) {
+							const maxUses = featureConfig.maxUses;
+							const uses = typeof maxUses === 'function' ? maxUses(c.level) : maxUses;
+							c.classFeatures.features[key] = Array(uses).fill(false);
+						} else if (typeof c.classFeatures.features[key] === 'number') {
+							const maxPool = featureConfig.maxPool;
+							const poolValue = typeof maxPool === 'function' ? maxPool(c.level) : maxPool;
+							if (poolValue !== undefined) {
+								c.classFeatures.features[key] = poolValue;
+							}
+						}
+					}
+				});
+			}
+			
+			return c;
+		});
+		showRestMenu = false;
+	}
+
+	function getFeatureConfig(key: string) {
+		// Import from classConfig to get feature definitions
+		const classConfig = $character.class ? getClassConfig($character.class) : null;
+		if (!classConfig) return null;
+		
+		const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
+		// The key is stored without spaces, so we need to match it
+		return features.find(f => f.name.replace(/\s+/g, '') === key);
+	}
 
 	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string }) {
 		// Reset notation first to ensure Svelte sees a change even if same value
 		diceNotation = '';
+		diceDamageNotation = '';
+		diceAttackName = '';
 		isHitDiceRoll = false;
 		
+		// Set all values together to ensure they update simultaneously
 		if (typeof detail === 'string') {
-			// Use nextTick to ensure reset is processed first
-			setTimeout(() => {
-				diceNotation = detail;
-				diceDamageNotation = '';
-				diceAttackName = '';
-			}, 0);
+			diceNotation = detail;
 		} else {
-			setTimeout(() => {
-				diceNotation = detail.notation;
-				diceDamageNotation = detail.damageNotation || '';
-				diceAttackName = detail.attackName || '';
-			}, 0);
+			diceNotation = detail.notation;
+			diceDamageNotation = detail.damageNotation || '';
+			diceAttackName = detail.attackName || '';
 		}
 		showDiceRoller = true;
 	}
@@ -89,6 +171,14 @@
 		});
 	}
 
+	// Close rest menu when clicking outside
+	function handleClickOutside(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+		if (!target.closest('.rest-button-container')) {
+			showRestMenu = false;
+		}
+	}
+
 	// Apply use-mode class to body when mode changes
 	onMount(() => {
 		console.log('onMount - initial isEditMode:', $isEditMode);
@@ -109,7 +199,13 @@
 			console.log('Body classes after:', document.body.className);
 		});
 
-		return unsubscribe;
+		// Add click listener for closing rest menu
+		document.addEventListener('click', handleClickOutside);
+
+		return () => {
+			unsubscribe();
+			document.removeEventListener('click', handleClickOutside);
+		};
 	});
 
 	function handleExport() {
@@ -143,16 +239,35 @@
 <div class="container">
 	<header>
 		<div class="header-top">
-			<h1>D&D Character Sheet</h1>
+			<div class="header-title">
+				<h1>D&D Character Sheet</h1>
+				{#if $character.name}
+					<span class="character-name">{$character.name}</span>
+				{/if}
+			</div>
 			<div class="header-controls">
 				<button on:click={() => showDiceRoller = true} class="btn btn-secondary use-enabled">
-				🎲 Roll Dice
-			</button>
+					🎲 Roll Dice
+				</button>
+				<div class="rest-button-container">
+					<button 
+						on:click={() => showRestMenu = !showRestMenu} 
+						class="btn btn-secondary use-enabled"
+					>
+						😴 Rest
+					</button>
+					{#if showRestMenu}
+						<div class="rest-menu">
+							<button on:click={takeShortRest} class="rest-option">☕ Short Rest</button>
+							<button on:click={takeLongRest} class="rest-option">🛏️ Long Rest</button>
+						</div>
+					{/if}
+				</div>
 				<input 
 					type="text" 
 					bind:value={$searchFilter} 
 					placeholder="🔍 Search (e.g., Religion, Strength, Attack...)" 
-					class="search-input"
+					class="search-input use-enabled"
 				/>
 				<div class="mode-toggle">
 					<button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
@@ -261,10 +376,23 @@
 		gap: 20px;
 	}
 
+	.header-title {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		flex-shrink: 0;
+	}
+
 	h1 {
 		font-size: 1.5rem;
 		margin: 0;
-		flex-shrink: 0;
+	}
+
+	.character-name {
+		font-size: 1rem;
+		font-weight: normal;
+		opacity: 0.9;
+		font-style: italic;
 	}
 
 	.header-controls {
@@ -272,6 +400,40 @@
 		align-items: center;
 		gap: 15px;
 		flex: 1;
+	}
+
+	.rest-button-container {
+		position: relative;
+	}
+
+	.rest-menu {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		margin-top: 5px;
+		background: white;
+		border-radius: 4px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		overflow: hidden;
+		z-index: 1001;
+		min-width: 150px;
+	}
+
+	.rest-option {
+		display: block;
+		width: 100%;
+		padding: 10px 15px;
+		border: none;
+		background: white;
+		text-align: left;
+		cursor: pointer;
+		color: var(--text-color);
+		font-size: 0.9rem;
+		transition: background-color 0.2s;
+	}
+
+	.rest-option:hover {
+		background-color: var(--bg-color);
 	}
 
 	.search-input {
@@ -349,7 +511,17 @@
 
 	@media (max-width: 768px) {
 		h1 {
-			font-size: 1.2rem;
+			display: none;
+		}
+
+		.header-title {
+			gap: 0;
+		}
+
+		.character-name {
+			font-size: 1.1rem;
+			font-weight: bold;
+			opacity: 1;
 		}
 
 		.header-actions {

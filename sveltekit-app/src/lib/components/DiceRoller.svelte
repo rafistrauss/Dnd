@@ -2,6 +2,8 @@
 	import { onMount, afterUpdate } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { base } from '$app/paths';
+	import { character } from '$lib/stores';
+	import { getAvailableFeatures } from '$lib/classConfig';
 
 	const dispatch = createEventDispatcher();
 
@@ -34,6 +36,20 @@
 	let followUpActions: Array<{label: string, notation: string}> = [];
 	let isCritical = false;
 	let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
+	let guidedStrikeUsed = false;
+
+	// Check if character has Guided Strike and Channel Divinity uses
+	$: hasGuidedStrike = (() => {
+		if (!$character.class) return false;
+		const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
+		return features.some(f => f.name === 'Guided Strike');
+	})();
+
+	$: channelDivinityRemaining = (() => {
+		const channelDivinityKey = 'ChannelDivinity';
+		const current = $character.classFeatures.features[channelDivinityKey];
+		return typeof current === 'number' ? current : 0;
+	})();
 
 	// Reactive notation that updates when any dice count changes
 	$: currentNotation = (() => {
@@ -69,7 +85,7 @@
 					h: height
 				});
 				isInitialized = true;
-				console.log(`Dice box initialized with dimensions: ${width}x${height}`);
+				// console.log(`Dice box initialized with dimensions: ${width}x${height}`);
 			} catch (e) {
 				console.error('Error initializing dice box:', e);
 			}
@@ -154,6 +170,7 @@
 
 		console.log('Rolling dice:', notation, 'type:', type);
 		rollType = type;
+		guidedStrikeUsed = false; // Reset Guided Strike usage for new rolls
 		
 		// Set the dice notation before throwing
 		diceBox.diceToRoll = notation;
@@ -181,6 +198,7 @@
 			
 			// Set up follow-up actions based on roll type
 			followUpActions = [];
+			// console.log('Setting up follow-up actions. Type:', type, 'damageNotation:', damageNotation, 'isCritical:', isCritical);
 			if (type === 'attack') {
 				// If damage notation is provided, offer to roll damage
 				if (damageNotation) {
@@ -197,8 +215,12 @@
 							notation: damageNotation 
 						});
 					}
+					// console.log('Follow-up actions after setup:', followUpActions);
+				} else {
+					// console.log('No damageNotation provided for attack roll');
 				}
 			}
+			// console.log('Final followUpActions:', followUpActions);
 		};
 		
 		diceBox.start_throw(beforeRoll, afterRoll);
@@ -246,16 +268,43 @@
 		followUpActions = [];
 		isCritical = false;
 		rollType = 'other';
+		guidedStrikeUsed = false;
+	}
+
+	function useGuidedStrike() {
+		if (!rollResult || channelDivinityRemaining <= 0 || guidedStrikeUsed) return;
+
+		// Add 10 to the result
+		rollResult = {
+			...rollResult,
+			resultTotal: rollResult.resultTotal + 10,
+			resultString: rollResult.resultString + ' + 10 (Guided Strike)'
+		};
+
+		// Consume Channel Divinity
+		character.update(c => {
+			const channelDivinityKey = 'ChannelDivinity';
+			const current = c.classFeatures.features[channelDivinityKey];
+			if (typeof current === 'number' && current > 0) {
+				c.classFeatures.features[channelDivinityKey] = current - 1;
+			}
+			return c;
+		});
+
+		guidedStrikeUsed = true;
 	}
 	
 	// Auto-roll when notation is set and modal is visible
-	$: if (notation && isInitialized && visible) {
+	// Also track damageNotation and attackName to ensure they're set before rolling
+	$: if (notation && isInitialized && visible && notation !== lastRolledNotation) {
 		lastRolledNotation = notation;
 		rollResult = null;
 		followUpActions = [];
 		isCritical = false;
+		guidedStrikeUsed = false;
 		// Detect roll type from notation pattern (simple heuristic)
 		const detectedType = notation.includes('1d20') ? 'attack' : 'other';
+		console.log('Auto-roll triggered. notation:', notation, 'damageNotation:', damageNotation, 'attackName:', attackName);
 		setTimeout(() => rollDice(notation, detectedType), 200);
 	}
 
@@ -267,6 +316,7 @@
 		attackName = '';
 		lastRolledNotation = '';
 		rollResult = null;
+		guidedStrikeUsed = false;
 		resetDice();
 	}
 </script>
@@ -344,13 +394,23 @@
 						<p class="modifier-text">Modifier: {rollResult.constant >= 0 ? '+' : ''}{rollResult.constant}</p>
 					{/if}
 				</div>
-				{#if followUpActions.length > 0}
+				{#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed)}
 					<div class="follow-up-actions">
 						{#each followUpActions as action}
 							<button class="btn btn-follow-up" on:click={() => rollDice(action.notation, 'damage')}>
 								{action.label}
 							</button>
 						{/each}
+						{#if hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed}
+							<button 
+								class="btn btn-guided-strike" 
+								on:click={useGuidedStrike}
+								disabled={channelDivinityRemaining <= 0}
+								title={channelDivinityRemaining <= 0 ? 'No Channel Divinity uses remaining' : 'Use Channel Divinity to add +10 to this attack roll'}
+							>
+								⚡ Use Guided Strike (+10)
+							</button>
+						{/if}
 					</div>
 				{/if}
 			{/if}
@@ -607,6 +667,30 @@
 	.btn-follow-up:hover {
 		transform: translateY(-1px);
 		box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+	}
+
+	.btn-guided-strike {
+		background: linear-gradient(135deg, #8b0000, #a50000);
+		color: white;
+		border: none;
+		padding: 8px 16px;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+		box-shadow: 0 2px 4px rgba(139, 0, 0, 0.3);
+	}
+
+	.btn-guided-strike:hover:not(:disabled) {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(139, 0, 0, 0.4);
+	}
+
+	.btn-guided-strike:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		background: #999;
 	}
 
 	/* Side-by-side layout for wider screens */

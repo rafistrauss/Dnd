@@ -7,7 +7,6 @@
 		getPreparedSpellsCount,
 		getSpellSaveDC
 	} from '$lib/classConfig';
-	import { onMount } from 'svelte';
 
 	$: classConfig = $character.class ? getClassConfig($character.class) : null;
 	$: features = $character.class ? getAvailableFeatures($character.class, $character.level, $character.subclass) : [];
@@ -122,6 +121,24 @@
 		return feature.description;
 	}
 
+	function useChannelDivinity() {
+		const channelDivinityKey = 'ChannelDivinity';
+		character.update(c => {
+			const current = c.classFeatures.features[channelDivinityKey];
+			if (typeof current === 'number' && current > 0) {
+				c.classFeatures.features[channelDivinityKey] = current - 1;
+			}
+			return c;
+		});
+	}
+
+	// Reactive variable to track Channel Divinity availability
+	$: channelDivinityRemaining = (() => {
+		const channelDivinityKey = 'ChannelDivinity';
+		const current = $character.classFeatures.features[channelDivinityKey];
+		return typeof current === 'number' ? current : 0;
+	})();
+
 	function toggleCollapse() {
 		collapsedStates.update(s => ({ ...s, classFeatures: !s.classFeatures }));
 	}
@@ -216,7 +233,12 @@
 				{@const isArrayData = Array.isArray(featureData)}
 				{@const isNumericData = typeof featureData === 'number'}
 				<div class="feature-box">
-					<h3>{feature.name}</h3>
+					<h3>
+						{#if feature.type === "channelDivinity"}
+							 Channel Divinity:
+						{/if}
+						{feature.name}
+					</h3>
 					<p class="feature-description">{getDescription(feature)}</p>
 
 					{#if feature.type === 'uses'}
@@ -260,9 +282,9 @@
 										/>
 									{/if}
 								{/each}
-								<button on:click={() => resetFeature(featureKey, maxUses)} class="btn-small">
+								<!-- <button on:click={() => resetFeature(featureKey, maxUses)} class="btn-small">
 									{feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}
-								</button>
+								</button> -->
 							{/if}
 						</div>
 					{:else if feature.type === 'pool'}
@@ -285,6 +307,19 @@
 							<button on:click={() => resetPool(featureKey, maxPool)} class="btn-small">
 								{feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}
 							</button>
+						</div>
+					{:else if feature.type === 'channelDivinity'}
+						<div class="channel-divinity-option">
+							<button 
+								on:click={useChannelDivinity}
+								disabled={channelDivinityRemaining <= 0}
+								class="btn btn-primary use-enabled"
+							>
+								Use Channel Divinity
+							</button>
+							{#if channelDivinityRemaining <= 0}
+								<p class="no-uses">No Channel Divinity uses remaining</p>
+							{/if}
 						</div>
 					{/if}
 				</div>
@@ -480,5 +515,22 @@
 	input:focus {
 		outline: none;
 		border-color: var(--primary-color);
+	}
+
+	.channel-divinity-option {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.channel-divinity-option button {
+		align-self: flex-start;
+	}
+
+	.no-uses {
+		color: #999;
+		font-size: 0.85rem;
+		font-style: italic;
+		margin: 0;
 	}
 </style>

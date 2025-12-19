@@ -38,8 +38,8 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
 			},
 			{
 				name: 'Channel Divinity',
-				type: 'uses',
-				maxUses: (level) => level >= 18 ? 3 : level >= 6 ? 2 : 1,
+				type: 'pool',
+				maxPool: (level) => level >= 18 ? 3 : level >= 6 ? 2 : 1,
 				resetOn: 'short',
 				description: 'Sacred Weapon or Turn Undead',
 				minLevel: 3
@@ -232,8 +232,8 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
 		features: [
 			{
 				name: 'Channel Divinity',
-				type: 'uses',
-				maxUses: (level) => level >= 18 ? 3 : level >= 6 ? 2 : 1,
+				type: 'pool',
+				maxPool: (level) => level >= 18 ? 3 : level >= 6 ? 2 : 1,
 				resetOn: 'short',
 				description: 'Turn Undead or domain-specific ability',
 				minLevel: 2
@@ -270,15 +270,17 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
 					},
 					{
 						name: 'Guided Strike',
-						type: 'info',
-						description: 'Use Channel Divinity to gain +10 to attack roll',
-						minLevel: 2
+						type: 'channelDivinity',
+						description: 'Use your Channel Divinity to gain +10 to an attack roll. Make this choice after you see the roll, but before the DM says whether the attack hits or misses.',
+						minLevel: 2,
+						resetOn: 'short'
 					},
 					{
 						name: 'War God\'s Blessing',
-						type: 'info',
-						description: 'Use reaction to grant +10 to attack roll within 30 feet',
-						minLevel: 6
+						type: 'channelDivinity',
+						description: 'Use reaction to grant +10 to an ally\'s attack roll within 30 feet. Consumes one use of Channel Divinity.',
+						minLevel: 6,
+						resetOn: 'short'
 					},
 					{
 						name: 'Divine Strike',

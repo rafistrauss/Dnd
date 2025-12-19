@@ -116,7 +116,7 @@ export interface Character {
 // Class Configuration Types
 
 export type ResetType = 'short' | 'long';
-export type FeatureType = 'uses' | 'pool' | 'spellSlot' | 'info';
+export type FeatureType = 'uses' | 'pool' | 'spellSlot' | 'info' | 'channelDivinity';
 
 export interface ClassFeature {
 	name: string;
