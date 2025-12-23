@@ -38,6 +38,28 @@
 	let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
 	let guidedStrikeUsed = false;
 
+	// Dice color customization
+	let diceColor = '#051e0a';
+	let labelColor = '#ffffff';
+	let deskColor = '#3a2004';
+	let showColorPicker = false;
+
+	// Convert 8-char hex (with alpha) to 6-char hex for color input
+	function stripAlpha(color: string): string {
+		if (color.length === 9 && color.startsWith('#')) {
+			return color.substring(0, 7);
+		}
+		return color;
+	}
+
+	// Add alpha channel back when updating colors
+	function addAlpha(color: string, alpha: string = 'ff'): string {
+		if (color.length === 7 && color.startsWith('#')) {
+			return color + alpha;
+		}
+		return color;
+	}
+
 	// Check if character has Guided Strike and Channel Divinity uses
 	$: hasGuidedStrike = (() => {
 		if (!$character.class) return false;
@@ -130,6 +152,14 @@
 					console.log('All scripts loaded, initializing dice box...');
 					console.log('DICE available:', !!(window as any).DICE);
 					console.log('Container available:', !!diceContainer);
+					
+					// Load saved colors or use defaults
+					if ((window as any).DICE) {
+						const colors = (window as any).DICE.getColors();
+						diceColor = stripAlpha(colors.dice_color);
+						labelColor = stripAlpha(colors.label_color);
+						deskColor = stripAlpha(colors.desk_color);
+					}
 					
 					// Initialize dice box
 					initializeDiceBox();
@@ -271,6 +301,27 @@
 		guidedStrikeUsed = false;
 	}
 
+	function updateDiceColors() {
+		if ((window as any).DICE) {
+			// Update the global color vars with alpha channel
+			(window as any).DICE.setColors({
+				dice_color: addAlpha(diceColor, 'ff'),
+				label_color: addAlpha(labelColor, 'ff'),
+				desk_color: deskColor // desk color doesn't need alpha
+			});
+
+			// Update existing dice and desk in current dice box instance
+			if (diceBox) {
+				diceBox.updateDeskColor(deskColor);
+				diceBox.updateDiceColors();
+			}
+		}
+	}
+
+	function toggleColorPicker() {
+		showColorPicker = !showColorPicker;
+	}
+
 	function useGuidedStrike() {
 		if (!rollResult || channelDivinityRemaining <= 0 || guidedStrikeUsed) return;
 
@@ -325,8 +376,33 @@
 	<div class="modal-content" on:click|stopPropagation on:keydown role="dialog" tabindex="0">
 		<div class="modal-header">
 			<h2>Dice Roller</h2>
-			<button class="close-btn" on:click={close}>×</button>
+			<div class="header-buttons">
+				<button class="color-btn" on:click={toggleColorPicker} title="Customize dice colors">
+					🎨
+				</button>
+				<button class="close-btn" on:click={close}>×</button>
+			</div>
 		</div>
+
+		{#if showColorPicker}
+			<div class="color-picker-section">
+				<h3>Dice Colors</h3>
+				<div class="color-inputs">
+					<div class="color-input-group">
+						<label for="dice-color">Dice Color</label>
+						<input type="color" id="dice-color" bind:value={diceColor} on:change={updateDiceColors} />
+					</div>
+					<div class="color-input-group">
+						<label for="label-color">Label Color</label>
+						<input type="color" id="label-color" bind:value={labelColor} on:change={updateDiceColors} />
+					</div>
+					<div class="color-input-group">
+						<label for="desk-color">Background Color</label>
+						<input type="color" id="desk-color" bind:value={deskColor} on:change={updateDiceColors} />
+					</div>
+				</div>
+			</div>
+		{/if}
 
 		{#if !isInitialized}
 			<div class="loading">
@@ -466,6 +542,32 @@
 		color: var(--primary-color);
 	}
 
+	.header-buttons {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.color-btn {
+		width: 32px;
+		height: 32px;
+		background-color: #f0f0f0;
+		border: 2px solid #ccc;
+		border-radius: 6px;
+		font-size: 1.2rem;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+	}
+
+	.color-btn:hover {
+		background-color: #e0e0e0;
+		border-color: #999;
+		transform: scale(1.05);
+	}
+
 	.close-btn {
 		width: 32px;
 		height: 32px;
@@ -479,6 +581,52 @@
 
 	.close-btn:hover {
 		color: #000;
+	}
+
+	.color-picker-section {
+		background-color: #f9f9f9;
+		border-radius: 8px;
+		padding: 15px;
+		margin-bottom: 15px;
+		border: 1px solid #e0e0e0;
+	}
+
+	.color-picker-section h3 {
+		margin: 0 0 12px 0;
+		font-size: 1rem;
+		color: #333;
+	}
+
+	.color-inputs {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 12px;
+	}
+
+	.color-input-group {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.color-input-group label {
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: #555;
+	}
+
+	.color-input-group input[type="color"] {
+		width: 100%;
+		height: 40px;
+		border: 2px solid #ccc;
+		border-radius: 6px;
+		cursor: pointer;
+		background: white;
+		padding: 2px;
+	}
+
+	.color-input-group input[type="color"]:hover {
+		border-color: var(--primary-color);
 	}
 
 	.dice-main-area {
