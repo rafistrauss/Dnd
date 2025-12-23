@@ -1,6 +1,8 @@
 // Local D&D data management
 // Data is pre-fetched and stored in static/data/
 
+import { resolve } from '$app/paths';
+
 export interface Spell {
 	name: string;
 	level: number;
@@ -37,7 +39,7 @@ export async function loadSpells(): Promise<Spell[]> {
 	if (spellsCache) return spellsCache;
 	
 	try {
-		const response = await fetch('/data/spells.json');
+		const response = await fetch(resolve('/data/spells.json'));
 		spellsCache = await response.json();
 		return spellsCache || [];
 	} catch (error) {
@@ -53,7 +55,7 @@ export async function loadFeats(): Promise<Feat[]> {
 	if (featsCache) return featsCache;
 	
 	try {
-		const response = await fetch('/data/feats.json');
+		const response = await fetch(resolve('/data/feats.json'));
 		featsCache = await response.json();
 		return featsCache || [];
 	} catch (error) {
