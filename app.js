@@ -6,6 +6,8 @@ let character = {
     race: '',
     background: '',
     alignment: '',
+    languages: 'Common, Goblin',
+    deity: 'Lathander',
     armorClass: 10,
     initiative: 0,
     speed: '30 ft',
@@ -88,6 +90,9 @@ let isEditMode = true;
 
 // Dice box instance
 let diceBox = null;
+
+// Store roll context for re-rolling
+let currentRollContext = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -191,6 +196,14 @@ function setupEventListeners() {
     
     document.getElementById('characterAlignment').addEventListener('change', (e) => {
         character.alignment = e.target.value;
+    });
+    
+    document.getElementById('characterLanguages').addEventListener('change', (e) => {
+        character.languages = e.target.value;
+    });
+    
+    document.getElementById('characterDeity').addEventListener('change', (e) => {
+        character.deity = e.target.value;
     });
     
     // Combat stats
@@ -490,7 +503,8 @@ function rollAttack(attackIndex) {
         attackBonus,
         null,
         '1d20',
-        attackBonus
+        attackBonus,
+        'd20'
     );
 }
 
@@ -505,6 +519,13 @@ function rollDamage(attackIndex) {
         return;
     }
     
+    // Check if this is a melee weapon for divine smite
+    const isMelee = attack.name.toLowerCase().includes('longsword') || 
+                    attack.name.toLowerCase().includes('greatsword') ||
+                    attack.name.toLowerCase().includes('sword') ||
+                    attack.name.toLowerCase().includes('mace') ||
+                    attack.damageType.toLowerCase().includes('melee');
+    
     // The dice library will handle the rolling
     showRollResult(
         `${attack.name} Damage`,
@@ -512,14 +533,26 @@ function rollDamage(attackIndex) {
         null,
         damageStr, // Pass the damage notation directly
         0, // No additional modifier (already in notation)
-        'damage' // Type of roll
+        'damage', // Type of roll
+        isMelee ? attackIndex : null
     );
 }
 
-function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20') {
+function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20', attackIndex = null) {
     const modal = document.getElementById('rollModal');
     const titleDiv = document.getElementById('rollTitle');
     const resultDiv = document.getElementById('rollResult');
+    
+    // Store roll context for re-rolling
+    currentRollContext = {
+        title: title,
+        modifier: modifier,
+        details: details,
+        diceNotation: diceNotation,
+        bonusModifier: bonusModifier,
+        rollType: rollType,
+        attackIndex: attackIndex
+    };
     
     // Show the modal first
     modal.style.display = 'block';
@@ -538,7 +571,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             setTimeout(() => {
                 const initialized = initializeDiceBox();
                 if (initialized) {
-                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
+                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex);
                 } else {
                     // Fallback to instant result if initialization fails
                     const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -550,7 +583,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             }, 150);
         } else {
             // Dice box already initialized, use it
-            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType);
+            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex);
         }
     } else {
         // No dice animation, just show the result
@@ -561,7 +594,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
     }
 }
 
-function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20') {
+function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20', attackIndex = null) {
     if (!diceBox) {
         // Fallback if dice box not available
         const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -609,9 +642,53 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                     }
                 }
                 
+                // Add re-roll buttons for d20 rolls (attack rolls, ability checks, saves, skills)
+                let rerollButtons = '';
+                if (rollType === 'd20' && diceNotation && diceNotation.includes('d20')) {
+                    rerollButtons = `
+                        <div class="reroll-buttons">
+                            <button class="btn btn-secondary" onclick="rerollDice()">Re-roll</button>
+                        </div>
+                    `;
+                }
+                
+                // Add divine smite button for melee damage rolls
+                let smiteButton = '';
+                if (attackIndex !== null && rollType === 'damage') {
+                    // Check if any spell slots are available
+                    const hasSpellSlots = findAvailableSpellSlot(1) !== -1;
+                    const disabledAttr = hasSpellSlots ? '' : ' disabled';
+                    const disabledClass = hasSpellSlots ? '' : ' disabled-smite';
+                    
+                    smiteButton = `
+                        <div class="smite-in-modal${disabledClass}">
+                            <h4>Divine Smite</h4>
+                            <div class="smite-calculator">
+                                <label>Spell Slot Level:</label>
+                                <select id="smiteLevel_modal_${attackIndex}" class="smite-select"${disabledAttr}>
+                                    <option value="1">1st Level (2d8)</option>
+                                    <option value="2">2nd Level (3d8)</option>
+                                    <option value="3">3rd Level (4d8)</option>
+                                    <option value="4">4th Level (5d8)</option>
+                                </select>
+                                <label>
+                                    <input type="checkbox" id="smiteUndead_modal_${attackIndex}"${disabledAttr}>
+                                    Target is undead/fiend (+1d8)
+                                </label>
+                                <button class="btn btn-primary" onclick="rollDivineSmiteFromModal(${attackIndex})"${disabledAttr}>Roll Smite Damage</button>
+                                ${!hasSpellSlots ? '<p class="no-slots-message">No spell slots available</p>' : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 resultDiv.innerHTML = `
-                    <div class="dice-roll">${finalTotal}</div>
-                    <div class="roll-details">${details}</div>
+                    <div class="roll-result-inline">
+                        <span class="dice-roll">${finalTotal}</span>
+                        <span class="roll-details">${details}</span>
+                    </div>
+                    ${rerollButtons}
+                    ${smiteButton}
                 `;
             }, 500);
         }
@@ -630,6 +707,59 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
 
 function closeModal() {
     document.getElementById('rollModal').style.display = 'none';
+}
+
+function rerollDice() {
+    if (!currentRollContext) {
+        console.error('No roll context available for re-roll');
+        return;
+    }
+    
+    // Re-use the stored context to perform the same roll again
+    showRollResult(
+        currentRollContext.title,
+        currentRollContext.modifier,
+        currentRollContext.details,
+        currentRollContext.diceNotation,
+        currentRollContext.bonusModifier,
+        currentRollContext.rollType,
+        currentRollContext.attackIndex
+    );
+}
+
+function rollDivineSmiteFromModal(attackIndex) {
+    const level = parseInt(document.getElementById(`smiteLevel_modal_${attackIndex}`).value);
+    const isUndead = document.getElementById(`smiteUndead_modal_${attackIndex}`).checked;
+    
+    // Find an available spell slot of the selected level
+    const slotIndex = findAvailableSpellSlot(level);
+    if (slotIndex === -1) {
+        alert(`No available ${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} level spell slots!`);
+        return;
+    }
+    
+    // Mark spell slot as used
+    character.classFeatures.spellSlots[slotIndex] = true;
+    document.getElementById(`spellSlot1_${slotIndex + 1}`).checked = true;
+    saveToLocalStorage(true);
+    
+    // Base damage: 2d8 for 1st level, +1d8 per level above 1st
+    const diceCount = 1 + level;
+    
+    // Build dice notation
+    let diceNotation = `${diceCount}d8`;
+    if (isUndead) {
+        diceNotation += '+1d8';
+    }
+    
+    showRollResult(
+        `Divine Smite (${level}${level === 1 ? 'st' : level === 2 ? 'nd' : level === 3 ? 'rd' : 'th'} Level)`,
+        0, // Not used when using dice animation
+        null,
+        diceNotation,
+        0,
+        'damage'
+    );
 }
 
 // HP adjustment function - increment/decrement the adjust input
@@ -1074,6 +1204,8 @@ function populateForm() {
     document.getElementById('characterRace').value = character.race || '';
     document.getElementById('characterBackground').value = character.background || '';
     document.getElementById('characterAlignment').value = character.alignment || '';
+    document.getElementById('characterLanguages').value = character.languages || 'Common, Goblin';
+    document.getElementById('characterDeity').value = character.deity || 'Lathander';
     
     // Combat stats
     document.getElementById('armorClass').value = character.armorClass || 10;
@@ -1527,8 +1659,10 @@ window.resetLayOnHands = resetLayOnHands;
 window.resetSpellSlots = resetSpellSlots;
 window.resetChannelDivinity = resetChannelDivinity;
 window.rollDivineSmite = rollDivineSmite;
+window.rollDivineSmiteFromModal = rollDivineSmiteFromModal;
 window.rollCustomDice = rollCustomDice;
 window.commitHPAdjustment = commitHPAdjustment;
 window.longRest = longRest;
 window.adjustHitDiceCount = adjustHitDiceCount;
 window.rollHitDice = rollHitDice;
+window.rerollDice = rerollDice;
