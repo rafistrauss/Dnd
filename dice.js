@@ -28,7 +28,7 @@ const DICE = (function() {
 
     var vars = { //todo: make these configurable on init
         frame_rate: 1 / 60,
-        scale: 100, //dice size
+        scale: 50, //dice size
         
         material_options: {
             specular: 0x172022,
@@ -36,8 +36,8 @@ const DICE = (function() {
             shininess: 40,
             shading: THREE.FlatShading,
         },
-        label_color: '#aaaaaa', //numbers on dice
-        dice_color: '#170074ff',
+        label_color: '#ffffffff', //numbers on dice
+        dice_color: '#051e0aff',
         ambient_light_color: 0xf0f0f0,
         spot_light_color: 0xcfcfcf,
         desk_color: '#3a2004', //canvas background
@@ -184,6 +184,14 @@ const DICE = (function() {
         this.diceToRoll = diceToRoll;
     }
 
+    // @brief Update desk color dynamically
+    that.dice_box.prototype.updateDeskColor = function(color) {
+        if (this.desk) {
+            this.desk.material.color.set(color);
+            this.renderer.render(this.scene, this.camera);
+        }
+    }
+
     //call this to roll dice programatically or from click
     that.dice_box.prototype.start_throw = function(before_roll, after_roll) {
         var box = this;
@@ -250,7 +258,7 @@ const DICE = (function() {
             box.clear();
             box.roll(vectors, request_results || notation.result, function(result) {
                 notation.result = result;
-                var res = result.join(' ');
+                var res = result.join(' + ');
                 if (notation.constant) {
                     if (notation.constant > 0) res += ' +' + notation.constant;
                     else res += ' -' + Math.abs(notation.constant);
@@ -561,6 +569,7 @@ const DICE = (function() {
             var ts = calc_texture_size(size + size * 2 * margin) * 2;
             canvas.width = canvas.height = ts;
             context.font = ts / (1 + 2 * margin) + "pt Arial";
+            context.fontWeight = 'bold';
             context.fillStyle = back_color;
             context.fillRect(0, 0, canvas.width, canvas.height);
             context.textAlign = "center";
@@ -609,6 +618,55 @@ const DICE = (function() {
             materials.push(new THREE.MeshPhongMaterial($t.copyto(vars.material_options,
                         { map: create_d4_text(labels[i], vars.label_color, vars.dice_color) })));
         return materials;
+    }
+
+    // @brief Update colors of existing dice in the scene
+    that.dice_box.prototype.updateDiceColors = function() {
+        // Clear material cache to force recreation with new colors
+        that.clearMaterialCache();
+        
+        // Update each existing dice in the scene
+        for (var i = 0; i < this.dices.length; i++) {
+            var dice = this.dices[i];
+            var type = dice.dice_type;
+            
+            // Create new material with updated colors
+            var newMaterial;
+            if (type === 'd4') {
+                newMaterial = new THREE.MeshFaceMaterial(
+                    create_d4_materials(vars.scale / 2, vars.scale * 2, CONSTS.d4_labels[0])
+                );
+            } else if (type === 'd100') {
+                newMaterial = new THREE.MeshFaceMaterial(
+                    create_dice_materials(CONSTS.standart_d100_dice_face_labels, vars.scale / 2, 1.5)
+                );
+            } else {
+                // Most dice types use the same material structure
+                var scaleFactors = {
+                    'd6': 0.9,
+                    'd8': 1.4,
+                    'd9': 1.0,
+                    'd10': 1.0,
+                    'd12': 1.0,
+                    'd20': 1.2
+                };
+                var scaleFactor = scaleFactors[type] || 1.0;
+                newMaterial = new THREE.MeshFaceMaterial(
+                    create_dice_materials(CONSTS.standart_d20_dice_face_labels, vars.scale / 2, scaleFactor)
+                );
+            }
+            
+            // Dispose old material to free memory
+            if (dice.material && dice.material.dispose) {
+                dice.material.dispose();
+            }
+            
+            // Apply new material
+            dice.material = newMaterial;
+        }
+        
+        // Re-render the scene
+        this.renderer.render(this.scene, this.camera);
     }
 
     function create_d4_geometry(radius) {
@@ -890,5 +948,44 @@ const DICE = (function() {
         playCriticalSound(document.body);
     };
 
+    // @brief Update dice colors dynamically
+    // @param colors object with optional properties: dice_color, label_color, desk_color
+    that.setColors = function(colors) {
+        if (colors.dice_color !== undefined) {
+            vars.dice_color = colors.dice_color;
+        }
+        if (colors.label_color !== undefined) {
+            vars.label_color = colors.label_color;
+        }
+        if (colors.desk_color !== undefined) {
+            vars.desk_color = colors.desk_color;
+        }
+        // Clear cached materials so they get recreated with new colors
+        that.clearMaterialCache();
+    };
+
+    // @brief Clear cached dice materials to force recreation with new colors
+    that.clearMaterialCache = function() {
+        if (threeD_dice) {
+            threeD_dice.dice_material = null;
+            threeD_dice.d4_material = null;
+            threeD_dice.d100_material = null;
+        }
+    };
+
+    // @brief Get current color settings
+    that.getColors = function() {
+        return {
+            dice_color: vars.dice_color,
+            label_color: vars.label_color,
+            desk_color: vars.desk_color
+        };
+    };
+
     return that;
 }());
+
+// Export to global scope for use in other scripts
+if (typeof window !== 'undefined') {
+    window.DICE = DICE;
+}
