@@ -52,9 +52,28 @@ header {
     margin-bottom: 10px;
 }
 
+.header-title-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
 header h1 {
     font-size: 1.5rem;
     margin: 0;
+    white-space: nowrap;
+}
+
+.header-character-input {
+    max-width: 200px;
+    padding: 6px 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    font-weight: bold;
 }
 
 .mode-toggle {
@@ -1042,9 +1061,32 @@ body:not(.use-mode) .hp-controls {
         margin-bottom: 10px;
     }
 
+    .header-top {
+        flex-wrap: wrap;
+    }
+
+    .header-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+    }
+
     header h1 {
         font-size: 1.2rem;
-        margin-bottom: 8px;
+        margin: 0;
+    }
+
+    .header-character-input {
+        width: 100%;
+        max-width: none;
+        font-size: 0.9rem;
+        padding: 6px 8px;
+    }
+
+    .mode-toggle {
+        gap: 5px;
     }
 
     .header-actions {
