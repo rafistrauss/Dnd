@@ -169,6 +169,13 @@ function setupEventListeners() {
     // Character info inputs
     document.getElementById('characterName').addEventListener('change', (e) => {
         character.name = e.target.value;
+        document.getElementById('headerCharacterName').value = e.target.value;
+    });
+    
+    // Header character name input (sync with main input)
+    document.getElementById('headerCharacterName').addEventListener('change', (e) => {
+        character.name = e.target.value;
+        document.getElementById('characterName').value = e.target.value;
     });
     
     document.getElementById('characterClass').addEventListener('change', (e) => {
@@ -1209,6 +1216,7 @@ function loadFromLocalStorage() {
 function populateForm() {
     // Basic info
     document.getElementById('characterName').value = character.name || '';
+    document.getElementById('headerCharacterName').value = character.name || '';
     document.getElementById('characterClass').value = character.class || '';
     document.getElementById('characterLevel').value = character.level || 1;
     document.getElementById('characterRace').value = character.race || '';
