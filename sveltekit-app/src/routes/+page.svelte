@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { character, isEditMode, exportCharacter, importCharacter, searchFilter } from '$lib/stores';
+	import { character, isEditMode, exportCharacter, importCharacter, searchFilter, toasts } from '$lib/stores';
 	import { getClassConfig, getAvailableFeatures } from '$lib/classConfig';
 	import CharacterInfo from '$lib/components/CharacterInfo.svelte';
 	import AbilityScores from '$lib/components/AbilityScores.svelte';
@@ -12,6 +12,7 @@
 	import DiceRoller from '$lib/components/DiceRoller.svelte';
 	import GistModal from '$lib/components/GistModal.svelte';
 	import WikidotImport from '$lib/components/WikidotImport.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	import type { Character } from '$lib/types';
 
 	function getAllSpellSlots(): { level: number; available: number; total: number }[] {
@@ -43,9 +44,16 @@
 	let showRestMenu = false;
 
 	function takeShortRest() {
+		const restoredItems: string[] = [];
+		
 		character.update(c => {
 			// Restore hit dice (up to half of max)
+			const hitDiceBefore = c.hitDice.current;
 			c.hitDice.current = Math.min(c.hitDice.max, c.hitDice.current + Math.max(1, Math.floor(c.hitDice.max / 2)));
+			const hitDiceRestored = c.hitDice.current - hitDiceBefore;
+			if (hitDiceRestored > 0) {
+				restoredItems.push(`${hitDiceRestored} hit ${hitDiceRestored === 1 ? 'die' : 'dice'}`);
+			}
 			
 			// Reset features that recharge on short rest
 			if (c.classFeatures.features) {
@@ -56,11 +64,13 @@
 							const maxUses = featureConfig.maxUses;
 							const uses = typeof maxUses === 'function' ? maxUses(c.level) : maxUses;
 							c.classFeatures.features[key] = Array(uses).fill(false);
+							restoredItems.push(featureConfig.name);
 						} else if (typeof c.classFeatures.features[key] === 'number') {
 							const maxPool = featureConfig.maxPool;
 						const poolValue = typeof maxPool === 'function' ? maxPool(c.level) : maxPool;
 						if (poolValue !== undefined) {
 							c.classFeatures.features[key] = poolValue;
+							restoredItems.push(featureConfig.name);
 						}
 						}
 					}
@@ -69,26 +79,49 @@
 			
 			return c;
 		});
+		
 		showRestMenu = false;
+		
+		// Show toast with what was restored
+		const message = restoredItems.length > 0 
+			? `Short rest taken! Restored: ${restoredItems.join(', ')}`
+			: 'Short rest taken!';
+		toasts.add(message, 'success');
 	}
 
 	function takeLongRest() {
+		const restoredItems: string[] = [];
+		
 		character.update(c => {
 			// Restore all HP
+			const hpRestored = c.maxHP - c.currentHP;
+			if (hpRestored > 0) {
+				restoredItems.push(`${hpRestored} HP`);
+			}
 			c.currentHP = c.maxHP;
 			c.tempHP = 0;
 			
 			// Restore all hit dice
+			const hitDiceRestored = c.hitDice.max - c.hitDice.current;
+			if (hitDiceRestored > 0) {
+				restoredItems.push(`${hitDiceRestored} hit ${hitDiceRestored === 1 ? 'die' : 'dice'}`);
+			}
 			c.hitDice.current = c.hitDice.max;
 			
 			// Reset all spell slots
+			let spellSlotsRestored = 0;
 			if (c.classFeatures.spellSlotsByLevel) {
 				Object.keys(c.classFeatures.spellSlotsByLevel).forEach(level => {
 					const slots = c.classFeatures.spellSlotsByLevel![parseInt(level)];
 					if (slots) {
+						const usedSlots = slots.filter(s => s).length;
+						spellSlotsRestored += usedSlots;
 						c.classFeatures.spellSlotsByLevel![parseInt(level)] = Array(slots.length).fill(false);
 					}
 				});
+			}
+			if (spellSlotsRestored > 0) {
+				restoredItems.push(`${spellSlotsRestored} spell ${spellSlotsRestored === 1 ? 'slot' : 'slots'}`);
 			}
 			
 			// Reset all class features
@@ -109,11 +142,21 @@
 						}
 					}
 				});
+				if (Object.keys(c.classFeatures.features).length > 0) {
+					restoredItems.push('all class features');
+				}
 			}
 			
 			return c;
 		});
+		
 		showRestMenu = false;
+		
+		// Show toast with what was restored
+		const message = restoredItems.length > 0 
+			? `Long rest taken! Restored: ${restoredItems.join(', ')}`
+			: 'Long rest taken! Fully rested.';
+		toasts.add(message, 'success');
 	}
 
 	function getFeatureConfig(key: string) {
@@ -357,6 +400,8 @@
 {#if showWikidotImport}
 	<WikidotImport onClose={() => showWikidotImport = false} />
 {/if}
+
+<Toast />
 
 <style>
 	:global(body) {
