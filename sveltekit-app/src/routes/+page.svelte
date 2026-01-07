@@ -234,6 +234,7 @@
 <svelte:head>
 	<title>D&D Character Sheet</title>
 	<link rel="icon" type="image/png" href="/favicon.png">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 </svelte:head>
 
 <div class="container">
@@ -244,6 +245,12 @@
 				{#if $character.name}
 					<span class="character-name">{$character.name}</span>
 				{/if}
+				<input 
+					type="text" 
+					bind:value={$searchFilter} 
+					placeholder="🔍 Search (e.g., Religion, Strength, Attack...)" 
+					class="search-input use-enabled"
+				/>
 			</div>
 			<div class="header-controls">
 				<button on:click={() => showDiceRoller = true} class="btn btn-secondary use-enabled">
@@ -263,12 +270,6 @@
 						</div>
 					{/if}
 				</div>
-				<input 
-					type="text" 
-					bind:value={$searchFilter} 
-					placeholder="🔍 Search (e.g., Religion, Strength, Attack...)" 
-					class="search-input use-enabled"
-				/>
 				<div class="mode-toggle">
 					<button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
 						{$isEditMode ? '📝 Edit Mode' : '🎲 Use Mode'}
@@ -277,7 +278,7 @@
 			</div>
 		</div>
 		<div class="header-actions">
-			<button on:click={() => showWikidotImport = true} class="btn btn-primary">
+			<button on:click={() => showWikidotImport = true} class="btn btn-mode">
 				📚 Browse Spells & Feats
 			</button>
 			<button on:click={() => { gistMode = 'save'; showGistModal = true; }} class="btn btn-secondary">
@@ -378,8 +379,10 @@
 
 	.header-title {
 		display: flex;
-		flex-direction: column;
-		gap: 5px;
+		flex-direction: row;
+		justify-content: space-between;
+		width: 100%;
+		gap: 15px;
 		flex-shrink: 0;
 	}
 
@@ -474,6 +477,7 @@
 	:global(.btn-primary) {
 		background-color: var(--primary-color);
 		color: white;
+		border: 1px solid var(--primary-color);
 	}
 
 	:global(.btn-primary:hover) {
@@ -512,10 +516,6 @@
 	@media (max-width: 768px) {
 		h1 {
 			display: none;
-		}
-
-		.header-title {
-			gap: 0;
 		}
 
 		.character-name {
