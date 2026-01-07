@@ -301,6 +301,12 @@
 					{:else}
 						{@const spell = getSpellByName(attack.spellRef)}
 						{#if spell}
+							{#if attack.generalNotes}
+								 <div class="spell-notes">
+									 <h4>General Notes</h4>
+									 <p>{attack.generalNotes}</p>
+								 </div>
+							{/if}
 							<div class="spell-info">
 								<h4>Spell Info</h4>
 								<ul>
@@ -357,12 +363,6 @@
 										<span style="color: #dc3545; font-weight: bold;">No spell slots available!</span>
 									</div>
 								{/if}
-							{/if}
-							{#if attack.generalNotes}
-								 <div class="spell-notes">
-									 <h4>General Notes</h4>
-									 <p>{attack.generalNotes}</p>
-								 </div>
 							{/if}
 						{:else}
 							<div class="spell-info-missing">Spell info not found.</div>
