@@ -257,10 +257,12 @@
 	<header>
 		<div class="header-top">
 			<div class="header-title">
-				<h1>D&D Character Sheet</h1>
-				{#if $character.name}
-					<span class="character-name">{$character.name}</span>
-				{/if}
+				<div class="title-row">
+					<h1>D&D Character Sheet</h1>
+					{#if $character.name}
+						<span class="character-name">{$character.name}</span>
+					{/if}
+				</div>
 				{#if getAllSpellSlots().length > 0}
 					<div class="spell-slots-header">
 						{#each getAllSpellSlots() as slotInfo}
@@ -270,24 +272,19 @@
 						{/each}
 					</div>
 				{/if}
-				<input 
-					type="text" 
-					bind:value={$searchFilter} 
-					placeholder="🔍 Search (e.g., Religion, Strength, Attack...)" 
-					class="search-input use-enabled"
-				/>
 			</div>
-			<div class="header-controls">
-				<button on:click={() => showDiceRoller = true} class="btn btn-secondary use-enabled">
-					🎲 Roll Dice
-				</button>
-				<div class="rest-button-container">
-					<button 
-						on:click={() => showRestMenu = !showRestMenu} 
-						class="btn btn-secondary use-enabled"
-					>
-						😴 Rest
+			<div class="header-right">
+				<div class="header-controls">
+					<button on:click={() => showDiceRoller = true} class="btn btn-secondary use-enabled">
+						<span class="btn-icon">🎲</span><span class="btn-text"> Roll Dice</span>
 					</button>
+					<div class="rest-button-container">
+						<button 
+							on:click={() => showRestMenu = !showRestMenu} 
+							class="btn btn-secondary use-enabled"
+						>
+							<span class="btn-icon">😴</span><span class="btn-text"> Rest</span>
+						</button>
 					{#if showRestMenu}
 						<div class="rest-menu">
 							<button on:click={takeShortRest} class="rest-option">☕ Short Rest</button>
@@ -295,10 +292,19 @@
 						</div>
 					{/if}
 				</div>
-				<div class="mode-toggle">
-					<button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
-						{$isEditMode ? '📝 Edit Mode' : '🎲 Use Mode'}
-					</button>
+					<div class="mode-toggle">
+						<button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
+							<span class="btn-icon">{$isEditMode ? '📝' : '🎲'}</span><span class="btn-text"> {$isEditMode ? 'Edit Mode' : 'Use Mode'}</span>
+						</button>
+					</div>
+				</div>
+				<div class="header-search">
+					<input 
+						type="text" 
+						bind:value={$searchFilter} 
+						placeholder="🔍 Search..." 
+						class="search-input use-enabled"
+					/>
 				</div>
 			</div>
 		</div>
@@ -397,18 +403,36 @@
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: space-between;
-		align-items: center;
+		align-items: flex-start;
 		margin-bottom: 10px;
-		gap: 20px;
+		gap: 10px;
 	}
 
 	.header-title {
 		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
-		width: 100%;
-		gap: 15px;
-		flex-shrink: 0;
+		flex-direction: column;
+		gap: 8px;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.header-right {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		align-items: flex-end;
+	}
+
+	.title-row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+
+	.header-search {
+		min-width: 200px;
+		overflow-x: hidden;
 	}
 
 	h1 {
@@ -426,8 +450,12 @@
 	.header-controls {
 		display: flex;
 		align-items: center;
-		gap: 15px;
-		flex: 1;
+		gap: 8px;
+		flex-wrap: nowrap;
+	}
+
+	.header-search {
+		min-width: 200px;
 	}
 
 	.rest-button-container {
@@ -465,8 +493,8 @@
 	}
 
 	.search-input {
-		flex: 1;
-		max-width: 400px;
+		width: 100%;
+		min-width: 200px;
 		padding: 8px 12px;
 		border: 1px solid rgba(255, 255, 255, 0.3);
 		border-radius: 4px;
@@ -483,7 +511,7 @@
 	.spell-slots-header {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 8px;
+		gap: 6px;
 	}
 
 	.slot-badge {
@@ -570,6 +598,46 @@
 			font-size: 1.1rem;
 			font-weight: bold;
 			opacity: 1;
+		}
+
+		.header-top {
+			gap: 8px;
+		}
+
+		.header-right {
+			align-items: stretch;
+		}
+
+		.header-controls {
+			flex-wrap: nowrap;
+			gap: 6px;
+		}
+
+		.header-search {
+			min-width: 150px;
+		}
+
+		.search-input {
+			font-size: 0.85rem;
+			padding: 6px 10px;
+			min-width: 150px;
+		}
+
+		.btn-text {
+			display: none;
+		}
+
+		.btn-icon {
+			display: inline;
+		}
+
+		.spell-slots-header {
+			gap: 4px;
+		}
+
+		.slot-badge {
+			padding: 3px 8px;
+			font-size: 0.75rem;
 		}
 
 		.header-actions {
