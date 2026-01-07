@@ -53,6 +53,7 @@ export interface Attack {
 	infoNotes?: string; // Range, Duration, Components, etc.
 	generalNotes?: string; // summary/effects
 	castAtLevel?: number; // for spells that can be cast at higher levels
+	targetIsFiendOrUndead?: boolean; // for conditional damage like Divine Smite
 	notes?: string; // for non-spell attacks
 }
 

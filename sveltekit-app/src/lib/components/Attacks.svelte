@@ -32,6 +32,7 @@
 
 	function rollAttack(attack: Attack) {
 		// If this is a spell attack, consume a spell slot
+		let damageToRoll = attack.damage;
 		if (attack.spellRef) {
 			const spell = getSpellByName(attack.spellRef);
 			if (spell && spell.level > 0) {
@@ -41,13 +42,15 @@
 					alert(`No level ${castLevel} spell slots available!`);
 					return;
 				}
+				// Use scaled damage if applicable
+				damageToRoll = getScaledSpellDamage(attack, spell);
 			}
 		}
 		
 		const notation = `1d20${attack.bonus >= 0 ? '+' : ''}${attack.bonus}`;
 		dispatch('roll', { 
 			notation, 
-			damageNotation: attack.damage,
+			damageNotation: damageToRoll,
 			attackName: attack.name 
 		});
 	}
@@ -58,7 +61,24 @@
 			return;
 		}
 
-		dispatch('roll', { notation: attack.damage });
+		let damageToRoll = attack.damage;
+		
+		// If this is a spell, handle slot consumption and scaling
+		if (attack.spellRef) {
+			const spell = getSpellByName(attack.spellRef);
+			if (spell && spell.level > 0) {
+				const castLevel = attack.castAtLevel || spell.level;
+				const hasSlot = checkAndConsumeSpellSlot(castLevel);
+				if (!hasSlot) {
+					alert(`No level ${castLevel} spell slots available!`);
+					return;
+				}
+				// Use scaled damage if applicable
+				damageToRoll = getScaledSpellDamage(attack, spell);
+			}
+		}
+
+		dispatch('roll', { notation: damageToRoll, attackName: attack.name });
 	}
 
 	function toggleCollapse() {
@@ -110,36 +130,81 @@
 	}
 
 	function getScaledSpellDamage(attack: Attack, spell: Spell): string {
-		if (!spell.higherLevelSlot || !attack.castAtLevel) {
-			return attack.damage;
+		let baseDamage = attack.damage;
+		let additionalDice = 0;
+		
+		// Handle higher level slot scaling
+		if (spell.higherLevelSlot && attack.castAtLevel) {
+			const baseLevel = spell.level;
+			const castLevel = attack.castAtLevel || baseLevel;
+			const levelDiff = castLevel - baseLevel;
+			
+			if (levelDiff > 0) {
+				// Look for common patterns in higherLevelSlot like "increases by 1d6 for each spell slot level above"
+				const increaseMatch = spell.higherLevelSlot.match(/(\d+)d(\d+)\s+for\s+each.*?level\s+above/i);
+				if (increaseMatch) {
+					const [, increaseDice] = increaseMatch;
+					additionalDice += levelDiff * parseInt(increaseDice);
+				}
+			}
 		}
 		
-		const baseLevel = spell.level;
-		const castLevel = attack.castAtLevel || baseLevel;
-		const levelDiff = castLevel - baseLevel;
-		
-		if (levelDiff <= 0) {
-			return attack.damage;
+		// Handle conditional damage (e.g., Divine Smite vs Fiend/Undead)
+		if (attack.targetIsFiendOrUndead && spell.description.includes('Fiend or an Undead')) {
+			const bonusMatch = spell.description.match(/increases by (\d+)d(\d+) if.*?Fiend or.*?Undead/i);
+			if (bonusMatch) {
+				const [, bonusDice] = bonusMatch;
+				additionalDice += parseInt(bonusDice);
+			}
 		}
 		
 		// Parse the base damage (e.g., "3d6")
-		const damageMatch = attack.damage.match(/(\d+)d(\d+)/);
+		const damageMatch = baseDamage.match(/(\d+)d(\d+)/);
 		if (!damageMatch) {
-			return attack.damage;
+			return baseDamage;
 		}
 		
 		const [, numDice, dieSize] = damageMatch;
-		
-		// Look for common patterns in higherLevelSlot like "increases by 1d6 for each spell slot level above"
-		const increaseMatch = spell.higherLevelSlot.match(/(\d+)d(\d+)\s+for\s+each.*?level\s+above/i);
-		if (!increaseMatch) {
-			return attack.damage;
-		}
-		
-		const [, increaseDice, increaseDie] = increaseMatch;
-		const totalDice = parseInt(numDice) + (levelDiff * parseInt(increaseDice));
+		const totalDice = parseInt(numDice) + additionalDice;
 		
 		return `${totalDice}d${dieSize}`;
+	}
+
+	function getAvailableSpellLevels(spell: Spell): number[] {
+		const levels: number[] = [];
+		const maxLevel = 9;
+		
+		for (let level = spell.level; level <= maxLevel; level++) {
+			const slots = $character.classFeatures.spellSlotsByLevel?.[level];
+			if (slots && slots.length > 0) {
+				levels.push(level);
+			}
+		}
+		
+		return levels;
+	}
+
+	function getAvailableSlotCount(level: number): { available: number; total: number } {
+		const slots = $character.classFeatures.spellSlotsByLevel?.[level] || [];
+		const total = slots.length;
+		const used = slots.filter(s => s).length;
+		return { available: total - used, total };
+	}
+
+	function getAllSpellSlots(): { level: number; available: number; total: number }[] {
+		const result: { level: number; available: number; total: number }[] = [];
+		const spellSlots = $character.classFeatures.spellSlotsByLevel || {};
+		
+		for (let level = 1; level <= 9; level++) {
+			const slots = spellSlots[level];
+			if (slots && slots.length > 0) {
+				const total = slots.length;
+				const used = slots.filter(s => s).length;
+				result.push({ level, available: total - used, total });
+			}
+		}
+		
+		return result;
 	}
 
 	function rollSpellDamage(attack: Attack) {
@@ -160,7 +225,7 @@
 		}
 		
 		const scaledDamage = getScaledSpellDamage(attack, spell);
-		dispatch('roll', { notation: scaledDamage });
+		dispatch('roll', { notation: scaledDamage, attackName: attack.name });
 	}
 
 	$: filteredAttacks = $character.attacks
@@ -251,6 +316,48 @@
 	
 								</ul>
 							</div>
+							{#if spell.higherLevelSlot && spell.level > 0}
+								{@const availableLevels = getAvailableSpellLevels(spell)}
+								{#if availableLevels.length > 0}
+									<div class="spell-level-selector">
+										<label for="castLevel-{attack.id}">Cast at Level:</label>
+										<select 
+											id="castLevel-{attack.id}"
+											bind:value={attack.castAtLevel}
+											class="spell-level-select use-enabled"
+										>
+											{#each availableLevels as level}
+												{@const slotCount = getAvailableSlotCount(level)}
+												<option value={level}>
+													Level {level} ({slotCount.available}/{slotCount.total} slots)
+												</option>
+											{/each}
+										</select>
+										{#if attack.castAtLevel && attack.castAtLevel > spell.level}
+											{@const scaledDamage = getScaledSpellDamage(attack, spell)}
+											<span class="scaled-damage">Damage: {scaledDamage}</span>
+										{/if}
+									</div>								{#if spell.description.includes('Fiend or an Undead')}
+									<div class="target-condition">
+										<label>
+											<input 
+												type="checkbox" 
+												bind:checked={attack.targetIsFiendOrUndead}
+												class="use-enabled"
+											/>
+											Target is Fiend or Undead
+											{#if attack.targetIsFiendOrUndead}
+												{@const scaledDamage = getScaledSpellDamage(attack, spell)}
+												<span class="scaled-damage">(+1d8, total: {scaledDamage})</span>
+											{/if}
+										</label>
+									</div>
+								{/if}								{:else}
+									<div class="spell-level-selector">
+										<span style="color: #dc3545; font-weight: bold;">No spell slots available!</span>
+									</div>
+								{/if}
+							{/if}
 							{#if attack.generalNotes}
 								 <div class="spell-notes">
 									 <h4>General Notes</h4>
@@ -274,9 +381,10 @@
 					</div>
 				{/if}
 				<div class="attack-actions">
-					<button on:click={() => rollAttack(attack)} class="btn btn-primary">Roll Attack</button>
-					<button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button
-					>
+					{#if attack.bonus !== 0 || !attack.spellRef}
+						<button on:click={() => rollAttack(attack)} class="btn btn-primary">Roll Attack</button>
+					{/if}
+					<button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button>
 				</div>
 			</div>
 		{/each}
@@ -539,6 +647,29 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
+	}
+
+	.target-condition {
+		margin-top: 10px;
+		padding: 10px;
+		background-color: #fff3e0;
+		border: 1px solid #ffcc80;
+		border-radius: 4px;
+	}
+
+	.target-condition label {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 0.9rem;
+		font-weight: normal;
+		cursor: pointer;
+	}
+
+	.target-condition input[type="checkbox"] {
+		cursor: pointer;
+		width: 16px;
+		height: 16px;
 	}
 
 	.spell-level-selector label {

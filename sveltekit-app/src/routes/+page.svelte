@@ -14,6 +14,22 @@
 	import WikidotImport from '$lib/components/WikidotImport.svelte';
 	import type { Character } from '$lib/types';
 
+	function getAllSpellSlots(): { level: number; available: number; total: number }[] {
+		const result: { level: number; available: number; total: number }[] = [];
+		const spellSlots = $character.classFeatures.spellSlotsByLevel || {};
+		
+		for (let level = 1; level <= 9; level++) {
+			const slots = spellSlots[level];
+			if (slots && slots.length > 0) {
+				const total = slots.length;
+				const used = slots.filter(s => s).length;
+				result.push({ level, available: total - used, total });
+			}
+		}
+		
+		return result;
+	}
+
 	let showDiceRoller = false;
 	let showGistModal = false;
 	let showWikidotImport = false;
@@ -245,6 +261,15 @@
 				{#if $character.name}
 					<span class="character-name">{$character.name}</span>
 				{/if}
+				{#if getAllSpellSlots().length > 0}
+					<div class="spell-slots-header">
+						{#each getAllSpellSlots() as slotInfo}
+							<span class="slot-badge" class:depleted={slotInfo.available === 0}>
+								Lv{slotInfo.level}: {slotInfo.available}/{slotInfo.total}
+							</span>
+						{/each}
+					</div>
+				{/if}
 				<input 
 					type="text" 
 					bind:value={$searchFilter} 
@@ -453,6 +478,29 @@
 		outline: none;
 		background-color: white;
 		border-color: var(--secondary-color);
+	}
+
+	.spell-slots-header {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.slot-badge {
+		background-color: rgba(255, 255, 255, 0.95);
+		color: #007bff;
+		padding: 4px 10px;
+		border-radius: 4px;
+		font-weight: bold;
+		font-size: 0.85rem;
+		border: 1px solid rgba(179, 217, 255, 0.8);
+		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	}
+
+	.slot-badge.depleted {
+		background-color: rgba(248, 215, 218, 0.95);
+		color: #721c24;
+		border: 1px solid rgba(245, 198, 203, 0.8);
 	}
 
 	.header-actions {

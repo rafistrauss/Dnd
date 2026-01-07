@@ -211,7 +211,6 @@
 											class="slot-checkbox"
 										/>
 									{/each}
-									<button on:click={() => resetSpellSlotLevel(level, slots)} class="btn-small">Long Rest</button>
 								</div>
 							</div>
 						{/each}
