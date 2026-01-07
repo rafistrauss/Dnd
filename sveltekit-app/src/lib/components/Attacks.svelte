@@ -200,13 +200,6 @@
 		return levels;
 	}
 
-	function getAvailableSlotCount(level: number): { available: number; total: number } {
-		const slots = $character.classFeatures.spellSlotsByLevel?.[level] || [];
-		const total = slots.length;
-		const used = slots.filter(s => s).length;
-		return { available: total - used, total };
-	}
-
 	function getAllSpellSlots(): { level: number; available: number; total: number }[] {
 		const result: { level: number; available: number; total: number }[] = [];
 		const spellSlots = $character.classFeatures.spellSlotsByLevel || {};
@@ -356,15 +349,20 @@
 											class="spell-level-select use-enabled"
 										>
 											{#each availableLevels as level}
-												{@const slotCount = getAvailableSlotCount(level)}
 												<option value={level}>
-													Level {level} ({slotCount.available}/{slotCount.total} slots)
+													Level {level}
 												</option>
 											{/each}
 										</select>
 										{#if attack.castAtLevel && attack.castAtLevel > spell.level}
 											{@const scaledDamage = getScaledSpellDamage(attack, spell)}
-											<span class="scaled-damage">Damage: {scaledDamage}</span>
+											<span class="scaled-damage">
+												{#if isHealingSpell(spell)}
+													 Healing
+												{:else}
+													Damage
+												{/if}
+												{scaledDamage}</span>
 										{/if}
 									</div>								{#if spell.description.includes('Fiend or an Undead')}
 									<div class="target-condition">
