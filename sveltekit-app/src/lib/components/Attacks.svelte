@@ -6,6 +6,20 @@
 
 	const dispatch = createEventDispatcher();
 
+	// Track collapsed state for each attack's spell info
+	let collapsedSpellInfo: Record<string, boolean> = {};
+
+	function toggleSpellInfo(attackId: string) {
+		collapsedSpellInfo[attackId] = !collapsedSpellInfo[attackId];
+		collapsedSpellInfo = { ...collapsedSpellInfo }; // Trigger reactivity
+	}
+
+	function isHealingSpell(spell: Spell): boolean {
+		return spell.description.toLowerCase().includes('regain') && 
+		       (spell.description.toLowerCase().includes('hit point') || 
+		        spell.description.toLowerCase().includes('hp'));
+	}
+
 	function addAttack() {
 		character.update(c => {
 			c.attacks = [
@@ -86,8 +100,10 @@
 	}
 
 	let spells: Spell[] = [];
+	let spellsLoaded = false;
 	onMount(async () => {
 		spells = await loadSpells();
+		spellsLoaded = true;
 	});
 
 	function getSpellByName(name: string) {
@@ -308,19 +324,26 @@
 								 </div>
 							{/if}
 							<div class="spell-info">
-								<h4>Spell Info</h4>
-								<ul>
-									<li><strong>Level:</strong> {spell.level}</li>
-									<li><strong>Casting Time:</strong> {spell.castingTime || spell.actionType}</li>
-									<li><strong>Range:</strong> {spell.range}</li>
-									<li><strong>Components:</strong> {spell.components.join(', ')}{#if spell.material} ({spell.material}){/if}</li>
-									<li><strong>Duration:</strong> {#if spell.concentration}Concentration, {/if}{spell.duration}</li>
-									<li><strong>Description:</strong> {spell.description}</li>
-									{#if spell.higherLevelSlot}
-										<li><strong>At Higher Levels:</strong> {spell.higherLevelSlot}</li>
-									{/if}
+								<div class="spell-info-header" on:click={() => toggleSpellInfo(attack.id)} on:keydown={(e) => e.key === 'Enter' && toggleSpellInfo(attack.id)} role="button" tabindex="0">
+									<h4>Spell Info</h4>
+									<button class="collapse-btn-small" aria-label={collapsedSpellInfo[attack.id] ? 'Expand' : 'Collapse'}>
+										{collapsedSpellInfo[attack.id] ? '▼' : '▲'}
+									</button>
+								</div>
+								{#if !collapsedSpellInfo[attack.id]}
+									<ul>
+										<li><strong>Level:</strong> {spell.level}</li>
+										<li><strong>Casting Time:</strong> {spell.castingTime || spell.actionType}</li>
+										<li><strong>Range:</strong> {spell.range}</li>
+										<li><strong>Components:</strong> {spell.components.join(', ')}{#if spell.material} ({spell.material}){/if}</li>
+										<li><strong>Duration:</strong> {#if spell.concentration}Concentration, {/if}{spell.duration}</li>
+										<li><strong>Description:</strong> {spell.description}</li>
+										{#if spell.higherLevelSlot}
+											<li><strong>At Higher Levels:</strong> {spell.higherLevelSlot}</li>
+										{/if}
 	
-								</ul>
+									</ul>
+								{/if}
 							</div>
 							{#if spell.higherLevelSlot && spell.level > 0}
 								{@const availableLevels = getAvailableSpellLevels(spell)}
@@ -384,7 +407,18 @@
 					{#if attack.bonus !== 0 || !attack.spellRef}
 						<button on:click={() => rollAttack(attack)} class="btn btn-primary">Roll Attack</button>
 					{/if}
-					<button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button>
+					{#if attack.spellRef && spellsLoaded}
+						{@const spell = getSpellByName(attack.spellRef)}
+						<button on:click={() => rollDamage(attack)} class="btn btn-secondary">
+							{#if spell && isHealingSpell(spell)}
+								Roll Healing
+							{:else}
+								Roll Damage
+							{/if}
+						</button>
+					{:else}
+						<button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button>
+					{/if}
 				</div>
 			</div>
 		{/each}
@@ -584,6 +618,32 @@
 		background-color: #e9f5ff;
 		border: 1px solid #b3e0ff;
 		border-radius: 4px;
+	}
+
+	.spell-info-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.spell-info-header:hover {
+		opacity: 0.8;
+	}
+
+	.collapse-btn-small {
+		background: none;
+		border: none;
+		font-size: 0.9rem;
+		cursor: pointer;
+		color: #007bff;
+		padding: 0;
+		transition: transform 0.2s ease;
+	}
+
+	.collapse-btn-small:hover {
+		transform: scale(1.1);
 	}
 
 	.spell-info h4 {
