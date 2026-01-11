@@ -3,6 +3,7 @@
 	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
 	import type { Attack, Spell } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
+	import { getSavingThrowInfo } from '$lib/spellUtils';
 
 	const dispatch = createEventDispatcher();
 
@@ -57,7 +58,8 @@
 					return;
 				}
 				// Use scaled damage if applicable, with half damage if target succeeded on save
-				const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+				const savingThrow = getSavingThrowInfo(spell);
+				const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
 				damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
 			}
 		}
@@ -89,7 +91,8 @@
 					return;
 				}
 				// Use scaled damage if applicable, with half damage if target succeeded on save
-				const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+				const savingThrow = getSavingThrowInfo(spell);
+				const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
 				damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
 			}
 		}
@@ -240,7 +243,8 @@
 			}
 		}
 		
-		const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+		const savingThrow = getSavingThrowInfo(spell);
+		const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
 		const scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage);
 		dispatch('roll', { notation: scaledDamage, attackName: attack.name });
 	}
@@ -363,7 +367,8 @@
 											{/each}
 										</select>
 										{#if attack.castAtLevel && attack.castAtLevel > spell.level}
-											{@const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave}
+											{@const savingThrow = getSavingThrowInfo(spell)}
+											{@const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave}
 											{@const scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage)}
 											<span class="scaled-damage">
 												{#if isHealingSpell(spell)}
@@ -383,14 +388,16 @@
 											/>
 											Target is Fiend or Undead
 											{#if attack.targetIsFiendOrUndead}
-												{@const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave}
+												{@const savingThrow = getSavingThrowInfo(spell)}
+												{@const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave}
 												{@const scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage)}
 												<span class="scaled-damage">(+1d8, total: {scaledDamage})</span>
 											{/if}
 										</label>
 									</div>
 								{/if}
-								{#if spell.savingThrow}
+								{@const savingThrow = getSavingThrowInfo(spell)}
+								{#if savingThrow}
 									<div class="target-condition">
 										<label>
 											<input 
@@ -398,10 +405,10 @@
 												bind:checked={attack.targetSucceededSave}
 												class="use-enabled"
 											/>
-											Target succeeded on {spell.savingThrow.ability.charAt(0).toUpperCase() + spell.savingThrow.ability.slice(1)} save
-											{#if attack.targetSucceededSave && spell.savingThrow.halfDamageOnSave}
+											Target succeeded on {savingThrow.ability.charAt(0).toUpperCase() + savingThrow.ability.slice(1)} save
+											{#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
 												<span class="scaled-damage">(Half damage)</span>
-											{:else if attack.targetSucceededSave && !spell.savingThrow.halfDamageOnSave}
+											{:else if attack.targetSucceededSave && !savingThrow.halfDamageOnSave}
 												<span class="scaled-damage">(No damage)</span>
 											{/if}
 										</label>

@@ -75,10 +75,6 @@ export interface Spell {
   castingTime?: string
   higherLevelSlot?: string
   castingTrigger?: string
-  savingThrow?: {
-    ability: 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma'
-    halfDamageOnSave: boolean
-  }
 }
 
 export interface HitDice {
