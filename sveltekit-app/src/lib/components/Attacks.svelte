@@ -57,10 +57,14 @@
 					alert(`No level ${castLevel} spell slots available!`);
 					return;
 				}
-				// Use scaled damage if applicable, with half damage if target succeeded on save
+				// Use scaled damage if applicable, with half damage or no damage if target succeeded on save
 				const savingThrow = getSavingThrowInfo(spell);
-				const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
-				damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
+				if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
+					damageToRoll = '0';
+				} else {
+					const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+					damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
+				}
 			}
 		}
 		
@@ -90,10 +94,14 @@
 					alert(`No level ${castLevel} spell slots available!`);
 					return;
 				}
-				// Use scaled damage if applicable, with half damage if target succeeded on save
+				// Use scaled damage if applicable, with half damage or no damage if target succeeded on save
 				const savingThrow = getSavingThrowInfo(spell);
-				const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
-				damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
+				if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
+					damageToRoll = '0';
+				} else {
+					const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+					damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
+				}
 			}
 		}
 
@@ -244,8 +252,13 @@
 		}
 		
 		const savingThrow = getSavingThrowInfo(spell);
-		const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
-		const scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage);
+		let scaledDamage;
+		if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
+			scaledDamage = '0';
+		} else {
+			const applyHalfDamage = savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+			scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage);
+		}
 		dispatch('roll', { notation: scaledDamage, attackName: attack.name });
 	}
 
@@ -408,7 +421,7 @@
 											Target succeeded on {savingThrow.ability.charAt(0).toUpperCase() + savingThrow.ability.slice(1)} save
 											{#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
 												<span class="scaled-damage">(Half damage)</span>
-											{:else if attack.targetSucceededSave && !savingThrow.halfDamageOnSave}
+											{:else if attack.targetSucceededSave && savingThrow.noDamageOnSave}
 												<span class="scaled-damage">(No damage)</span>
 											{/if}
 										</label>
