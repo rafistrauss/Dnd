@@ -55,23 +55,27 @@
 				restoredItems.push(`${hitDiceRestored} hit ${hitDiceRestored === 1 ? 'die' : 'dice'}`);
 			}
 			
-			// Reset features that recharge on short rest
-			if (c.classFeatures.features) {
-				Object.keys(c.classFeatures.features).forEach(key => {
-					const featureConfig = getFeatureConfig(key);
-					if (featureConfig?.resetOn === 'short') {
-						if (Array.isArray(c.classFeatures.features[key])) {
-							const maxUses = featureConfig.maxUses;
-							const uses = typeof maxUses === 'function' ? maxUses(c.level) : maxUses;
-							c.classFeatures.features[key] = Array(uses).fill(false);
-							restoredItems.push(featureConfig.name);
-						} else if (typeof c.classFeatures.features[key] === 'number') {
-							const maxPool = featureConfig.maxPool;
-						const poolValue = typeof maxPool === 'function' ? maxPool(c.level) : maxPool;
-						if (poolValue !== undefined) {
-							c.classFeatures.features[key] = poolValue;
-							restoredItems.push(featureConfig.name);
-						}
+			// Reset features that recharge on short rest - check all available features
+			if (c.class) {
+				const availableFeatures = getAvailableFeatures(c.class, c.level, c.subclass);
+				if (!c.classFeatures.features) {
+					c.classFeatures.features = {};
+				}
+				
+				availableFeatures.forEach(feature => {
+					if (feature.resetOn === 'short') {
+						const featureKey = feature.name.replace(/\s+/g, '');
+						
+						if (feature.type === 'uses') {
+							const maxUses = typeof feature.maxUses === 'function' ? feature.maxUses(c.level) : feature.maxUses;
+							c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+							restoredItems.push(feature.name);
+						} else if (feature.type === 'pool') {
+							const maxPool = typeof feature.maxPool === 'function' ? feature.maxPool(c.level) : feature.maxPool;
+							if (maxPool !== undefined) {
+								c.classFeatures.features[featureKey] = maxPool;
+								restoredItems.push(feature.name);
+							}
 						}
 					}
 				});
@@ -124,25 +128,36 @@
 				restoredItems.push(`${spellSlotsRestored} spell ${spellSlotsRestored === 1 ? 'slot' : 'slots'}`);
 			}
 			
-			// Reset all class features
-			if (c.classFeatures.features) {
-				Object.keys(c.classFeatures.features).forEach(key => {
-					const featureConfig = getFeatureConfig(key);
-					if (featureConfig) {
-						if (Array.isArray(c.classFeatures.features[key])) {
-							const maxUses = featureConfig.maxUses;
-							const uses = typeof maxUses === 'function' ? maxUses(c.level) : maxUses;
-							c.classFeatures.features[key] = Array(uses).fill(false);
-						} else if (typeof c.classFeatures.features[key] === 'number') {
-							const maxPool = featureConfig.maxPool;
-							const poolValue = typeof maxPool === 'function' ? maxPool(c.level) : maxPool;
-							if (poolValue !== undefined) {
-								c.classFeatures.features[key] = poolValue;
-							}
+			// Reset all class features - iterate through available features, not just existing ones
+			if (c.class) {
+				const availableFeatures = getAvailableFeatures(c.class, c.level, c.subclass);
+				if (!c.classFeatures.features) {
+					c.classFeatures.features = {};
+				}
+				
+				let featuresRestored = false;
+				availableFeatures.forEach(feature => {
+					const featureKey = feature.name.replace(/\s+/g, '');
+					
+					// Skip info and channelDivinity types as they don't need restoration
+					if (feature.type === 'info' || feature.type === 'channelDivinity') {
+						return;
+					}
+					
+					if (feature.type === 'uses') {
+						const maxUses = typeof feature.maxUses === 'function' ? feature.maxUses(c.level) : feature.maxUses;
+						c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+						featuresRestored = true;
+					} else if (feature.type === 'pool') {
+						const maxPool = typeof feature.maxPool === 'function' ? feature.maxPool(c.level) : feature.maxPool;
+						if (maxPool !== undefined) {
+							c.classFeatures.features[featureKey] = maxPool;
+							featuresRestored = true;
 						}
 					}
 				});
-				if (Object.keys(c.classFeatures.features).length > 0) {
+				
+				if (featuresRestored) {
 					restoredItems.push('all class features');
 				}
 			}
