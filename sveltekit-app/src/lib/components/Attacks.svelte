@@ -363,7 +363,8 @@
 											{/each}
 										</select>
 										{#if attack.castAtLevel && attack.castAtLevel > spell.level}
-											{@const scaledDamage = getScaledSpellDamage(attack, spell)}
+											{@const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave}
+											{@const scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage)}
 											<span class="scaled-damage">
 												{#if isHealingSpell(spell)}
 													 Healing
@@ -382,7 +383,8 @@
 											/>
 											Target is Fiend or Undead
 											{#if attack.targetIsFiendOrUndead}
-												{@const scaledDamage = getScaledSpellDamage(attack, spell)}
+												{@const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave}
+												{@const scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage)}
 												<span class="scaled-damage">(+1d8, total: {scaledDamage})</span>
 											{/if}
 										</label>
