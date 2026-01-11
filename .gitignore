@@ -33,3 +33,11 @@ Temporary Items
 logs
 *.log
 npm-debug.log*
+
+# Node modules
+node_modules/
+sveltekit-app/node_modules/
+
+# Build artifacts
+sveltekit-app/build/
+sveltekit-app/.svelte-kit/
