@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
+	import { character, abilityModifiers, searchFilter, collapsedStates, updateProficiencyBonus } from '$lib/stores';
 	import type { AbilityName } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
