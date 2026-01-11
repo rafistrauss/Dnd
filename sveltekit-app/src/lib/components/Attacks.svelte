@@ -56,8 +56,9 @@
 					alert(`No level ${castLevel} spell slots available!`);
 					return;
 				}
-				// Use scaled damage if applicable
-				damageToRoll = getScaledSpellDamage(attack, spell);
+				// Use scaled damage if applicable, with half damage if target succeeded on save
+				const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+				damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
 			}
 		}
 		
@@ -87,8 +88,9 @@
 					alert(`No level ${castLevel} spell slots available!`);
 					return;
 				}
-				// Use scaled damage if applicable
-				damageToRoll = getScaledSpellDamage(attack, spell);
+				// Use scaled damage if applicable, with half damage if target succeeded on save
+				const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+				damageToRoll = getScaledSpellDamage(attack, spell, applyHalfDamage);
 			}
 		}
 
@@ -145,7 +147,7 @@
 		return true;
 	}
 
-	function getScaledSpellDamage(attack: Attack, spell: Spell): string {
+	function getScaledSpellDamage(attack: Attack, spell: Spell, applyHalfDamage: boolean = false): string {
 		let baseDamage = attack.damage;
 		let additionalDice = 0;
 		
@@ -182,6 +184,11 @@
 		
 		const [, numDice, dieSize] = damageMatch;
 		const totalDice = parseInt(numDice) + additionalDice;
+		
+		// Apply half damage if target succeeded on save
+		if (applyHalfDamage) {
+			return `(${totalDice}d${dieSize})/2`;
+		}
 		
 		return `${totalDice}d${dieSize}`;
 	}
@@ -233,7 +240,8 @@
 			}
 		}
 		
-		const scaledDamage = getScaledSpellDamage(attack, spell);
+		const applyHalfDamage = spell.savingThrow?.halfDamageOnSave && attack.targetSucceededSave;
+		const scaledDamage = getScaledSpellDamage(attack, spell, applyHalfDamage);
 		dispatch('roll', { notation: scaledDamage, attackName: attack.name });
 	}
 
@@ -376,6 +384,23 @@
 											{#if attack.targetIsFiendOrUndead}
 												{@const scaledDamage = getScaledSpellDamage(attack, spell)}
 												<span class="scaled-damage">(+1d8, total: {scaledDamage})</span>
+											{/if}
+										</label>
+									</div>
+								{/if}
+								{#if spell.savingThrow}
+									<div class="target-condition">
+										<label>
+											<input 
+												type="checkbox" 
+												bind:checked={attack.targetSucceededSave}
+												class="use-enabled"
+											/>
+											Target succeeded on {spell.savingThrow.ability.charAt(0).toUpperCase() + spell.savingThrow.ability.slice(1)} save
+											{#if attack.targetSucceededSave && spell.savingThrow.halfDamageOnSave}
+												<span class="scaled-damage">(Half damage)</span>
+											{:else if attack.targetSucceededSave && !spell.savingThrow.halfDamageOnSave}
+												<span class="scaled-damage">(No damage)</span>
 											{/if}
 										</label>
 									</div>

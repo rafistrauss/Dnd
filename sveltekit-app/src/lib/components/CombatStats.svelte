@@ -49,6 +49,16 @@
 		collapsedStates.update((s: any) => ({ ...s, combatStats: !s.combatStats }));
 	}
 
+	// Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
+	$: spellSaveDC = (() => {
+		if (!$character.class) return null;
+		const classConfig = getClassConfig($character.class);
+		if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return null;
+		
+		const spellcastingMod = $abilityModifiers[classConfig.spellcastingAbility];
+		return 8 + $character.proficiencyBonus + spellcastingMod;
+	})();
+
 	$: hasVisibleContent = !$searchFilter || 
 		'armor class'.includes($searchFilter.toLowerCase()) ||
 		'initiative'.includes($searchFilter.toLowerCase()) ||
@@ -56,6 +66,7 @@
 		'hit points'.includes($searchFilter.toLowerCase()) ||
 		'hp'.includes($searchFilter.toLowerCase()) ||
 		'hit dice'.includes($searchFilter.toLowerCase()) ||
+		'spell save'.includes($searchFilter.toLowerCase()) ||
 		'combat'.includes($searchFilter.toLowerCase());
 </script>
 
@@ -90,6 +101,19 @@
 			<label for="speed">Speed</label>
 			<input type="text" id="speed" bind:value={$character.speed} class="stat-input" />
 		</div>
+		{#if spellSaveDC !== null}
+		<div class="stat-box">
+			<label for="spellSaveDC">Spell Save DC</label>
+			<input
+				type="number"
+				id="spellSaveDC"
+				value={spellSaveDC}
+				class="stat-input"
+				readonly
+				title="8 + Proficiency Bonus + Spellcasting Ability Modifier"
+			/>
+		</div>
+		{/if}
 	</div>
 
 	<div class="hp-section">
