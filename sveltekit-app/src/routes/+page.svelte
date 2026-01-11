@@ -139,7 +139,8 @@
 				availableFeatures.forEach(feature => {
 					const featureKey = feature.name.replace(/\s+/g, '');
 					
-					// Skip info and channelDivinity types as they don't need restoration
+					// Skip info and channelDivinity types - they don't store state
+					// 'info' features are passive, 'channelDivinity' features consume from the Channel Divinity pool
 					if (feature.type === 'info' || feature.type === 'channelDivinity') {
 						return;
 					}
