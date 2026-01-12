@@ -238,11 +238,11 @@
 		// Parse the base damage (e.g., "3d6" or "3d6+2")
 		const damageMatch = baseDamage.match(/(\d+)d(\d+)([+-]\d+)?/);
 		if (!damageMatch) {
-			// No dice notation, might just be a modifier
+			// No dice notation, just return modifier if any, otherwise "0"
 			if (additionalModifier !== 0) {
-				return additionalModifier >= 0 ? `+${additionalModifier}` : `${additionalModifier}`;
+				return additionalModifier >= 0 ? `${additionalModifier}` : `${additionalModifier}`;
 			}
-			return baseDamage;
+			return baseDamage || '0';
 		}
 		
 		const [, numDice, dieSize, existingMod] = damageMatch;
@@ -250,7 +250,7 @@
 		const baseModifier = existingMod ? parseInt(existingMod) : 0;
 		const totalModifier = baseModifier + additionalModifier;
 		
-		// Build the result
+		// Build the result - always show modifier for consistency
 		let result = `${totalDice}d${dieSize}`;
 		if (totalModifier !== 0) {
 			result += totalModifier >= 0 ? `+${totalModifier}` : `${totalModifier}`;
