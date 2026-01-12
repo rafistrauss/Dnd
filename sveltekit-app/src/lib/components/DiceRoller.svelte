@@ -207,6 +207,11 @@
 		followUpActions = [];
 		isCritical = false;
 		
+		// Clear bonus breakdown when rolling damage (we don't want attack bonuses showing for damage rolls)
+		if (type === 'damage') {
+			bonusBreakdown = [];
+		}
+		
 		rollType = type;
 		guidedStrikeUsed = false; // Reset Guided Strike usage for new rolls
 		
