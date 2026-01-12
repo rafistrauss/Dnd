@@ -192,7 +192,7 @@
 									{level === 1 ? '1st' : level === 2 ? '2nd' : level === 3 ? '3rd' : `${level}th`} Level Spell Slots
 								</label>
 								<div class="slots-tracker">
-									{#each Array(slots) as _, i}
+									{#each levelSlots as _, i}
 										<input
 											type="checkbox"
 											checked={levelSlots[i] || false}
