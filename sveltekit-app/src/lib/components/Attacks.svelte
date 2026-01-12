@@ -539,18 +539,24 @@
 	</label>
 </div> -->
   {#if !$collapsedStates.attacks}
-    <button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
+    {#if $isEditMode}
+      <button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
+    {/if}
 
     <div class="attacks-list">
       {#each filteredAttacks as attack (attack.id)}
         <div class="attack-card">
           <div class="attack-header">
-            <input
-              type="text"
-              bind:value={attack.name}
-              placeholder="Attack name"
-              class="attack-name"
-            />
+            {#if $isEditMode}
+              <input
+                type="text"
+                bind:value={attack.name}
+                placeholder="Attack name"
+                class="attack-name"
+              />
+            {:else}
+              <h4 class="attack-name-display">{attack.name || '(Unnamed Attack)'}</h4>
+            {/if}
             {#if $isEditMode}
               <button on:click={() => removeAttack(attack.id)} class="btn-remove">×</button>
             {/if}
@@ -559,7 +565,12 @@
             {#if attack.bonus !== 0 && attack.bonus !== undefined}
               <div class="attack-field">
                 <label for="attack-bonus-{attack.id}">Bonus</label>
-                <input id="attack-bonus-{attack.id}" type="number" bind:value={attack.bonus} class="attack-bonus" />
+                <input
+                  id="attack-bonus-{attack.id}"
+                  type="number"
+                  bind:value={attack.bonus}
+                  class="attack-bonus"
+                />
               </div>
             {/if}
             {#if attack.damage && attack.damage.trim() !== ''}
@@ -591,12 +602,12 @@
             {:else}
               {@const spell = getSpellByName(attack.spellRef)}
               {#if spell}
-                {#if attack.generalNotes}
+                <!-- {#if attack.generalNotes}
                   <div class="spell-notes">
                     <h4>General Notes</h4>
                     <p>{attack.generalNotes}</p>
                   </div>
-                {/if}
+                {/if} -->
                 <div class="spell-info">
                   <div
                     class="spell-info-header"
@@ -794,11 +805,21 @@
               <div class="state-details">
                 <div class="state-field">
                   <label for="state-attack-bonus-{index}">Attack Bonus</label>
-                  <input id="state-attack-bonus-{index}" type="number" bind:value={state.attackBonus} class="state-bonus" />
+                  <input
+                    id="state-attack-bonus-{index}"
+                    type="number"
+                    bind:value={state.attackBonus}
+                    class="state-bonus"
+                  />
                 </div>
                 <div class="state-field">
                   <label for="state-damage-bonus-{index}">Damage Bonus</label>
-                  <input id="state-damage-bonus-{index}" type="text" bind:value={state.damageBonus} class="state-bonus" />
+                  <input
+                    id="state-damage-bonus-{index}"
+                    type="text"
+                    bind:value={state.damageBonus}
+                    class="state-bonus"
+                  />
                 </div>
               </div>
               <div class="state-description">
@@ -1259,5 +1280,11 @@
     padding: 20px;
     font-style: italic;
     margin-top: 15px;
+  }
+
+  .attack-name-display {
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 1.2em;
   }
 </style>
