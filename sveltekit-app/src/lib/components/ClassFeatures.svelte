@@ -273,17 +273,31 @@
 
 					{#if feature.type === 'uses'}
 						{@const maxUses = getMaxUses(feature)}
-						{@const usesRemaining = (() => {
-							const arr = $character.classFeatures.features[featureKey] as boolean[];
-							if (!Array.isArray(arr)) return maxUses;
-							return arr.filter(u => !u).length;
-						})()}
+						{@const usesArr = (Array.isArray(featureData) ? featureData : Array(maxUses).fill(false)) as boolean[]}
 						<div class="uses-tracker">
 							{#if maxUses === Infinity}
 								<p class="unlimited">Unlimited Uses</p>
 							{:else}
-								<div class="uses-with-button">
-									<button 
+								<div class="slots-tracker">
+									{#each usesArr as checked, i}
+										<input
+											type="checkbox"
+											class="slot-checkbox"
+											checked={checked}
+											on:change={(e) => {
+												character.update(c => {
+													if (!c.classFeatures.features[featureKey]) {
+														c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+													}
+													c.classFeatures.features[featureKey][i] = e.currentTarget.checked;
+													return c;
+												});
+											}}
+										/>
+									{/each}
+								</div>
+								<div class="uses-actions-row">
+									<button
 										on:click={() => {
 											character.update(c => {
 												if (!c.classFeatures.features[featureKey]) {
@@ -298,18 +312,14 @@
 												return c;
 											});
 										}}
-										disabled={usesRemaining <= 0}
+										disabled={usesArr.filter(u => !u).length <= 0}
 										class="btn btn-primary use-enabled"
 									>
 										Use {feature.name}
 									</button>
-									<div class="uses-info">
-										<span class="uses-remaining">{usesRemaining} / {maxUses} uses</span>
-										<span class="reset-info">Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span>
-									</div>
-									{#if usesRemaining <= 0}
-										<p class="no-uses">No uses remaining</p>
-									{/if}
+								</div>
+								<div class="uses-info">
+									<span class="reset-info">Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span>
 								</div>
 							{/if}
 						</div>
@@ -488,6 +498,11 @@
 		align-items: center;
 		gap: 8px;
 		flex-wrap: wrap;
+	}
+
+	.uses-tracker {
+		flex-direction: column;
+		align-items: flex-start;
 	}
 
 	.pool-input {

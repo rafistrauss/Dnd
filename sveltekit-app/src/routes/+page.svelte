@@ -437,6 +437,7 @@
 	:global(:root) {
 		--primary-color: #8b0000;
 		--primary-color-hover: #a50000;
+		--primary-color--disabled: rgb(90, 62, 62);
 		--secondary-color: #c8a882;
 		--bg-color: #f5f5dc;
 		--card-bg: #ffffff;
@@ -619,6 +620,18 @@
 		background-color: var(--primary-color);
 		color: white;
 		border: 1px solid var(--primary-color);
+	}
+
+	:global(.btn-primary:disabled) {
+		background-color: var(--primary-color--disabled);
+		border-color: var(--primary-color--disabled);
+		cursor: not-allowed;
+		box-shadow: none;
+	}
+
+	:global(.btn-primary:hover:disabled) {
+		background-color: var(--primary-color--disabled);
+		border-color: var(--primary-color--disabled);
 	}
 
 	:global(.btn-primary:hover) {
