@@ -95,7 +95,7 @@ sveltekit-app/
 ### Development
 
 ```bash
-cd sveltekit-app
+
 bun run dev
 ```
 

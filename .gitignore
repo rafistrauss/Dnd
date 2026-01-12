@@ -1,43 +1,24 @@
-# MacOS
+node_modules
+package-lock.json
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
 .DS_Store
-.AppleDouble
-.LSOverride
+Thumbs.db
 
-# Thumbnails
-._*
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
 
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-# Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Logs
-logs
-*.log
-npm-debug.log*
-
-# Node modules
-node_modules/
-sveltekit-app/node_modules/
-
-# Build artifacts
-sveltekit-app/build/
-sveltekit-app/.svelte-kit/
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
