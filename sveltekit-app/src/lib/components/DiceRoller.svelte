@@ -11,6 +11,7 @@
 	export let visible = false;
 	export let damageNotation = ''; // Optional damage notation for attacks
 	export let attackName = ''; // Optional attack name for context
+	export let applyHalfDamage = false; // If true, halve the result after rolling
 
 	let diceBox: any = null;
 	let diceContainer: HTMLDivElement | undefined = undefined;
@@ -214,8 +215,18 @@
 		// after_roll callback - handle the result
 		const afterRoll = (notationObj: any) => {
 			console.log('After roll:', notationObj);
-			console.log('Result:', notationObj.resultTotal);
-			rollResult = notationObj;
+			let resultTotal = notationObj.resultTotal;
+			let resultString = notationObj.resultString;
+			// If applyHalfDamage is true, halve the result (rounded down)
+			if (applyHalfDamage) {
+				resultTotal = Math.floor(resultTotal / 2);
+				resultString = resultString + ' (halved)';
+			}
+			rollResult = {
+				...notationObj,
+				resultTotal,
+				resultString
+			};
 			
 			// Detect critical hits/fails on d20 rolls
 			if (type === 'attack' || type === 'check' || type === 'save') {
