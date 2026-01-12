@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, afterUpdate } from 'svelte';
+	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { base } from '$app/paths';
 	import { character } from '$lib/stores';

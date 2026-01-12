@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { toasts } from '$lib/stores';
-	import { fade, fly } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 </script>
 
 <div class="toast-container">
