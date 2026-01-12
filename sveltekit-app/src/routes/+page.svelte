@@ -337,6 +337,29 @@
 						{/each}
 					</div>
 				{/if}
+				{#if $character.activeStates && $character.activeStates.length > 0}
+					<div class="active-effects-header">
+						{#each $character.activeStates as state, index}
+							<span class="effect-badge" title={state.description || `${state.attackBonus > 0 ? '+' + state.attackBonus + ' attack' : ''}${state.damageBonus > 0 ? (state.attackBonus > 0 ? ', ' : '') + '+' + state.damageBonus + ' damage' : ''}`}>
+								✨ {state.name}
+								{#if !$isEditMode}
+									<button 
+										class="effect-remove-btn"
+										on:click={() => {
+											character.update(c => {
+												if (c.activeStates) {
+													c.activeStates = c.activeStates.filter((_, i) => i !== index);
+												}
+												return c;
+											});
+										}}
+										title="End {state.name}"
+									>×</button>
+								{/if}
+							</span>
+						{/each}
+					</div>
+				{/if}
 			</div>
 			<div class="header-right">
 				<div class="header-controls">
@@ -599,6 +622,49 @@
 		background-color: rgba(248, 215, 218, 0.95);
 		color: #721c24;
 		border: 1px solid rgba(245, 198, 203, 0.8);
+	}
+
+	.active-effects-header {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 6px;
+	}
+
+	.effect-badge {
+		background: linear-gradient(135deg, rgba(156, 39, 176, 0.15) 0%, rgba(103, 58, 183, 0.15) 100%);
+		color: #6a1b9a;
+		padding: 4px 10px;
+		border-radius: 4px;
+		font-weight: bold;
+		font-size: 0.85rem;
+		border: 1px solid rgba(156, 39, 176, 0.3);
+		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.effect-remove-btn {
+		background: rgba(211, 47, 47, 0.8);
+		color: white;
+		border: none;
+		border-radius: 50%;
+		width: 18px;
+		height: 18px;
+		padding: 0;
+		cursor: pointer;
+		font-size: 14px;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: background 0.2s;
+		margin-left: 2px;
+	}
+
+	.effect-remove-btn:hover {
+		background: rgba(211, 47, 47, 1);
 	}
 
 	.header-actions {
