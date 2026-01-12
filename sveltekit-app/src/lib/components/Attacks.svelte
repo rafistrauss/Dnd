@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
+	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode, toasts } from '$lib/stores';
 	import type { Attack, Spell, SpellState } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
 	import { getSavingThrowInfo, addsSpellcastingModifierToDamage, isBuffSpell, extractSpellEffectBonuses } from '$lib/spellUtils';
@@ -56,7 +56,7 @@
 				const castLevel = attack.castAtLevel || spell.level;
 				const hasSlot = checkAndConsumeSpellSlot(castLevel);
 				if (!hasSlot) {
-					alert(`No level ${castLevel} spell slots available!`);
+					toasts.add(`No level ${castLevel} spell slots available!`, 'error');
 					return;
 				}
 				// Use scaled damage if applicable, with half damage or no damage if target succeeded on save
@@ -89,7 +89,7 @@
 
 	function rollDamage(attack: Attack) {
 		if (!attack.damage) {
-			alert(`${attack.name}: No damage specified`);
+			toasts.add(`${attack.name}: No damage specified`, 'error');
 			return;
 		}
 
@@ -103,7 +103,7 @@
 				const castLevel = attack.castAtLevel || spell.level;
 				const hasSlot = checkAndConsumeSpellSlot(castLevel);
 				if (!hasSlot) {
-					alert(`No level ${castLevel} spell slots available!`);
+					toasts.add(`No level ${castLevel} spell slots available!`, 'error');
 					return;
 				}
 				// Use scaled damage if applicable, with half damage or no damage if target succeeded on save
@@ -301,7 +301,7 @@
 		if (castLevel > 0) { // Cantrips don't use slots
 			const hasSlot = checkAndConsumeSpellSlot(castLevel);
 			if (!hasSlot) {
-				alert(`No level ${castLevel} spell slots available!`);
+				toasts.add(`No level ${castLevel} spell slots available!`, 'error');
 				return;
 			}
 		}
@@ -348,7 +348,7 @@
 	function castBuffSpell(attack: Attack) {
 		const spell = getSpellByName(attack.spellRef!);
 		if (!spell) {
-			alert('Spell not found');
+			toasts.add('Spell not found', 'error');
 			return;
 		}
 		
@@ -357,7 +357,7 @@
 		if (castLevel > 0) { // Cantrips don't use slots
 			const hasSlot = checkAndConsumeSpellSlot(castLevel);
 			if (!hasSlot) {
-				alert(`No level ${castLevel} spell slots available!`);
+				toasts.add(`No level ${castLevel} spell slots available!`, 'error');
 				return;
 			}
 		}
@@ -365,7 +365,7 @@
 		// Extract bonuses from the spell
 		const bonuses = extractSpellEffectBonuses(spell);
 		if (!bonuses) {
-			alert(`${spell.name} cast! Check spell description for effects.`);
+			toasts.add(`${spell.name} cast! Check spell description for effects.`, 'info');
 			return;
 		}
 		
@@ -392,7 +392,7 @@
 			return c;
 		});
 		
-		alert(`${spell.name} cast! Effect added to Active Spell Effects.`);
+		toasts.add(`${spell.name} cast! Effect added to Active Spell Effects.`, 'success');
 	}
 
 	$: filteredAttacks = $character.attacks
