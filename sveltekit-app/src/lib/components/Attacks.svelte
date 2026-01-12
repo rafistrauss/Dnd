@@ -318,6 +318,33 @@
 		dispatch('roll', { notation: scaledDamage, attackName: attack.name, applyHalfDamage });
 	}
 
+	function addActiveState() {
+		character.update(c => {
+			if (!c.activeStates) {
+				c.activeStates = [];
+			}
+			c.activeStates = [
+				...c.activeStates,
+				{
+					name: '',
+					attackBonus: 0,
+					damageBonus: 0,
+					description: ''
+				}
+			];
+			return c;
+		});
+	}
+
+	function removeActiveState(index: number) {
+		character.update(c => {
+			if (c.activeStates) {
+				c.activeStates = c.activeStates.filter((_, i) => i !== index);
+			}
+			return c;
+		});
+	}
+
 	$: filteredAttacks = $character.attacks
 		.filter((attack) => {
 			if (!$searchFilter) return true;
@@ -532,6 +559,54 @@
 			<p class="no-attacks">No attacks added yet. Click "Add Attack" to create one.</p>
 		{:else if filteredAttacks.length === 0}
 			<p class="no-attacks">No attacks match your search.</p>
+		{/if}
+	</div>
+
+	<!-- Active Spell States Section -->
+	<div class="active-states-section">
+		<h3>Active Spell Effects</h3>
+		<p class="section-description">Effects that modify attack and damage rolls (e.g., Magic Weapon, Bless)</p>
+		<button on:click={addActiveState} class="btn btn-secondary">Add Effect</button>
+		
+		{#if $character.activeStates && $character.activeStates.length > 0}
+			<div class="states-list">
+				{#each $character.activeStates as state, index}
+					<div class="state-card">
+						<div class="state-header">
+							<input
+								type="text"
+								bind:value={state.name}
+								placeholder="Effect name (e.g., Magic Weapon)"
+								class="state-name"
+							/>
+							{#if $isEditMode}
+								<button on:click={() => removeActiveState(index)} class="btn-remove">×</button>
+							{/if}
+						</div>
+						<div class="state-details">
+							<div class="state-field">
+								<label>Attack Bonus</label>
+								<input type="number" bind:value={state.attackBonus} class="state-bonus" />
+							</div>
+							<div class="state-field">
+								<label>Damage Bonus</label>
+								<input type="number" bind:value={state.damageBonus} class="state-bonus" />
+							</div>
+						</div>
+						<div class="state-description">
+							<label>Description</label>
+							<input
+								type="text"
+								bind:value={state.description}
+								placeholder="e.g., +1 to attack and damage rolls (Magic Weapon)"
+								class="state-desc-input"
+							/>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{:else}
+			<p class="no-states">No active effects. Add spell effects that modify your attacks.</p>
 		{/if}
 	</div>
 	{/if}
@@ -874,5 +949,105 @@
 		font-size: 0.9rem;
 		color: #666;
 		margin-left: 5px;
+	}
+
+	.active-states-section {
+		margin-top: 30px;
+		padding-top: 20px;
+		border-top: 2px solid var(--border-color);
+	}
+
+	.active-states-section h3 {
+		margin: 0 0 10px 0;
+		color: var(--primary-color);
+		font-size: 1.3rem;
+	}
+
+	.section-description {
+		margin: 0 0 15px 0;
+		color: #666;
+		font-size: 0.9rem;
+		font-style: italic;
+	}
+
+	.states-list {
+		margin-top: 15px;
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+	}
+
+	.state-card {
+		background-color: #fff9e6;
+		border: 1px solid #ffd966;
+		border-radius: 6px;
+		padding: 15px;
+	}
+
+	.state-header {
+		display: flex;
+		gap: 10px;
+		margin-bottom: 10px;
+	}
+
+	.state-name {
+		flex: 1;
+		padding: 8px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		font-size: 1rem;
+		font-weight: bold;
+	}
+
+	.state-details {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 10px;
+		margin-bottom: 10px;
+	}
+
+	.state-field {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.state-field label {
+		font-size: 0.85rem;
+		font-weight: bold;
+		margin-bottom: 4px;
+	}
+
+	.state-bonus {
+		padding: 6px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		width: 100%;
+	}
+
+	.state-description {
+		margin-top: 5px;
+	}
+
+	.state-description label {
+		font-size: 0.85rem;
+		font-weight: bold;
+		margin-bottom: 4px;
+		display: block;
+	}
+
+	.state-desc-input {
+		width: 100%;
+		padding: 6px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		font-size: 0.9rem;
+	}
+
+	.no-states {
+		text-align: center;
+		color: #666;
+		padding: 20px;
+		font-style: italic;
+		margin-top: 15px;
 	}
 </style>
