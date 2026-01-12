@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { character, abilityModifiers, calculateModifier, searchFilter, collapsedStates } from '$lib/stores';
+	import { afterUpdate } from 'svelte';
 	import {
 		getClassConfig,
 		getAvailableFeatures,
@@ -106,6 +107,36 @@
 		}
 		return feature.maxUses || 0;
 	}
+
+	// Ensure uses-based features (like War Priest) always have the correct array size in JSON
+	// This will be called in a reactive block below, not in the template
+	function ensureCorrectUsesArray(featureKey: string, maxUses: number) {
+		character.update(c => {
+			if (!c.classFeatures.features[featureKey] || !Array.isArray(c.classFeatures.features[featureKey]) || c.classFeatures.features[featureKey].length !== maxUses) {
+				c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+			}
+			return c;
+		});
+	}
+
+
+	// --- Ensure correct uses array for all uses-based features (afterUpdate, safe) ---
+	afterUpdate(() => {
+		if (filteredFeatures && $character && $character.classFeatures && $character.classFeatures.features) {
+			let changed = false;
+			filteredFeatures.forEach(feature => {
+				if (feature.type === 'uses') {
+					const featureKey = feature.name.replace(/\s+/g, '');
+					const maxUses = getMaxUses(feature);
+					const arr = $character.classFeatures.features[featureKey];
+					if (!Array.isArray(arr) || arr.length !== maxUses) {
+						ensureCorrectUsesArray(featureKey, maxUses);
+						changed = true;
+					}
+				}
+			});
+		}
+	});
 
 	function getMaxPool(feature: any): number {
 		if (typeof feature.maxPool === 'function') {
@@ -243,9 +274,9 @@
 					{#if feature.type === 'uses'}
 						{@const maxUses = getMaxUses(feature)}
 						{@const usesRemaining = (() => {
-							if (!isArrayData) return maxUses;
-							const uses = featureData as boolean[];
-							return uses.filter(u => !u).length;
+							const arr = $character.classFeatures.features[featureKey] as boolean[];
+							if (!Array.isArray(arr)) return maxUses;
+							return arr.filter(u => !u).length;
 						})()}
 						<div class="uses-tracker">
 							{#if maxUses === Infinity}
