@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { character, abilityModifiers, calculateModifier, searchFilter, collapsedStates } from '$lib/stores';
+	import SlotCheckbox from './SlotCheckbox.svelte';
+	import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
+	import { afterUpdate } from 'svelte';
 	import {
 		getClassConfig,
 		getAvailableFeatures,
@@ -107,6 +109,36 @@
 		return feature.maxUses || 0;
 	}
 
+	// Ensure uses-based features (like War Priest) always have the correct array size in JSON
+	// This will be called in a reactive block below, not in the template
+	function ensureCorrectUsesArray(featureKey: string, maxUses: number) {
+		character.update(c => {
+			if (!c.classFeatures.features[featureKey] || !Array.isArray(c.classFeatures.features[featureKey]) || c.classFeatures.features[featureKey].length !== maxUses) {
+				c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+			}
+			return c;
+		});
+	}
+
+
+	// --- Ensure correct uses array for all uses-based features (afterUpdate, safe) ---
+	afterUpdate(() => {
+		if (filteredFeatures && $character && $character.classFeatures && $character.classFeatures.features) {
+			let changed = false;
+			filteredFeatures.forEach(feature => {
+				if (feature.type === 'uses') {
+					const featureKey = feature.name.replace(/\s+/g, '');
+					const maxUses = getMaxUses(feature);
+					const arr = $character.classFeatures.features[featureKey];
+					if (!Array.isArray(arr) || arr.length !== maxUses) {
+						ensureCorrectUsesArray(featureKey, maxUses);
+						changed = true;
+					}
+				}
+			});
+		}
+	});
+
 	function getMaxPool(feature: any): number {
 		if (typeof feature.maxPool === 'function') {
 			return feature.maxPool($character.level);
@@ -192,9 +224,8 @@
 									{level === 1 ? '1st' : level === 2 ? '2nd' : level === 3 ? '3rd' : `${level}th`} Level Spell Slots
 								</label>
 								<div class="slots-tracker">
-									{#each Array(slots) as _, i}
-										<input
-											type="checkbox"
+									{#each levelSlots as _, i}
+										<SlotCheckbox
 											checked={levelSlots[i] || false}
 											on:change={(e) => {
 												character.update(c => {
@@ -204,11 +235,10 @@
 													if (!c.classFeatures.spellSlotsByLevel[level]) {
 														c.classFeatures.spellSlotsByLevel[level] = Array(slots).fill(false);
 													}
-													c.classFeatures.spellSlotsByLevel[level][i] = e.currentTarget.checked;
+													c.classFeatures.spellSlotsByLevel[level][i] = e.detail.checked;
 													return c;
 												});
 											}}
-											class="slot-checkbox"
 										/>
 									{/each}
 								</div>
@@ -242,17 +272,30 @@
 
 					{#if feature.type === 'uses'}
 						{@const maxUses = getMaxUses(feature)}
-						{@const usesRemaining = (() => {
-							if (!isArrayData) return maxUses;
-							const uses = featureData as boolean[];
-							return uses.filter(u => !u).length;
-						})()}
+						{@const usesArr = (Array.isArray(featureData) ? featureData : Array(maxUses).fill(false)) as boolean[]}
 						<div class="uses-tracker">
 							{#if maxUses === Infinity}
 								<p class="unlimited">Unlimited Uses</p>
 							{:else}
-								<div class="uses-with-button">
-									<button 
+								<div class="slots-tracker">
+									{#each usesArr as checked, i}
+										<SlotCheckbox
+											checked={checked}
+											index={i}
+											on:change={(e) => {
+												character.update(c => {
+													if (!c.classFeatures.features[featureKey]) {
+														c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+													}
+													c.classFeatures.features[featureKey][i] = e.detail.checked;
+													return c;
+												});
+											}}
+										/>
+									{/each}
+								</div>
+								<div class="uses-actions-row">
+									<button
 										on:click={() => {
 											character.update(c => {
 												if (!c.classFeatures.features[featureKey]) {
@@ -267,18 +310,14 @@
 												return c;
 											});
 										}}
-										disabled={usesRemaining <= 0}
+										disabled={usesArr.filter(u => !u).length <= 0}
 										class="btn btn-primary use-enabled"
 									>
 										Use {feature.name}
 									</button>
-									<div class="uses-info">
-										<span class="uses-remaining">{usesRemaining} / {maxUses} uses</span>
-										<span class="reset-info">Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span>
-									</div>
-									{#if usesRemaining <= 0}
-										<p class="no-uses">No uses remaining</p>
-									{/if}
+								</div>
+								<div class="uses-info">
+									<span class="reset-info">Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span>
 								</div>
 							{/if}
 						</div>
@@ -457,6 +496,11 @@
 		align-items: center;
 		gap: 8px;
 		flex-wrap: wrap;
+	}
+
+	.uses-tracker {
+		flex-direction: column;
+		align-items: flex-start;
 	}
 
 	.pool-input {

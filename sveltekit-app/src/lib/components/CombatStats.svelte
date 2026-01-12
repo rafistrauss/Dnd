@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { character, searchFilter, collapsedStates, abilityModifiers } from '$lib/stores';
 	import { getClassConfig } from '$lib/classConfig';
+	import { getSpellSaveDC } from '$lib/combatUtils';
 	import type { Character } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
@@ -49,6 +50,9 @@
 		collapsedStates.update((s: any) => ({ ...s, combatStats: !s.combatStats }));
 	}
 
+	// Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
+	$: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
+
 	$: hasVisibleContent = !$searchFilter || 
 		'armor class'.includes($searchFilter.toLowerCase()) ||
 		'initiative'.includes($searchFilter.toLowerCase()) ||
@@ -56,6 +60,7 @@
 		'hit points'.includes($searchFilter.toLowerCase()) ||
 		'hp'.includes($searchFilter.toLowerCase()) ||
 		'hit dice'.includes($searchFilter.toLowerCase()) ||
+		'spell save'.includes($searchFilter.toLowerCase()) ||
 		'combat'.includes($searchFilter.toLowerCase());
 </script>
 
@@ -90,6 +95,19 @@
 			<label for="speed">Speed</label>
 			<input type="text" id="speed" bind:value={$character.speed} class="stat-input" />
 		</div>
+		{#if spellSaveDC !== null}
+		<div class="stat-box">
+			<label for="spellSaveDC">Spell Save DC</label>
+			<input
+				type="number"
+				id="spellSaveDC"
+				value={spellSaveDC}
+				class="stat-input"
+				readonly
+				title="8 + Proficiency Bonus + Spellcasting Ability Modifier"
+			/>
+		</div>
+		{/if}
 	</div>
 
 	<div class="hp-section">

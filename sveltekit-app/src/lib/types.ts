@@ -54,6 +54,7 @@ export interface Attack {
 	generalNotes?: string; // summary/effects
 	castAtLevel?: number; // for spells that can be cast at higher levels
 	targetIsFiendOrUndead?: boolean; // for conditional damage like Divine Smite
+	targetSucceededSave?: boolean; // for spells with saving throws
 	notes?: string; // for non-spell attacks
 }
 

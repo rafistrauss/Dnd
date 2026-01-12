@@ -39,6 +39,7 @@
 	let diceNotation = '';
 	let diceDamageNotation = '';
 	let diceAttackName = '';
+	let diceApplyHalfDamage = false;
 	let diceRollerComponent: any;
 	let isHitDiceRoll = false;
 	let showRestMenu = false;
@@ -185,11 +186,12 @@
 		return features.find(f => f.name.replace(/\s+/g, '') === key);
 	}
 
-	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string }) {
+	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string, applyHalfDamage?: boolean }) {
 		// Reset notation first to ensure Svelte sees a change even if same value
 		diceNotation = '';
 		diceDamageNotation = '';
 		diceAttackName = '';
+		diceApplyHalfDamage = false;
 		isHitDiceRoll = false;
 		
 		// Set all values together to ensure they update simultaneously
@@ -199,6 +201,7 @@
 			diceNotation = detail.notation;
 			diceDamageNotation = detail.damageNotation || '';
 			diceAttackName = detail.attackName || '';
+			diceApplyHalfDamage = !!detail.applyHalfDamage;
 		}
 		showDiceRoller = true;
 	}
@@ -308,7 +311,7 @@
 
 <svelte:head>
 	<title>D&D Character Sheet</title>
-	<link rel="icon" type="image/png" href="/favicon.png">
+	<link rel="icon" type="image/png" href="favicon4.png">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 </svelte:head>
 
@@ -405,6 +408,7 @@
 	notation={diceNotation}
 	damageNotation={diceDamageNotation}
 	attackName={diceAttackName}
+	applyHalfDamage={diceApplyHalfDamage}
 	visible={showDiceRoller}
 	on:close={handleDiceRollerClose} 
 />
@@ -433,6 +437,7 @@
 	:global(:root) {
 		--primary-color: #8b0000;
 		--primary-color-hover: #a50000;
+		--primary-color--disabled: rgb(90, 62, 62);
 		--secondary-color: #c8a882;
 		--bg-color: #f5f5dc;
 		--card-bg: #ffffff;
@@ -615,6 +620,18 @@
 		background-color: var(--primary-color);
 		color: white;
 		border: 1px solid var(--primary-color);
+	}
+
+	:global(.btn-primary:disabled) {
+		background-color: var(--primary-color--disabled);
+		border-color: var(--primary-color--disabled);
+		cursor: not-allowed;
+		box-shadow: none;
+	}
+
+	:global(.btn-primary:hover:disabled) {
+		background-color: var(--primary-color--disabled);
+		border-color: var(--primary-color--disabled);
 	}
 
 	:global(.btn-primary:hover) {
