@@ -60,6 +60,9 @@
     function hideEffectTooltip() {
       effectTooltipIdx = null;
     }
+    function toggleEffectTooltip(idx: number) {
+      effectTooltipIdx = effectTooltipIdx === idx ? null : idx;
+    }
 
   function takeShortRest() {
     const restoredItems: string[] = [];
@@ -379,6 +382,7 @@
             {#each $character.activeStates as state, index}
               <!-- svelte-ignore a11y_no_static_element_interactions -->
               <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+              <!-- svelte-ignore a11y_click_events_have_key_events -->
               <span
                 class="effect-badge"
                 tabindex="0"
@@ -387,8 +391,7 @@
                 on:mouseleave={hideEffectTooltip}
                 on:focus={() => showEffectTooltip(index)}
                 on:blur={hideEffectTooltip}
-                on:touchstart|preventDefault={() => showEffectTooltip(index)}
-                on:touchend|preventDefault={hideEffectTooltip}
+                on:click={() => toggleEffectTooltip(index)}
               >
                 ✨ {state.name}
                 {#if effectTooltipIdx === index}
