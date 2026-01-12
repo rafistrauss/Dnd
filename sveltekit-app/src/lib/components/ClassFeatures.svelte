@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { character, abilityModifiers, calculateModifier, searchFilter, collapsedStates } from '$lib/stores';
+	import SlotCheckbox from './SlotCheckbox.svelte';
+	import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
 	import { afterUpdate } from 'svelte';
 	import {
 		getClassConfig,
@@ -224,8 +225,7 @@
 								</label>
 								<div class="slots-tracker">
 									{#each levelSlots as _, i}
-										<input
-											type="checkbox"
+										<SlotCheckbox
 											checked={levelSlots[i] || false}
 											on:change={(e) => {
 												character.update(c => {
@@ -235,11 +235,10 @@
 													if (!c.classFeatures.spellSlotsByLevel[level]) {
 														c.classFeatures.spellSlotsByLevel[level] = Array(slots).fill(false);
 													}
-													c.classFeatures.spellSlotsByLevel[level][i] = e.currentTarget.checked;
+													c.classFeatures.spellSlotsByLevel[level][i] = e.detail.checked;
 													return c;
 												});
 											}}
-											class="slot-checkbox"
 										/>
 									{/each}
 								</div>
@@ -280,16 +279,15 @@
 							{:else}
 								<div class="slots-tracker">
 									{#each usesArr as checked, i}
-										<input
-											type="checkbox"
-											class="slot-checkbox"
+										<SlotCheckbox
 											checked={checked}
+											index={i}
 											on:change={(e) => {
 												character.update(c => {
 													if (!c.classFeatures.features[featureKey]) {
 														c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
 													}
-													c.classFeatures.features[featureKey][i] = e.currentTarget.checked;
+													c.classFeatures.features[featureKey][i] = e.detail.checked;
 													return c;
 												});
 											}}
