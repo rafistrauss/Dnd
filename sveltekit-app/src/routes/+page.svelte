@@ -325,7 +325,7 @@
 				<div class="title-row">
 					<h1>D&D Character Sheet</h1>
 					{#if $character.name}
-						<span class="character-name">{$character.name}</span>
+						<span class="character-name">{$character.name} ({$character.level})</span>
 					{/if}
 				</div>
 				{#if getAllSpellSlots().length > 0}
@@ -607,7 +607,7 @@
 		gap: 6px;
 	}
 
-	.slot-badge {
+	.slot-badge, .effect-badge {
 		background-color: rgba(255, 255, 255, 0.95);
 		color: #007bff;
 		padding: 4px 10px;
@@ -632,14 +632,13 @@
 	}
 
 	.effect-badge {
-		background: linear-gradient(135deg, rgba(156, 39, 176, 0.25) 0%, rgba(103, 58, 183, 0.25) 100%);
 		color: #4a148c;
 		padding: 5px 12px;
-		border-radius: 16px;
+		/* border-radius: 16px; */
 		font-weight: 600;
 		font-size: 0.85rem;
 		border: 1.5px solid rgba(156, 39, 176, 0.5);
-		box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+		/* box-shadow: 0 2px 4px rgba(0,0,0,0.15); */
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
@@ -668,7 +667,6 @@
 
 	.effect-remove-btn:hover {
 		background: rgba(211, 47, 47, 1);
-		transform: scale(1.1);
 	}
 
 	.header-actions {

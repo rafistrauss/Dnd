@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode, toasts } from '$lib/stores';
+
+	// Debug flag: set to true to force all d20 rolls to 20
+	let debugForceD20Twenty = false;
 	import type { Attack, Spell, SpellState } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
 	import { getSavingThrowInfo, addsSpellcastingModifierToDamage, isBuffSpell, extractSpellEffectBonuses } from '$lib/spellUtils';
@@ -108,7 +111,12 @@
 			}
 		}
 		
-		const notation = `1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`;
+		let notation;
+		if (debugForceD20Twenty) {
+			notation = `1d20@20`;
+		} else {
+			notation = `1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`;
+		}
 		dispatch('roll', { 
 			notation, 
 			damageNotation: damageToRoll,
@@ -456,6 +464,12 @@
 		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.attacks ? 'Expand' : 'Collapse'}>
 			{$collapsedStates.attacks ? '▼' : '▲'}
 		</button>
+		<!-- <div style="margin: 1em 0;">
+	<label style="font-size: 0.95em;">
+		<input type="checkbox" bind:checked={debugForceD20Twenty} />
+		Debug: Force all d20 rolls to 20
+	</label>
+</div> -->
 	</div>
 	{#if !$collapsedStates.attacks}
 	<button on:click={addAttack} class="btn btn-secondary">Add Attack</button>

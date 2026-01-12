@@ -242,11 +242,9 @@
 			
 			// Detect critical hits/fails on d20 rolls
 			if (type === 'attack' || type === 'check' || type === 'save') {
-				const d20Rolls = notationObj.results?.filter((r: any) => r.sides === 20) || [];
-				console.log('d20Rolls:', d20Rolls);
+				const d20Rolls = notationObj.result?.filter((r: any) => r === 20) || [];
 				if (d20Rolls.length > 0) {
-					const d20Value = d20Rolls[0].value;
-					console.log('d20Value:', d20Value, 'isCritical will be:', d20Value === 20);
+					const d20Value = d20Rolls[0];
 					isCritical = d20Value === 20;
 				}
 			}
