@@ -28,15 +28,22 @@
     { key: 'survival', label: 'Survival' }
   ];
 
-  function getSkillModifier(skill: SkillName): number {
-    const ability = SKILL_ABILITIES[skill];
-    const abilityMod = $abilityModifiers[ability];
-    const profBonus = $character.skillProficiencies[skill] ? $character.proficiencyBonus : 0;
-    return abilityMod + profBonus;
+  // Compute all skill modifiers reactively
+  $: skillModifiers = {};
+  $: skillProficiencies = $character.skillProficiencies;
+  $: proficiencyBonus = $character.proficiencyBonus;
+  $: abilityMods = $abilityModifiers;
+  $: {
+    for (const { key } of skills) {
+      const ability = SKILL_ABILITIES[key];
+      const abilityMod = abilityMods[ability];
+      const profBonus = skillProficiencies[key] ? proficiencyBonus : 0;
+      skillModifiers[key] = abilityMod + profBonus;
+    }
   }
 
   function rollSkill(skill: SkillName) {
-    const modifier = getSkillModifier(skill);
+    const modifier = skillModifiers[skill];
     const notation = `1d20${modifier >= 0 ? '+' : ''}${modifier}`;
     dispatch('roll', notation);
   }
@@ -63,15 +70,29 @@
   {#if !$collapsedStates.skills}
     <div class="skills-grid">
       {#each filteredSkills as { key, label }}
-        {@const ability = SKILL_ABILITIES[key]}
-        {@const modifier = getSkillModifier(key)}
         <div class="skill-row">
-          <input type="checkbox" bind:checked={$character.skillProficiencies[key]} id={key} />
+          <input
+            type="checkbox"
+            checked={skillProficiencies[key]}
+            id={key}
+            on:change={(e) => {
+              console.log('Skill proficiency changed:', key, e.target.checked);
+              character.update((c) => {
+                return {
+                  ...c,
+                  skillProficiencies: {
+                    ...c.skillProficiencies,
+                    [key]: e.target.checked
+                  }
+                };
+              });
+            }}
+          />
           <label for={key}>
             {label}
-            <span class="ability-tag">({ability.substring(0, 3).toUpperCase()})</span>
+            <span class="ability-tag">({SKILL_ABILITIES[key].substring(0, 3).toUpperCase()})</span>
           </label>
-          <span class="skill-modifier">{modifier >= 0 ? '+' : ''}{modifier}</span>
+          <span class="skill-modifier">{skillModifiers[key] >= 0 ? '+' : ''}{skillModifiers[key]}</span>
           <button class="roll-btn" on:click={() => rollSkill(key)}>Roll</button>
         </div>
       {/each}
