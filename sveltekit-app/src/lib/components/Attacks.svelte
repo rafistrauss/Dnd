@@ -8,6 +8,7 @@
     isEditMode,
     toasts
   } from '$lib/stores';
+  import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   // Debug flag: set to true to force all d20 rolls to 20
   let debugForceD20Twenty = false;
@@ -500,22 +501,18 @@
 </script>
 
 <section class="attacks" class:hidden={!hasVisibleContent}>
-  <div class="header">
-    <h2>Attacks & Spells</h2>
-    <button
-      class="collapse-btn"
-      on:click={toggleCollapse}
-      aria-label={$collapsedStates.attacks ? 'Expand' : 'Collapse'}
-    >
-      {$collapsedStates.attacks ? '▼' : '▲'}
-    </button>
-    <!-- <div style="margin: 1em 0;">
+  <SectionHeader
+    title="Attacks & Spells"
+    collapsed={$collapsedStates.attacks}
+    ariaLabel={$collapsedStates.attacks ? 'Expand' : 'Collapse'}
+    onToggle={() => collapsedStates.update((s) => ({ ...s, attacks: !s.attacks }))}
+  />
+  <!-- <div style="margin: 1em 0;">
 	<label style="font-size: 0.95em;">
 		<input type="checkbox" bind:checked={debugForceD20Twenty} />
 		Debug: Force all d20 rolls to 20
 	</label>
 </div> -->
-  </div>
   {#if !$collapsedStates.attacks}
     <button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
 
@@ -623,7 +620,8 @@
                         bind:checked={attack.targetSucceededSave}
                         class="use-enabled"
                       />
-                      Target succeeded on {savingThrow.ability.charAt(0).toUpperCase() + savingThrow.ability.slice(1)} save
+                      Target succeeded on {savingThrow.ability.charAt(0).toUpperCase() +
+                        savingThrow.ability.slice(1)} save
                       {#if $character.class}
                         <span class="scaled-damage" style="margin-left: 8px;">
                           (Spell Save DC: {getSpellSaveDC($character, $abilityModifiers)})
@@ -809,6 +807,7 @@
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 10px;
     margin-bottom: 15px;
+    cursor: pointer;
   }
 
   h2 {

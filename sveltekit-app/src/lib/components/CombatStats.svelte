@@ -10,6 +10,7 @@
   import { getClassConfig } from '$lib/classConfig';
   import { getSpellSaveDC } from '$lib/combatUtils';
   import type { Character } from '$lib/types';
+  import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -80,16 +81,12 @@
 </script>
 
 <section class="combat-stats" class:hidden={!hasVisibleContent}>
-  <div class="header">
-    <h2>Combat Stats</h2>
-    <button
-      class="collapse-btn"
-      on:click={toggleCollapse}
-      aria-label={$collapsedStates.combatStats ? 'Expand' : 'Collapse'}
-    >
-      {$collapsedStates.combatStats ? '▼' : '▲'}
-    </button>
-  </div>
+  <SectionHeader
+    title="Combat Stats"
+    collapsed={$collapsedStates.combatStats}
+    ariaLabel={$collapsedStates.combatStats ? 'Expand' : 'Collapse'}
+    onToggle={() => collapsedStates.update((s) => ({ ...s, combatStats: !s.combatStats }))}
+  />
   {#if !$collapsedStates.combatStats}
     <div class="stats-grid">
       <div class="stat-box">

@@ -8,6 +8,7 @@
     updateProficiencyBonus
   } from '$lib/stores';
   import type { AbilityName } from '$lib/types';
+  import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -54,16 +55,12 @@
 </script>
 
 <section class="ability-scores" class:hidden={!hasVisibleContent}>
-  <div class="header">
-    <h2>Ability Scores</h2>
-    <button
-      class="collapse-btn"
-      on:click={toggleCollapse}
-      aria-label={$collapsedStates.abilityScores ? 'Expand' : 'Collapse'}
-    >
-      {$collapsedStates.abilityScores ? '▼' : '▲'}
-    </button>
-  </div>
+  <SectionHeader
+    title="Ability Scores"
+    collapsed={$collapsedStates.abilityScores}
+    ariaLabel="Toggle Ability Scores Section"
+    onToggle={() => collapsedStates.update((s) => ({ ...s, abilityScores: !s.abilityScores }))}
+  />
   {#if !$collapsedStates.abilityScores}
     <div class="proficiency-bonus">
       <label for="profBonus">Proficiency Bonus</label>

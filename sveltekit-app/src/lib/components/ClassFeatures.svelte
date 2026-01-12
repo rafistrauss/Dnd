@@ -9,6 +9,7 @@
     getPreparedSpellsCount,
     getSpellSaveDC
   } from '$lib/classConfig';
+  import SectionHeader from './SectionHeader.svelte';``
 
   $: classConfig = $character.class ? getClassConfig($character.class) : null;
   $: features = $character.class
@@ -211,16 +212,12 @@
 </script>
 
 <section class="class-features" class:hidden={!hasVisibleContent}>
-  <div class="header">
-    <h2>Class Features</h2>
-    <button
-      class="collapse-btn"
-      on:click={toggleCollapse}
-      aria-label={$collapsedStates.classFeatures ? 'Expand' : 'Collapse'}
-    >
-      {$collapsedStates.classFeatures ? '▼' : '▲'}
-    </button>
-  </div>
+  <SectionHeader
+    title="Class Features"
+    collapsed={$collapsedStates.classFeatures}
+    ariaLabel={$collapsedStates.classFeatures ? 'Expand' : 'Collapse'}
+    onToggle={toggleCollapse}
+  />
   {#if !$collapsedStates.classFeatures}
     {#if !$character.class}
       <p class="no-features">Select a class to see available features</p>

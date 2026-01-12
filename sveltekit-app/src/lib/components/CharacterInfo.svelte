@@ -1,6 +1,7 @@
 <script lang="ts">
   import { character, updateProficiencyBonus, collapsedStates } from '$lib/stores';
   import { getAvailableClasses, getAvailableSubclasses } from '$lib/classConfig';
+  import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   const classes = getAvailableClasses();
 
@@ -38,16 +39,12 @@
 </script>
 
 <section class="character-info">
-  <div class="header">
-    <h2>Character Info</h2>
-    <button
-      class="collapse-btn"
-      on:click={toggleCollapse}
-      aria-label={$collapsedStates.characterInfo ? 'Expand' : 'Collapse'}
-    >
-      {$collapsedStates.characterInfo ? '▼' : '▲'}
-    </button>
-  </div>
+  <SectionHeader
+    title="Character Info"
+    collapsed={$collapsedStates.characterInfo}
+    ariaLabel={$collapsedStates.characterInfo ? 'Expand' : 'Collapse'}
+    onToggle={() => collapsedStates.update((s) => ({ ...s, characterInfo: !s.characterInfo }))}
+  />
   {#if !$collapsedStates.characterInfo}
     <div class="info-grid">
       <div class="form-group">

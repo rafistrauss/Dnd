@@ -1,5 +1,6 @@
 <script lang="ts">
   import { character, searchFilter, collapsedStates } from '$lib/stores';
+  import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   function toggleCollapse() {
     collapsedStates.update((s: any) => ({ ...s, notes: !s.notes }));
@@ -17,16 +18,12 @@
 </script>
 
 <section class="notes" class:hidden={!hasVisibleContent}>
-  <div class="header">
-    <h2>Features & Traits</h2>
-    <button
-      class="collapse-btn"
-      on:click={toggleCollapse}
-      aria-label={$collapsedStates.notes ? 'Expand' : 'Collapse'}
-    >
-      {$collapsedStates.notes ? '▼' : '▲'}
-    </button>
-  </div>
+  <SectionHeader
+    title="Features & Traits"
+    collapsed={$collapsedStates.notes}
+    ariaLabel={$collapsedStates.notes ? 'Expand' : 'Collapse'}
+    onToggle={toggleCollapse}
+  />
   {#if !$collapsedStates.notes}
     <textarea
       bind:value={$character.features}

@@ -3,6 +3,7 @@
   import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
   import { SKILL_ABILITIES } from '$lib/types';
   import type { SkillName } from '$lib/types';
+  import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -53,16 +54,12 @@
 </script>
 
 <section class="skills" class:hidden={!hasVisibleContent}>
-  <div class="header">
-    <h2>Skills</h2>
-    <button
-      class="collapse-btn"
-      on:click={toggleCollapse}
-      aria-label={$collapsedStates.skills ? 'Expand' : 'Collapse'}
-    >
-      {$collapsedStates.skills ? '▼' : '▲'}
-    </button>
-  </div>
+  <SectionHeader
+    title="Skills"
+    collapsed={$collapsedStates.skills}
+    ariaLabel={$collapsedStates.skills ? 'Expand' : 'Collapse'}
+    onToggle={() => collapsedStates.update((s) => ({ ...s, skills: !s.skills }))}
+  />
   {#if !$collapsedStates.skills}
     <div class="skills-grid">
       {#each filteredSkills as { key, label }}
