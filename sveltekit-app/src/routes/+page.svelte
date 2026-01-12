@@ -632,39 +632,43 @@
 	}
 
 	.effect-badge {
-		background: linear-gradient(135deg, rgba(156, 39, 176, 0.15) 0%, rgba(103, 58, 183, 0.15) 100%);
-		color: #6a1b9a;
-		padding: 4px 10px;
-		border-radius: 4px;
-		font-weight: bold;
+		background: linear-gradient(135deg, rgba(156, 39, 176, 0.25) 0%, rgba(103, 58, 183, 0.25) 100%);
+		color: #4a148c;
+		padding: 5px 12px;
+		border-radius: 16px;
+		font-weight: 600;
 		font-size: 0.85rem;
-		border: 1px solid rgba(156, 39, 176, 0.3);
-		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		border: 1.5px solid rgba(156, 39, 176, 0.5);
+		box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: 8px;
+		white-space: nowrap;
 	}
 
 	.effect-remove-btn {
-		background: rgba(211, 47, 47, 0.8);
+		background: rgba(211, 47, 47, 0.9);
 		color: white;
 		border: none;
 		border-radius: 50%;
-		width: 18px;
-		height: 18px;
+		width: 20px;
+		height: 20px;
 		padding: 0;
 		cursor: pointer;
-		font-size: 14px;
+		font-size: 16px;
+		font-weight: bold;
 		line-height: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: background 0.2s;
-		margin-left: 2px;
+		transition: all 0.2s;
+		margin-left: 4px;
+		flex-shrink: 0;
 	}
 
 	.effect-remove-btn:hover {
 		background: rgba(211, 47, 47, 1);
+		transform: scale(1.1);
 	}
 
 	.header-actions {
