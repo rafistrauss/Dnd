@@ -24,10 +24,10 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: cd sveltekit-app && bun install
+        run: bun install
 
       - name: Build SvelteKit app
-        run: cd sveltekit-app && bun run build
+        run: bun run build
         env:
           NODE_ENV: production
 
