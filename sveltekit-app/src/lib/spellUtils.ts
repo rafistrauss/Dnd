@@ -1,4 +1,4 @@
-import type { Spell } from './types';
+import type { Spell, SpellState } from './types';
 
 /**
  * Parse saving throw information from a spell's description
@@ -109,10 +109,11 @@ export function isBuffSpell(spell: Spell): boolean {
  */
 export function extractSpellEffectBonuses(
   spell: Spell
-): { attackBonus: number; damageBonus: number; description: string } | null {
+): SpellState | null {
   const description = spell.description;
   let attackBonus = 0;
   let damageBonus = 0;
+  let acBonus = 0;
   let effectDescription = '';
 
   // Magic Weapon: "+1 bonus to attack rolls and damage rolls" or "+2 bonus" or "+3 bonus"
@@ -134,8 +135,8 @@ export function extractSpellEffectBonuses(
   // Shield of Faith: "+2 bonus to AC"
   const acBonusMatch = description.match(/\+(\d+)\s+bonus\s+to\s+AC/i);
   if (acBonusMatch) {
-    const bonus = parseInt(acBonusMatch[1]);
-    effectDescription = `+${bonus} to AC`;
+    acBonus = parseInt(acBonusMatch[1]);
+    effectDescription = `+${acBonus} to AC`;
   }
 
   // Haste: "+2 bonus to Armor Class"
@@ -144,10 +145,11 @@ export function extractSpellEffectBonuses(
   }
 
   // If we found any effect, return it
-  if (effectDescription || attackBonus !== 0 || damageBonus !== 0) {
+  if (effectDescription || attackBonus !== 0 || damageBonus !== 0 || acBonus !== 0) {
     return {
       attackBonus,
       damageBonus,
+      acBonus,
       description: effectDescription || spell.description.substring(0, 100)
     };
   }

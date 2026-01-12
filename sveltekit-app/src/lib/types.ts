@@ -87,6 +87,7 @@ export interface SpellState {
   attackBonus: number;
   damageBonus: number;
   description: string;
+  acBonus?: number; // Optional AC bonus from spell effect
 }
 
 export interface ClassFeatures {

@@ -1,6 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { character, searchFilter, collapsedStates, abilityModifiers } from '$lib/stores';
+  import {
+    character,
+    searchFilter,
+    collapsedStates,
+    abilityModifiers,
+    isEditMode
+  } from '$lib/stores';
   import { getClassConfig } from '$lib/classConfig';
   import { getSpellSaveDC } from '$lib/combatUtils';
   import type { Character } from '$lib/types';
@@ -53,6 +59,14 @@
   // Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
   $: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
 
+  console.log('Active States:', $character.activeStates);
+
+  // Calculate total AC bonus from active states
+  $: totalAcBonus =
+    $character.activeStates && $character.activeStates.length > 0
+      ? $character.activeStates.reduce((sum, s) => sum + (s.acBonus || 0), 0)
+      : 0;
+
   $: hasVisibleContent =
     !$searchFilter ||
     'armor class'.includes($searchFilter.toLowerCase()) ||
@@ -80,12 +94,25 @@
     <div class="stats-grid">
       <div class="stat-box">
         <label for="armorClass">Armor Class</label>
-        <input
-          type="number"
-          id="armorClass"
-          bind:value={$character.armorClass}
-          class="stat-input"
-        />
+        {#if $isEditMode}
+          <input
+            type="number"
+            id="armorClass"
+            bind:value={$character.armorClass}
+            class="stat-input"
+          />
+        {:else}
+          <input
+            type="text"
+            id="armorClass"
+            value={totalAcBonus !== 0
+              ? `${$character.armorClass} → ${$character.armorClass + totalAcBonus}`
+              : `${$character.armorClass}`}
+            class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
+            readonly
+            title={totalAcBonus !== 0 ? 'Base AC plus active effect bonuses' : 'Base Armor Class'}
+          />
+        {/if}
       </div>
       <div class="stat-box">
         <label for="initiative">Initiative</label>
@@ -375,5 +402,12 @@
   input:focus {
     outline: none;
     border-color: var(--primary-color);
+  }
+
+  .ac-enhanced {
+    color: #007bff;
+    font-weight: bold;
+    background: #e9f5ff;
+    border: 2px solid #b3e0ff;
   }
 </style>

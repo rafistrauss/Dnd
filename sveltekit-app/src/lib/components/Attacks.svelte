@@ -465,6 +465,7 @@
           name: spell.name,
           attackBonus: bonuses.attackBonus,
           damageBonus: bonuses.damageBonus,
+          acBonus: bonuses.acBonus,
           description: bonuses.description
         }
       ];
