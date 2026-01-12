@@ -243,37 +243,41 @@
 			// Detect critical hits/fails on d20 rolls
 			if (type === 'attack' || type === 'check' || type === 'save') {
 				const d20Rolls = notationObj.results?.filter((r: any) => r.sides === 20) || [];
+				console.log('d20Rolls:', d20Rolls);
 				if (d20Rolls.length > 0) {
 					const d20Value = d20Rolls[0].value;
+					console.log('d20Value:', d20Value, 'isCritical will be:', d20Value === 20);
 					isCritical = d20Value === 20;
 				}
 			}
 			
 			// Set up follow-up actions based on roll type
 			followUpActions = [];
-			// console.log('Setting up follow-up actions. Type:', type, 'damageNotation:', damageNotation, 'isCritical:', isCritical);
+			console.log('Setting up follow-up actions. Type:', type, 'damageNotation:', damageNotation, 'isCritical:', isCritical);
 			if (type === 'attack') {
 				// If damage notation is provided, offer to roll damage
 				if (damageNotation) {
 					if (isCritical) {
 						// Double dice for critical hits (5e rules)
 						const critDamage = doubleDiceNotation(damageNotation);
+						console.log('Creating critical damage button:', critDamage);
 						followUpActions.push({ 
 							label: `Roll Critical Damage (${critDamage})`, 
 							notation: critDamage 
 						});
 					} else {
+						console.log('Creating normal damage button:', damageNotation);
 						followUpActions.push({ 
 							label: `Roll Damage (${damageNotation})`, 
 							notation: damageNotation 
 						});
 					}
-					// console.log('Follow-up actions after setup:', followUpActions);
+					console.log('Follow-up actions after setup:', followUpActions);
 				} else {
-					// console.log('No damageNotation provided for attack roll');
+					console.log('No damageNotation provided for attack roll');
 				}
 			}
-			// console.log('Final followUpActions:', followUpActions);
+			console.log('Final followUpActions:', followUpActions);
 		};
 		
 		diceBox.start_throw(beforeRoll, afterRoll);
