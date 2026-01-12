@@ -129,3 +129,13 @@ export function getSpellSaveDC(char: Character, abilities: Abilities): number | 
 	const spellcastingMod = abilities[classConfig.spellcastingAbility];
 	return 8 + char.proficiencyBonus + spellcastingMod;
 }
+
+/**
+ * Get spellcasting ability modifier for a character
+ */
+export function getSpellcastingModifier(char: Character, abilities: Abilities): number {
+	if (!char.class) return 0;
+	const classConfig = getClassConfig(char.class);
+	if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return 0;
+	return calculateModifier(abilities[classConfig.spellcastingAbility]);
+}

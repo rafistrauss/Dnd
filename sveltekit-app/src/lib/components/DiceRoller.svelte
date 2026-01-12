@@ -12,6 +12,7 @@
 	export let damageNotation = ''; // Optional damage notation for attacks
 	export let attackName = ''; // Optional attack name for context
 	export let applyHalfDamage = false; // If true, halve the result after rolling
+	export let bonusBreakdown: Array<{value: number, source: string}> = []; // Breakdown of bonuses by source
 
 	let diceBox: any = null;
 	let diceContainer: HTMLDivElement | undefined = undefined;
@@ -200,6 +201,17 @@
 		}
 
 		console.log('Rolling dice:', notation, 'type:', type);
+		
+		// Clear previous roll result and state when starting a new roll
+		rollResult = null;
+		followUpActions = [];
+		isCritical = false;
+		
+		// Clear bonus breakdown when rolling damage (we don't want attack bonuses showing for damage rolls)
+		if (type === 'damage') {
+			bonusBreakdown = [];
+		}
+		
 		rollType = type;
 		guidedStrikeUsed = false; // Reset Guided Strike usage for new rolls
 		
@@ -230,38 +242,40 @@
 			
 			// Detect critical hits/fails on d20 rolls
 			if (type === 'attack' || type === 'check' || type === 'save') {
-				const d20Rolls = notationObj.results?.filter((r: any) => r.sides === 20) || [];
+				const d20Rolls = notationObj.result?.filter((r: any) => r === 20) || [];
 				if (d20Rolls.length > 0) {
-					const d20Value = d20Rolls[0].value;
+					const d20Value = d20Rolls[0];
 					isCritical = d20Value === 20;
 				}
 			}
 			
 			// Set up follow-up actions based on roll type
 			followUpActions = [];
-			// console.log('Setting up follow-up actions. Type:', type, 'damageNotation:', damageNotation, 'isCritical:', isCritical);
+			console.log('Setting up follow-up actions. Type:', type, 'damageNotation:', damageNotation, 'isCritical:', isCritical);
 			if (type === 'attack') {
 				// If damage notation is provided, offer to roll damage
 				if (damageNotation) {
 					if (isCritical) {
 						// Double dice for critical hits (5e rules)
 						const critDamage = doubleDiceNotation(damageNotation);
+						console.log('Creating critical damage button:', critDamage);
 						followUpActions.push({ 
 							label: `Roll Critical Damage (${critDamage})`, 
 							notation: critDamage 
 						});
 					} else {
+						console.log('Creating normal damage button:', damageNotation);
 						followUpActions.push({ 
 							label: `Roll Damage (${damageNotation})`, 
 							notation: damageNotation 
 						});
 					}
-					// console.log('Follow-up actions after setup:', followUpActions);
+					console.log('Follow-up actions after setup:', followUpActions);
 				} else {
-					// console.log('No damageNotation provided for attack roll');
+					console.log('No damageNotation provided for attack roll');
 				}
 			}
-			// console.log('Final followUpActions:', followUpActions);
+			console.log('Final followUpActions:', followUpActions);
 		};
 		
 		diceBox.start_throw(beforeRoll, afterRoll);
@@ -477,8 +491,19 @@
 					{#if rollResult.resultString}
 						<p>{rollResult.resultString}</p>
 					{/if}
-					{#if rollResult.constant}
-						<p class="modifier-text">Modifier: {rollResult.constant >= 0 ? '+' : ''}{rollResult.constant}</p>
+					{#if rollResult.constant || bonusBreakdown.length > 0}
+						{#if bonusBreakdown.length > 0}
+							<div class="bonus-breakdown">
+								{#each bonusBreakdown as bonus}
+									<div class="bonus-item">
+										<span class="bonus-value">{bonus.value >= 0 ? '+' : ''}{bonus.value}</span>
+										<span class="bonus-source">({bonus.source})</span>
+									</div>
+								{/each}
+							</div>
+						{:else if rollResult.constant}
+							<p class="modifier-text">Modifier: {rollResult.constant >= 0 ? '+' : ''}{rollResult.constant}</p>
+						{/if}
 					{/if}
 				</div>
 				{#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed)}
@@ -776,6 +801,36 @@
 		font-style: italic;
 		color: #666;
 		font-size: 0.9rem;
+	}
+
+	.bonus-breakdown {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 8px;
+	}
+
+	.bonus-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 4px 8px;
+		background: rgba(255, 255, 255, 0.5);
+		border-radius: 4px;
+	}
+
+	.bonus-value {
+		font-size: 1.1rem;
+		font-weight: bold;
+		color: #2e7d32;
+	}
+
+	.bonus-source {
+		font-size: 0.75rem;
+		color: #666;
+		font-style: italic;
 	}
 
 	.result-header {

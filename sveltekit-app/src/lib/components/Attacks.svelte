@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
-	import type { Attack, Spell } from '$lib/types';
+	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode, toasts } from '$lib/stores';
+
+	// Debug flag: set to true to force all d20 rolls to 20
+	let debugForceD20Twenty = false;
+	import type { Attack, Spell, SpellState } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
-	import { getSavingThrowInfo } from '$lib/spellUtils';
-	import { getSpellSaveDC } from '$lib/combatUtils';
+	import { getSavingThrowInfo, addsSpellcastingModifierToDamage, isBuffSpell, extractSpellEffectBonuses } from '$lib/spellUtils';
+	import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
 
 	const dispatch = createEventDispatcher();
 
@@ -56,7 +59,7 @@
 				const castLevel = attack.castAtLevel || spell.level;
 				const hasSlot = checkAndConsumeSpellSlot(castLevel);
 				if (!hasSlot) {
-					alert(`No level ${castLevel} spell slots available!`);
+					toasts.add(`No level ${castLevel} spell slots available!`, 'error');
 					return;
 				}
 				// Use scaled damage if applicable, with half damage or no damage if target succeeded on save
@@ -68,25 +71,70 @@
 					damageToRoll = getScaledSpellDamage(attack, spell);
 				}
 			}
+		} else {
+			// For non-spell attacks, apply active state bonuses to damage notation
+			if ($character.activeStates && $character.activeStates.length > 0) {
+				let additionalModifier = 0;
+				for (const state of $character.activeStates) {
+					additionalModifier += state.damageBonus;
+				}
+				
+				if (additionalModifier !== 0 && damageToRoll) {
+					// Parse existing damage and add modifier
+					const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
+					if (damageMatch) {
+						const [, dice, existingMod] = damageMatch;
+						const baseModifier = existingMod ? parseInt(existingMod) : 0;
+						const totalModifier = baseModifier + additionalModifier;
+						damageToRoll = `${dice}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+					}
+				}
+			}
 		}
 		
-		const notation = `1d20${attack.bonus >= 0 ? '+' : ''}${attack.bonus}`;
+		// Build bonus breakdown for attack roll
+		const bonusBreakdown: Array<{value: number, source: string}> = [];
+		
+		// Add base attack bonus
+		if (attack.bonus !== 0) {
+			bonusBreakdown.push({ value: attack.bonus, source: 'base' });
+		}
+		
+		// Apply active state bonuses to attack roll
+		let attackBonus = attack.bonus;
+		if ($character.activeStates) {
+			for (const state of $character.activeStates) {
+				if (state.attackBonus !== 0) {
+					bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
+					attackBonus += state.attackBonus;
+				}
+			}
+		}
+		
+		let notation;
+		if (debugForceD20Twenty) {
+			notation = `1d20@20`;
+		} else {
+			notation = `1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`;
+		}
 		dispatch('roll', { 
 			notation, 
 			damageNotation: damageToRoll,
 			attackName: attack.name,
 			applyHalfDamage,
+			bonusBreakdown,
 		});
 	}
 
 	function rollDamage(attack: Attack) {
 		if (!attack.damage) {
-			alert(`${attack.name}: No damage specified`);
+			toasts.add(`${attack.name}: No damage specified`, 'error');
 			return;
 		}
 
 		let damageToRoll = attack.damage;
 		let applyHalfDamage = false;
+		const bonusBreakdown: Array<{value: number, source: string}> = [];
 		
 		// If this is a spell, handle slot consumption and scaling
 		if (attack.spellRef) {
@@ -95,7 +143,7 @@
 				const castLevel = attack.castAtLevel || spell.level;
 				const hasSlot = checkAndConsumeSpellSlot(castLevel);
 				if (!hasSlot) {
-					alert(`No level ${castLevel} spell slots available!`);
+					toasts.add(`No level ${castLevel} spell slots available!`, 'error');
 					return;
 				}
 				// Use scaled damage if applicable, with half damage or no damage if target succeeded on save
@@ -107,9 +155,36 @@
 					damageToRoll = getScaledSpellDamage(attack, spell);
 				}
 			}
+		} else {
+			// For non-spell attacks, parse the base damage and track bonuses
+			const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
+			if (damageMatch) {
+				const [, dice, existingMod] = damageMatch;
+				const baseModifier = existingMod ? parseInt(existingMod) : 0;
+				
+				if (baseModifier !== 0) {
+					bonusBreakdown.push({ value: baseModifier, source: 'base' });
+				}
+				
+				// Apply active state bonuses
+				if ($character.activeStates && $character.activeStates.length > 0) {
+					let additionalModifier = 0;
+					for (const state of $character.activeStates) {
+						if (state.damageBonus !== 0) {
+							bonusBreakdown.push({ value: state.damageBonus, source: state.name.toLowerCase() });
+							additionalModifier += state.damageBonus;
+						}
+					}
+					
+					if (additionalModifier !== 0) {
+						const totalModifier = baseModifier + additionalModifier;
+						damageToRoll = `${dice}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+					}
+				}
+			}
 		}
 
-		dispatch('roll', { notation: damageToRoll, attackName: attack.name, applyHalfDamage });
+		dispatch('roll', { notation: damageToRoll, attackName: attack.name, applyHalfDamage, bonusBreakdown });
 	}
 
 	function toggleCollapse() {
@@ -165,6 +240,19 @@
 	function getScaledSpellDamage(attack: Attack, spell: Spell): string {
 		let baseDamage = attack.damage;
 		let additionalDice = 0;
+		let additionalModifier = 0;
+		
+		// Check if spell adds spellcasting modifier to damage
+		if (addsSpellcastingModifierToDamage(spell)) {
+			additionalModifier += getSpellcastingModifier($character, $abilityModifiers);
+		}
+		
+		// Apply active state bonuses to damage
+		if ($character.activeStates) {
+			for (const state of $character.activeStates) {
+				additionalModifier += state.damageBonus;
+			}
+		}
 		
 		// Handle higher level slot scaling
 		if (spell.higherLevelSlot && attack.castAtLevel) {
@@ -191,16 +279,28 @@
 			}
 		}
 		
-		// Parse the base damage (e.g., "3d6")
-		const damageMatch = baseDamage.match(/(\d+)d(\d+)/);
+		// Parse the base damage (e.g., "3d6" or "3d6+2")
+		const damageMatch = baseDamage.match(/(\d+)d(\d+)([+-]\d+)?/);
 		if (!damageMatch) {
-			return baseDamage;
+			// No dice notation, just return modifier if any, otherwise "0"
+			if (additionalModifier !== 0) {
+				return additionalModifier >= 0 ? `${additionalModifier}` : `${additionalModifier}`;
+			}
+			return baseDamage || '0';
 		}
 		
-		const [, numDice, dieSize] = damageMatch;
+		const [, numDice, dieSize, existingMod] = damageMatch;
 		const totalDice = parseInt(numDice) + additionalDice;
-				
-		return `${totalDice}d${dieSize}`;
+		const baseModifier = existingMod ? parseInt(existingMod) : 0;
+		const totalModifier = baseModifier + additionalModifier;
+		
+		// Build the result - always show modifier for consistency
+		let result = `${totalDice}d${dieSize}`;
+		if (totalModifier !== 0) {
+			result += totalModifier >= 0 ? `+${totalModifier}` : `${totalModifier}`;
+		}
+		
+		return result;
 	}
 
 	function getAvailableSpellLevels(spell: Spell): number[] {
@@ -245,7 +345,7 @@
 		if (castLevel > 0) { // Cantrips don't use slots
 			const hasSlot = checkAndConsumeSpellSlot(castLevel);
 			if (!hasSlot) {
-				alert(`No level ${castLevel} spell slots available!`);
+				toasts.add(`No level ${castLevel} spell slots available!`, 'error');
 				return;
 			}
 		}
@@ -260,6 +360,83 @@
 			scaledDamage = getScaledSpellDamage(attack, spell);
 		}
 		dispatch('roll', { notation: scaledDamage, attackName: attack.name, applyHalfDamage });
+	}
+
+	function addActiveState() {
+		character.update(c => {
+			if (!c.activeStates) {
+				c.activeStates = [];
+			}
+			c.activeStates = [
+				...c.activeStates,
+				{
+					name: '',
+					attackBonus: 0,
+					damageBonus: 0,
+					description: ''
+				}
+			];
+			return c;
+		});
+	}
+
+	function removeActiveState(index: number) {
+		character.update(c => {
+			if (c.activeStates) {
+				c.activeStates = c.activeStates.filter((_, i) => i !== index);
+			}
+			return c;
+		});
+	}
+
+	function castBuffSpell(attack: Attack) {
+		const spell = getSpellByName(attack.spellRef!);
+		if (!spell) {
+			toasts.add('Spell not found', 'error');
+			return;
+		}
+		
+		// Consume spell slot if needed
+		const castLevel = attack.castAtLevel || spell.level;
+		if (castLevel > 0) { // Cantrips don't use slots
+			const hasSlot = checkAndConsumeSpellSlot(castLevel);
+			if (!hasSlot) {
+				toasts.add(`No level ${castLevel} spell slots available!`, 'error');
+				return;
+			}
+		}
+		
+		// Extract bonuses from the spell
+		const bonuses = extractSpellEffectBonuses(spell);
+		if (!bonuses) {
+			toasts.add(`${spell.name} cast! Check spell description for effects.`, 'info');
+			return;
+		}
+		
+		// Create or update the active state
+		character.update(c => {
+			if (!c.activeStates) {
+				c.activeStates = [];
+			}
+			
+			// Check if this spell is already active - if so, remove it first (concentration rules)
+			c.activeStates = c.activeStates.filter(state => state.name !== spell.name);
+			
+			// Add the new state
+			c.activeStates = [
+				...c.activeStates,
+				{
+					name: spell.name,
+					attackBonus: bonuses.attackBonus,
+					damageBonus: bonuses.damageBonus,
+					description: bonuses.description
+				}
+			];
+			
+			return c;
+		});
+		
+		toasts.add(`${spell.name} cast! Effect added to Active Spell Effects.`, 'success');
 	}
 
 	$: filteredAttacks = $character.attacks
@@ -287,6 +464,12 @@
 		<button class="collapse-btn" on:click={toggleCollapse} aria-label={$collapsedStates.attacks ? 'Expand' : 'Collapse'}>
 			{$collapsedStates.attacks ? '▼' : '▲'}
 		</button>
+		<!-- <div style="margin: 1em 0;">
+	<label style="font-size: 0.95em;">
+		<input type="checkbox" bind:checked={debugForceD20Twenty} />
+		Debug: Force all d20 rolls to 20
+	</label>
+</div> -->
 	</div>
 	{#if !$collapsedStates.attacks}
 	<button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
@@ -458,13 +641,17 @@
 					{/if}
 					{#if attack.spellRef && spellsLoaded}
 						{@const spell = getSpellByName(attack.spellRef)}
-						<button on:click={() => rollDamage(attack)} class="btn btn-secondary">
-							{#if spell && isHealingSpell(spell)}
-								Roll Healing
-							{:else}
-								Roll Damage
-							{/if}
-						</button>
+						{#if spell && isBuffSpell(spell)}
+							<button on:click={() => castBuffSpell(attack)} class="btn btn-success">Cast Spell</button>
+						{:else}
+							<button on:click={() => rollDamage(attack)} class="btn btn-secondary">
+								{#if spell && isHealingSpell(spell)}
+									Roll Healing
+								{:else}
+									Roll Damage
+								{/if}
+							</button>
+						{/if}
 					{:else}
 						<button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button>
 					{/if}
@@ -476,6 +663,54 @@
 			<p class="no-attacks">No attacks added yet. Click "Add Attack" to create one.</p>
 		{:else if filteredAttacks.length === 0}
 			<p class="no-attacks">No attacks match your search.</p>
+		{/if}
+	</div>
+
+	<!-- Active Spell States Section -->
+	<div class="active-states-section">
+		<h3>Active Spell Effects</h3>
+		<p class="section-description">Effects that modify attack and damage rolls (e.g., Magic Weapon, Bless)</p>
+		<button on:click={addActiveState} class="btn btn-secondary">Add Effect</button>
+		
+		{#if $character.activeStates && $character.activeStates.length > 0}
+			<div class="states-list">
+				{#each $character.activeStates as state, index}
+					<div class="state-card">
+						<div class="state-header">
+							<input
+								type="text"
+								bind:value={state.name}
+								placeholder="Effect name (e.g., Magic Weapon)"
+								class="state-name"
+							/>
+							{#if $isEditMode}
+								<button on:click={() => removeActiveState(index)} class="btn-remove">×</button>
+							{/if}
+						</div>
+						<div class="state-details">
+							<div class="state-field">
+								<label>Attack Bonus</label>
+								<input type="number" bind:value={state.attackBonus} class="state-bonus" />
+							</div>
+							<div class="state-field">
+								<label>Damage Bonus</label>
+								<input type="number" bind:value={state.damageBonus} class="state-bonus" />
+							</div>
+						</div>
+						<div class="state-description">
+							<label>Description</label>
+							<input
+								type="text"
+								bind:value={state.description}
+								placeholder="e.g., +1 to attack and damage rolls (Magic Weapon)"
+								class="state-desc-input"
+							/>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{:else}
+			<p class="no-states">No active effects. Add spell effects that modify your attacks.</p>
 		{/if}
 	</div>
 	{/if}
@@ -818,5 +1053,105 @@
 		font-size: 0.9rem;
 		color: #666;
 		margin-left: 5px;
+	}
+
+	.active-states-section {
+		margin-top: 30px;
+		padding-top: 20px;
+		border-top: 2px solid var(--border-color);
+	}
+
+	.active-states-section h3 {
+		margin: 0 0 10px 0;
+		color: var(--primary-color);
+		font-size: 1.3rem;
+	}
+
+	.section-description {
+		margin: 0 0 15px 0;
+		color: #666;
+		font-size: 0.9rem;
+		font-style: italic;
+	}
+
+	.states-list {
+		margin-top: 15px;
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+	}
+
+	.state-card {
+		background-color: #fff9e6;
+		border: 1px solid #ffd966;
+		border-radius: 6px;
+		padding: 15px;
+	}
+
+	.state-header {
+		display: flex;
+		gap: 10px;
+		margin-bottom: 10px;
+	}
+
+	.state-name {
+		flex: 1;
+		padding: 8px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		font-size: 1rem;
+		font-weight: bold;
+	}
+
+	.state-details {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 10px;
+		margin-bottom: 10px;
+	}
+
+	.state-field {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.state-field label {
+		font-size: 0.85rem;
+		font-weight: bold;
+		margin-bottom: 4px;
+	}
+
+	.state-bonus {
+		padding: 6px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		width: 100%;
+	}
+
+	.state-description {
+		margin-top: 5px;
+	}
+
+	.state-description label {
+		font-size: 0.85rem;
+		font-weight: bold;
+		margin-bottom: 4px;
+		display: block;
+	}
+
+	.state-desc-input {
+		width: 100%;
+		padding: 6px;
+		border: 1px solid var(--border-color);
+		border-radius: 4px;
+		font-size: 0.9rem;
+	}
+
+	.no-states {
+		text-align: center;
+		color: #666;
+		padding: 20px;
+		font-style: italic;
+		margin-top: 15px;
 	}
 </style>

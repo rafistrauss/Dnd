@@ -40,6 +40,7 @@
 	let diceDamageNotation = '';
 	let diceAttackName = '';
 	let diceApplyHalfDamage = false;
+	let diceBonusBreakdown: Array<{value: number, source: string}> = [];
 	let diceRollerComponent: any;
 	let isHitDiceRoll = false;
 	let showRestMenu = false;
@@ -186,12 +187,13 @@
 		return features.find(f => f.name.replace(/\s+/g, '') === key);
 	}
 
-	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string, applyHalfDamage?: boolean }) {
+	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string, applyHalfDamage?: boolean, bonusBreakdown?: Array<{value: number, source: string}> }) {
 		// Reset notation first to ensure Svelte sees a change even if same value
 		diceNotation = '';
 		diceDamageNotation = '';
 		diceAttackName = '';
 		diceApplyHalfDamage = false;
+		diceBonusBreakdown = [];
 		isHitDiceRoll = false;
 		
 		// Set all values together to ensure they update simultaneously
@@ -202,6 +204,7 @@
 			diceDamageNotation = detail.damageNotation || '';
 			diceAttackName = detail.attackName || '';
 			diceApplyHalfDamage = !!detail.applyHalfDamage;
+			diceBonusBreakdown = detail.bonusBreakdown || [];
 		}
 		showDiceRoller = true;
 	}
@@ -322,7 +325,7 @@
 				<div class="title-row">
 					<h1>D&D Character Sheet</h1>
 					{#if $character.name}
-						<span class="character-name">{$character.name}</span>
+						<span class="character-name">{$character.name} ({$character.level})</span>
 					{/if}
 				</div>
 				{#if getAllSpellSlots().length > 0}
@@ -330,6 +333,29 @@
 						{#each getAllSpellSlots() as slotInfo}
 							<span class="slot-badge" class:depleted={slotInfo.available === 0}>
 								Lv{slotInfo.level}: {slotInfo.available}/{slotInfo.total}
+							</span>
+						{/each}
+					</div>
+				{/if}
+				{#if $character.activeStates && $character.activeStates.length > 0}
+					<div class="active-effects-header">
+						{#each $character.activeStates as state, index}
+							<span class="effect-badge" title={state.description || `${state.attackBonus > 0 ? '+' + state.attackBonus + ' attack' : ''}${state.damageBonus > 0 ? (state.attackBonus > 0 ? ', ' : '') + '+' + state.damageBonus + ' damage' : ''}`}>
+								✨ {state.name}
+								{#if !$isEditMode}
+									<button 
+										class="effect-remove-btn"
+										on:click={() => {
+											character.update(c => {
+												if (c.activeStates) {
+													c.activeStates = c.activeStates.filter((_, i) => i !== index);
+												}
+												return c;
+											});
+										}}
+										title="End {state.name}"
+									>×</button>
+								{/if}
 							</span>
 						{/each}
 					</div>
@@ -409,6 +435,7 @@
 	damageNotation={diceDamageNotation}
 	attackName={diceAttackName}
 	applyHalfDamage={diceApplyHalfDamage}
+	bonusBreakdown={diceBonusBreakdown}
 	visible={showDiceRoller}
 	on:close={handleDiceRollerClose} 
 />
@@ -580,7 +607,7 @@
 		gap: 6px;
 	}
 
-	.slot-badge {
+	.slot-badge, .effect-badge {
 		background-color: rgba(255, 255, 255, 0.95);
 		color: #007bff;
 		padding: 4px 10px;
@@ -595,6 +622,51 @@
 		background-color: rgba(248, 215, 218, 0.95);
 		color: #721c24;
 		border: 1px solid rgba(245, 198, 203, 0.8);
+	}
+
+	.active-effects-header {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 6px;
+	}
+
+	.effect-badge {
+		color: #4a148c;
+		padding: 5px 12px;
+		/* border-radius: 16px; */
+		font-weight: 600;
+		font-size: 0.85rem;
+		border: 1.5px solid rgba(156, 39, 176, 0.5);
+		/* box-shadow: 0 2px 4px rgba(0,0,0,0.15); */
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		white-space: nowrap;
+	}
+
+	.effect-remove-btn {
+		background: rgba(211, 47, 47, 0.9);
+		color: white;
+		border: none;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		padding: 0;
+		cursor: pointer;
+		font-size: 16px;
+		font-weight: bold;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+		margin-left: 4px;
+		flex-shrink: 0;
+	}
+
+	.effect-remove-btn:hover {
+		background: rgba(211, 47, 47, 1);
 	}
 
 	.header-actions {
@@ -645,6 +717,16 @@
 
 	:global(.btn-secondary:hover) {
 		background-color: #b89872;
+	}
+
+	:global(.btn-success) {
+		background-color: #28a745;
+		color: white;
+		border: 1px solid #28a745;
+	}
+
+	:global(.btn-success:hover) {
+		background-color: #218838;
 	}
 
 	.btn-mode {
