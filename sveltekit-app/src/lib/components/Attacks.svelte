@@ -533,19 +533,23 @@
             {/if}
           </div>
           <div class="attack-details">
-            <div class="attack-field">
-              <label>Bonus</label>
-              <input type="number" bind:value={attack.bonus} class="attack-bonus" />
-            </div>
-            <div class="attack-field">
-              <label>Damage</label>
-              <input
-                type="text"
-                bind:value={attack.damage}
-                placeholder="e.g., 2d6+3"
-                class="attack-damage"
-              />
-            </div>
+            {#if attack.bonus !== 0 && attack.bonus !== undefined}
+              <div class="attack-field">
+                <label>Bonus</label>
+                <input type="number" bind:value={attack.bonus} class="attack-bonus" />
+              </div>
+            {/if}
+            {#if attack.damage && attack.damage.trim() !== ''}
+              <div class="attack-field">
+                <label>Damage</label>
+                <input
+                  type="text"
+                  bind:value={attack.damage}
+                  placeholder="e.g., 2d6+3"
+                  class="attack-damage"
+                />
+              </div>
+            {/if}
             <div class="attack-field">
               <label>Type</label>
               <input
