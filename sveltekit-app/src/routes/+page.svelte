@@ -40,6 +40,7 @@
 	let diceDamageNotation = '';
 	let diceAttackName = '';
 	let diceApplyHalfDamage = false;
+	let diceBonusBreakdown: Array<{value: number, source: string}> = [];
 	let diceRollerComponent: any;
 	let isHitDiceRoll = false;
 	let showRestMenu = false;
@@ -186,12 +187,13 @@
 		return features.find(f => f.name.replace(/\s+/g, '') === key);
 	}
 
-	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string, applyHalfDamage?: boolean }) {
+	function openDiceRoller(detail: string | { notation: string, damageNotation?: string, attackName?: string, applyHalfDamage?: boolean, bonusBreakdown?: Array<{value: number, source: string}> }) {
 		// Reset notation first to ensure Svelte sees a change even if same value
 		diceNotation = '';
 		diceDamageNotation = '';
 		diceAttackName = '';
 		diceApplyHalfDamage = false;
+		diceBonusBreakdown = [];
 		isHitDiceRoll = false;
 		
 		// Set all values together to ensure they update simultaneously
@@ -202,6 +204,7 @@
 			diceDamageNotation = detail.damageNotation || '';
 			diceAttackName = detail.attackName || '';
 			diceApplyHalfDamage = !!detail.applyHalfDamage;
+			diceBonusBreakdown = detail.bonusBreakdown || [];
 		}
 		showDiceRoller = true;
 	}
@@ -409,6 +412,7 @@
 	damageNotation={diceDamageNotation}
 	attackName={diceAttackName}
 	applyHalfDamage={diceApplyHalfDamage}
+	bonusBreakdown={diceBonusBreakdown}
 	visible={showDiceRoller}
 	on:close={handleDiceRollerClose} 
 />

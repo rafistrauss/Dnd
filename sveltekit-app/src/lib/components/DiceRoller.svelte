@@ -12,6 +12,7 @@
 	export let damageNotation = ''; // Optional damage notation for attacks
 	export let attackName = ''; // Optional attack name for context
 	export let applyHalfDamage = false; // If true, halve the result after rolling
+	export let bonusBreakdown: Array<{value: number, source: string}> = []; // Breakdown of bonuses by source
 
 	let diceBox: any = null;
 	let diceContainer: HTMLDivElement | undefined = undefined;
@@ -477,8 +478,19 @@
 					{#if rollResult.resultString}
 						<p>{rollResult.resultString}</p>
 					{/if}
-					{#if rollResult.constant}
-						<p class="modifier-text">Modifier: {rollResult.constant >= 0 ? '+' : ''}{rollResult.constant}</p>
+					{#if rollResult.constant || bonusBreakdown.length > 0}
+						{#if bonusBreakdown.length > 0}
+							<div class="bonus-breakdown">
+								{#each bonusBreakdown as bonus}
+									<div class="bonus-item">
+										<span class="bonus-value">{bonus.value >= 0 ? '+' : ''}{bonus.value}</span>
+										<span class="bonus-source">({bonus.source})</span>
+									</div>
+								{/each}
+							</div>
+						{:else if rollResult.constant}
+							<p class="modifier-text">Modifier: {rollResult.constant >= 0 ? '+' : ''}{rollResult.constant}</p>
+						{/if}
 					{/if}
 				</div>
 				{#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed)}
@@ -776,6 +788,36 @@
 		font-style: italic;
 		color: #666;
 		font-size: 0.9rem;
+	}
+
+	.bonus-breakdown {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 8px;
+	}
+
+	.bonus-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 4px 8px;
+		background: rgba(255, 255, 255, 0.5);
+		border-radius: 4px;
+	}
+
+	.bonus-value {
+		font-size: 1.1rem;
+		font-weight: bold;
+		color: #2e7d32;
+	}
+
+	.bonus-source {
+		font-size: 0.75rem;
+		color: #666;
+		font-style: italic;
 	}
 
 	.result-header {

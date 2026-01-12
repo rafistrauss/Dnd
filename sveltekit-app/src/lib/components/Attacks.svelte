@@ -68,13 +68,43 @@
 					damageToRoll = getScaledSpellDamage(attack, spell);
 				}
 			}
+		} else {
+			// For non-spell attacks, apply active state bonuses to damage notation
+			if ($character.activeStates && $character.activeStates.length > 0) {
+				let additionalModifier = 0;
+				for (const state of $character.activeStates) {
+					additionalModifier += state.damageBonus;
+				}
+				
+				if (additionalModifier !== 0 && damageToRoll) {
+					// Parse existing damage and add modifier
+					const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
+					if (damageMatch) {
+						const [, dice, existingMod] = damageMatch;
+						const baseModifier = existingMod ? parseInt(existingMod) : 0;
+						const totalModifier = baseModifier + additionalModifier;
+						damageToRoll = `${dice}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+					}
+				}
+			}
+		}
+		
+		// Build bonus breakdown for attack roll
+		const bonusBreakdown: Array<{value: number, source: string}> = [];
+		
+		// Add base attack bonus
+		if (attack.bonus !== 0) {
+			bonusBreakdown.push({ value: attack.bonus, source: 'base' });
 		}
 		
 		// Apply active state bonuses to attack roll
 		let attackBonus = attack.bonus;
 		if ($character.activeStates) {
 			for (const state of $character.activeStates) {
-				attackBonus += state.attackBonus;
+				if (state.attackBonus !== 0) {
+					bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
+					attackBonus += state.attackBonus;
+				}
 			}
 		}
 		
@@ -84,6 +114,7 @@
 			damageNotation: damageToRoll,
 			attackName: attack.name,
 			applyHalfDamage,
+			bonusBreakdown,
 		});
 	}
 
@@ -95,6 +126,7 @@
 
 		let damageToRoll = attack.damage;
 		let applyHalfDamage = false;
+		const bonusBreakdown: Array<{value: number, source: string}> = [];
 		
 		// If this is a spell, handle slot consumption and scaling
 		if (attack.spellRef) {
@@ -116,31 +148,35 @@
 				}
 			}
 		} else {
-			// For non-spell attacks, apply active state bonuses
-			if ($character.activeStates && $character.activeStates.length > 0) {
-				let additionalModifier = 0;
-				for (const state of $character.activeStates) {
-					additionalModifier += state.damageBonus;
+			// For non-spell attacks, parse the base damage and track bonuses
+			const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
+			if (damageMatch) {
+				const [, dice, existingMod] = damageMatch;
+				const baseModifier = existingMod ? parseInt(existingMod) : 0;
+				
+				if (baseModifier !== 0) {
+					bonusBreakdown.push({ value: baseModifier, source: 'base' });
 				}
 				
-				if (additionalModifier !== 0) {
-					// Parse existing damage and add modifier
-					const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
-					if (damageMatch) {
-						const [, dice, existingMod] = damageMatch;
-						const baseModifier = existingMod ? parseInt(existingMod) : 0;
+				// Apply active state bonuses
+				if ($character.activeStates && $character.activeStates.length > 0) {
+					let additionalModifier = 0;
+					for (const state of $character.activeStates) {
+						if (state.damageBonus !== 0) {
+							bonusBreakdown.push({ value: state.damageBonus, source: state.name.toLowerCase() });
+							additionalModifier += state.damageBonus;
+						}
+					}
+					
+					if (additionalModifier !== 0) {
 						const totalModifier = baseModifier + additionalModifier;
 						damageToRoll = `${dice}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
-					} else {
-						// Just a flat modifier
-						const baseValue = parseInt(damageToRoll) || 0;
-						damageToRoll = `${baseValue + additionalModifier}`;
 					}
 				}
 			}
 		}
 
-		dispatch('roll', { notation: damageToRoll, attackName: attack.name, applyHalfDamage });
+		dispatch('roll', { notation: damageToRoll, attackName: attack.name, applyHalfDamage, bonusBreakdown });
 	}
 
 	function toggleCollapse() {
