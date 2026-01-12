@@ -7,12 +7,13 @@
 Visit [dnd5e.wikidot.com](https://dnd5e.wikidot.com) and browse for the content you want to add:
 
 - **Spells**: Browse [Spell Lists](https://dnd5e.wikidot.com/spells)
-- **Feats**: Check [Feat List](https://dnd5e.wikidot.com/feats)  
+- **Feats**: Check [Feat List](https://dnd5e.wikidot.com/feats)
 - **Weapons**: See [Weapon Properties](https://dnd5e.wikidot.com/weapons)
 
 ### Step 2: Copy the URL
 
 Copy the full URL from the browser address bar. Examples:
+
 - Spell: `https://dnd5e.wikidot.com/spell:divine-favor`
 - Feat: `https://dnd5e.wikidot.com/feat:alert`
 - Weapon: `https://dnd5e.wikidot.com/weapon:longsword`
@@ -36,20 +37,26 @@ Click the **"📚 Import from D&D Wiki"** button at the top of your character sh
 ## Where Content Gets Added
 
 ### Spells
+
 Added to the **"Prepared Spells"** section in Class Features with format:
+
 ```
 Spell Name (LevelSchool)
 ```
 
 ### Feats
+
 Added to the **"Features & Traits"** text area with format:
+
 ```
 Feat Name (Req: Prerequisites)
 Description text...
 ```
 
 ### Weapons/Attacks
+
 Added to the **"Attacks"** section as a new attack with:
+
 - Name
 - Damage dice (e.g., 1d8)
 - Damage type (e.g., slashing)
@@ -60,6 +67,7 @@ Added to the **"Attacks"** section as a new attack with:
 ### "Unable to fetch content" Error
 
 The D&D wiki uses anti-scraping measures. If automatic fetching fails:
+
 1. Try the alternative CORS proxy (automatic)
 2. Manually copy the content from the wiki page
 3. Add it directly to your character sheet
@@ -67,6 +75,7 @@ The D&D wiki uses anti-scraping measures. If automatic fetching fails:
 ### Incorrect Parsing
 
 The parser extracts content using pattern matching. If information looks incorrect:
+
 1. Visit the source link to verify
 2. Manually edit the imported content in your character sheet
 3. Report parsing issues if you notice patterns
@@ -74,11 +83,13 @@ The parser extracts content using pattern matching. If information looks incorre
 ### Supported Content Types
 
 Currently supports:
-- ✅ Spells (spell:*)
-- ✅ Feats (feat:*)
-- ✅ Weapons (weapon:*)
+
+- ✅ Spells (spell:\*)
+- ✅ Feats (feat:\*)
+- ✅ Weapons (weapon:\*)
 
 Not yet supported:
+
 - ❌ Classes
 - ❌ Races
 - ❌ Monsters

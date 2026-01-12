@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher } from 'svelte';
   import { isEditMode } from '$lib/stores';
   export let checked: boolean = false;
   export let disabled: boolean = false;
-  export let className: string = "";
+  export let className: string = '';
 
   // Optional: index for array-based checkboxes
   export let index: number | undefined = undefined;
@@ -14,18 +14,18 @@
   const dispatch = createEventDispatcher();
 
   function handleChange(e: Event) {
-    dispatch("change", {
+    dispatch('change', {
       checked: (e.currentTarget as HTMLInputElement).checked,
-      index,
+      index
     });
   }
 </script>
 
-<label class={"slot-checkbox-label " + className + (!$isEditMode ? ' not-editable' : '')}>
+<label class={'slot-checkbox-label ' + className + (!$isEditMode ? ' not-editable' : '')}>
   <input
     type="checkbox"
     class="slot-checkbox-input"
-    checked={checked}
+    {checked}
     disabled={disabled || !$isEditMode}
     aria-label={ariaLabel}
     on:change={handleChange}
@@ -75,8 +75,11 @@
     justify-content: center;
     font-size: 1.2rem;
     color: var(--primary-color, #b89872);
-    transition: background 0.2s, color 0.2s, opacity 0.2s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    transition:
+      background 0.2s,
+      color 0.2s,
+      opacity 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
   .slot-checkbox-custom.used {

@@ -1,11 +1,13 @@
 # D&D Character Sheet - SvelteKit Implementation
 
 ## Overview
+
 This is a fully functional D&D 5th Edition character sheet built with SvelteKit, supporting multiple classes and levels with a data-driven configuration system.
 
 ## Features Implemented
 
 ### 1. Character Management
+
 - **Multiple Classes**: Supports Paladin, Fighter, Rogue, Wizard, Cleric, and Barbarian
 - **Subclass Support**: Choose from various subclasses for enhanced character customization
   - **Cleric**: War Domain, Life Domain
@@ -19,6 +21,7 @@ This is a fully functional D&D 5th Edition character sheet built with SvelteKit,
 - **Attacks**: Dynamic attack list with dice notation support
 
 ### 2. Dice Rolling
+
 - **Dice Notation Parser**: Supports standard D&D notation (e.g., "1d20+5", "2d6+3")
 - **Visual Feedback**: Roll results display in green notification boxes with animations
 - **Multiple Roll Types**:
@@ -29,6 +32,7 @@ This is a fully functional D&D 5th Edition character sheet built with SvelteKit,
   - Damage rolls
 
 ### 3. D&D Wiki Integration
+
 - **Import Spells**: Fetch spell details from dnd5e.wikidot.com URLs
 - **Import Feats**: Import feat descriptions and prerequisites
 - **Import Weapons/Attacks**: Add weapons with damage dice from the wiki
@@ -37,17 +41,20 @@ This is a fully functional D&D 5th Edition character sheet built with SvelteKit,
 - **Supported URLs**: Works with spell:, feat:, and weapon: pages from dnd5e.wikidot.com
 
 ### 4. GitHub Gist Integration
+
 - **Save to Gist**: Export your character to a GitHub Gist (public or private with token)
 - **Load from Gist**: Import character data from any Gist ID
 - **Update Existing**: Can update previously saved Gists
 - **Config Persistence**: Remembers your GitHub token and last Gist ID in localStorage
 
 ### 5. Data Persistence
+
 - **Auto-save**: Character data automatically saved to localStorage
 - **Export/Import JSON**: Download/upload character files as JSON
 - **Gist Sync**: Alternative cloud storage via GitHub Gists
 
 ### 5. Responsive UI
+
 - **Edit/Use Modes**: Toggle between editing character and using it in play
 - **Clean Layout**: Organized sections for all character data
 - **Keyboard Navigation**: Accessible with keyboard controls
@@ -86,12 +93,14 @@ sveltekit-app/
 ## Usage
 
 ### Development
+
 ```bash
 cd sveltekit-app
 bun run dev
 ```
 
 ### Build for Production
+
 ```bash
 bun run build
 bun run preview
@@ -112,6 +121,7 @@ Results display in green notification boxes for 3 seconds.
 ## GitHub Gist Integration
 
 ### To Save a Character:
+
 1. Click "Save to Gist" in the header
 2. Enter your GitHub token (get one from https://github.com/settings/tokens)
    - Token needs `gist` scope for private gists
@@ -120,6 +130,7 @@ Results display in green notification boxes for 3 seconds.
 4. Click "Save"
 
 ### To Load a Character:
+
 1. Click "Load from Gist" in the header
 2. Enter the Gist ID
 3. Optionally enter token if it's a private gist
@@ -130,6 +141,7 @@ The app remembers your token and last Gist ID in browser localStorage.
 ## Class Configuration
 
 Classes are configured with:
+
 - Hit dice type
 - Primary ability
 - Saving throw proficiencies
@@ -142,6 +154,7 @@ Easy to add new classes by extending `classConfig.ts`.
 ## Future Enhancements
 
 Possible additions:
+
 - 3D dice animation integration (DiceRoller.svelte is ready)
 - Spell management system
 - Character portrait upload

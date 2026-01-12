@@ -8,8 +8,8 @@ Due to whitespace formatting issues, please manually add the following code to `
 {#if spell.higherLevelSlot && spell.level > 0}
 	<div class="spell-level-selector">
 		<label for="spellLevel-{attack.id}">Cast at Level:</label>
-		<select 
-			id="spellLevel-{attack.id}" 
+		<select
+			id="spellLevel-{attack.id}"
 			class="spell-level-select"
 			on:change={(e) => {
 				character.update(c => {
@@ -37,17 +37,19 @@ Due to whitespace formatting issues, please manually add the following code to `
 ## 2. In the attack-actions div (around line 217), change:
 
 FROM:
+
 ```svelte
 <button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button>
 ```
 
 TO:
+
 ```svelte
-<button 
-	on:click={() => attack.spellRef ? rollSpellDamage(attack) : rollDamage(attack)} 
-	class="btn btn-secondary"
+<button
+  on:click={() => (attack.spellRef ? rollSpellDamage(attack) : rollDamage(attack))}
+  class="btn btn-secondary"
 >
-	Roll Damage
+  Roll Damage
 </button>
 ```
 

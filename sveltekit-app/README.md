@@ -43,7 +43,7 @@ You can preview the production build with `npm run preview`.
 
 Click the **"📚 Import from D&D Wiki"** button to browse and add spells and feats to your character:
 
-1. **Spells**: 
+1. **Spells**:
    - Browse a library of pre-loaded spells
    - Filter by spell level (Cantrip through Level 9)
    - Search by name, school, or description
