@@ -23,8 +23,19 @@
 
   const dispatch = createEventDispatcher();
 
-  // Track collapsed state for each attack's spell info
+  // Track collapsed state for each attack's spell info (collapsed by default)
   let collapsedSpellInfo: Record<string, boolean> = {};
+
+  // Collapse spell info by default for all attacks with spellRef
+  $: {
+    if ($character && $character.attacks) {
+      for (const attack of $character.attacks) {
+        if (attack.spellRef && collapsedSpellInfo[attack.id] === undefined) {
+          collapsedSpellInfo[attack.id] = true;
+        }
+      }
+    }
+  }
 
   function toggleSpellInfo(attackId: string) {
     collapsedSpellInfo[attackId] = !collapsedSpellInfo[attackId];
