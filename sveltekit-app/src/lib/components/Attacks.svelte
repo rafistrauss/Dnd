@@ -377,51 +377,6 @@
     return levels;
   }
 
-  function getAllSpellSlots(): { level: number; available: number; total: number }[] {
-    const result: { level: number; available: number; total: number }[] = [];
-    const spellSlots = $character.classFeatures.spellSlotsByLevel || {};
-
-    for (let level = 1; level <= 9; level++) {
-      const slots = spellSlots[level];
-      if (slots && slots.length > 0) {
-        const total = slots.length;
-        const used = slots.filter((s) => s).length;
-        result.push({ level, available: total - used, total });
-      }
-    }
-
-    return result;
-  }
-
-  function rollSpellDamage(attack: Attack) {
-    const spell = getSpellByName(attack.spellRef!);
-    if (!spell) {
-      rollDamage(attack);
-      return;
-    }
-
-    // Check if we have spell slots available
-    const castLevel = attack.castAtLevel || spell.level;
-    if (castLevel > 0) {
-      // Cantrips don't use slots
-      const hasSlot = checkAndConsumeSpellSlot(castLevel);
-      if (!hasSlot) {
-        toasts.add(`No level ${castLevel} spell slots available!`, 'error');
-        return;
-      }
-    }
-
-    const savingThrow = getSavingThrowInfo(spell);
-    let scaledDamage;
-    let applyHalfDamage = false;
-    if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
-      scaledDamage = '0';
-    } else {
-      applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
-      scaledDamage = getScaledSpellDamage(attack, spell);
-    }
-    dispatch('roll', { notation: scaledDamage, attackName: attack.name, applyHalfDamage });
-  }
 
   function addActiveState() {
     character.update((c) => {
@@ -850,35 +805,6 @@
     box-shadow: var(--shadow);
   }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    cursor: pointer;
-  }
-
-  h2 {
-    margin: 0;
-    color: var(--primary-color);
-  }
-
-  .collapse-btn {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--primary-color);
-    padding: 5px 10px;
-    transition: transform 0.2s ease;
-  }
-
-  .collapse-btn:hover {
-    transform: scale(1.1);
-  }
-
   .hidden {
     display: none;
   }
@@ -1001,17 +927,6 @@
     border-color: var(--primary-color);
   }
 
-  .roll-notification {
-    background: #4caf50;
-    color: white;
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    font-weight: bold;
-    text-align: center;
-    animation: slideIn 0.3s ease-out;
-  }
-
   @keyframes slideIn {
     from {
       opacity: 0;
@@ -1071,20 +986,6 @@
 
   .spell-info li {
     margin-bottom: 5px;
-  }
-
-  .spell-notes {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #fff3cd;
-    border: 1px solid #ffeeba;
-    border-radius: 4px;
-  }
-
-  .spell-notes h4 {
-    margin: 0 0 10px 0;
-    font-size: 1.1rem;
-    color: #856404;
   }
 
   .spell-info-loading {
@@ -1159,27 +1060,6 @@
     font-weight: bold;
     color: #007bff;
     font-size: 0.9rem;
-  }
-
-  .hit-dice-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .hit-dice-count-input {
-    width: 60px;
-    padding: 5px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    text-align: center;
-  }
-
-  .hit-dice-type {
-    font-size: 0.9rem;
-    color: #666;
-    margin-left: 5px;
   }
 
   .active-states-section {
