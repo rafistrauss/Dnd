@@ -123,7 +123,7 @@
         // Check if already loaded
         const existing = document.querySelector(`script[src="${src}"]`);
         if (existing) {
-          console.log(`Script already loaded: ${src}`);
+          // console.log(`Script already loaded: ${src}`);
           resolve(null);
           return;
         }
@@ -131,7 +131,7 @@
         const script = document.createElement('script');
         script.src = src;
         script.onload = () => {
-          console.log(`Loaded: ${src}`);
+          // console.log(`Loaded: ${src}`);
           resolve(null);
         };
         script.onerror = () => {
@@ -151,9 +151,9 @@
         .then(() => loadScript(`${base}/libs/teal.js`))
         .then(() => loadScript(`${base}/dice.js`))
         .then(() => {
-          console.log('All scripts loaded, initializing dice box...');
-          console.log('DICE available:', !!(window as any).DICE);
-          console.log('Container available:', !!diceContainer);
+          // console.log('All scripts loaded, initializing dice box...');
+          // console.log('DICE available:', !!(window as any).DICE);
+          // console.log('Container available:', !!diceContainer);
 
           // Load saved colors or use defaults
           if ((window as any).DICE) {
@@ -174,7 +174,7 @@
     // Reinitialize on window resize
     const handleResize = () => {
       if (isInitialized) {
-        console.log('Window resized, reinitializing dice box...');
+        // console.log('Window resized, reinitializing dice box...');
         initializeDiceBox();
       }
     };
@@ -203,7 +203,7 @@
       return;
     }
 
-    console.log('Rolling dice:', notation, 'type:', type);
+    // console.log('Rolling dice:', notation, 'type:', type);
 
     // Clear previous roll result and state when starting a new roll
     rollResult = null;
@@ -223,13 +223,13 @@
 
     // before_roll callback - return null for random results
     const beforeRoll = (notationObj: any) => {
-      console.log('Before roll:', notationObj);
+      // console.log('Before roll:', notationObj);
       return null; // Let dice roll randomly
     };
 
     // after_roll callback - handle the result
     const afterRoll = (notationObj: any) => {
-      console.log('After roll:', notationObj);
+      // console.log('After roll:', notationObj);
       let resultTotal = notationObj.resultTotal;
       let resultString = notationObj.resultString;
       // If applyHalfDamage is true, halve the result (rounded down)
@@ -268,24 +268,24 @@
           if (isCritical) {
             // Double dice for critical hits (5e rules)
             const critDamage = doubleDiceNotation(damageNotation);
-            console.log('Creating critical damage button:', critDamage);
+            // console.log('Creating critical damage button:', critDamage);
             followUpActions.push({
               label: `Roll Critical Damage (${critDamage})`,
               notation: critDamage
             });
           } else {
-            console.log('Creating normal damage button:', damageNotation);
+            // console.log('Creating normal damage button:', damageNotation);
             followUpActions.push({
               label: `Roll Damage (${damageNotation})`,
               notation: damageNotation
             });
           }
-          console.log('Follow-up actions after setup:', followUpActions);
+          // console.log('Follow-up actions after setup:', followUpActions);
         } else {
-          console.log('No damageNotation provided for attack roll');
+          // console.log('No damageNotation provided for attack roll');
         }
       }
-      console.log('Final followUpActions:', followUpActions);
+      // console.log('Final followUpActions:', followUpActions);
     };
 
     diceBox.start_throw(beforeRoll, afterRoll);

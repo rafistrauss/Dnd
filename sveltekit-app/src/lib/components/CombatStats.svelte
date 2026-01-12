@@ -60,8 +60,6 @@
   // Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
   $: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
 
-  console.log('Active States:', $character.activeStates);
-
   // Calculate total AC bonus from active states
   $: totalAcBonus =
     $character.activeStates && $character.activeStates.length > 0

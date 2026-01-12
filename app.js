@@ -124,23 +124,23 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeDiceBox() {
     const container = document.getElementById('diceContainer');
     if (!container || typeof DICE === 'undefined') {
-        console.log('Cannot initialize dice box - container or DICE library not found');
+        // console.log('Cannot initialize dice box - container or DICE library not found');
         return false;
     }
     
     // Make sure container has dimensions
     const rect = container.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) {
-        console.log('Cannot initialize dice box - container has no dimensions');
+        // console.log('Cannot initialize dice box - container has no dimensions');
         return false;
     }
     
     try {
         diceBox = new DICE.dice_box(container);
-        console.log('Dice box initialized successfully');
+        // console.log('Dice box initialized successfully');
         return true;
     } catch (error) {
-        console.log('Failed to initialize dice box:', error);
+        // console.log('Failed to initialize dice box:', error);
         return false;
     }
 }
@@ -695,7 +695,7 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
         
         diceBox.start_throw(beforeRoll, afterRoll);
     } catch (error) {
-        console.log('Failed to roll dice:', error);
+        // console.log('Failed to roll dice:', error);
         // Fall back to showing result without animation
         const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
         resultDiv.innerHTML = `

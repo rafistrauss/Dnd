@@ -285,9 +285,7 @@
   }
 
   function toggleMode() {
-    console.log('toggleMode called, current isEditMode:', $isEditMode);
     isEditMode.update((v) => {
-      console.log('Updating isEditMode from', v, 'to', !v);
       return !v;
     });
   }
@@ -302,22 +300,22 @@
 
   // Apply use-mode class to body when mode changes
   onMount(() => {
-    console.log('onMount - initial isEditMode:', $isEditMode);
-    console.log('onMount - body classes:', document.body.className);
+    // console.log('onMount - initial isEditMode:', $isEditMode);
+    // console.log('onMount - body classes:', document.body.className);
 
     const unsubscribe = isEditMode.subscribe((value) => {
-      console.log('isEditMode subscription triggered, value:', value);
-      console.log('Body classes before:', document.body.className);
+      // console.log('isEditMode subscription triggered, value:', value);
+      // console.log('Body classes before:', document.body.className);
 
       if (value) {
         document.body.classList.remove('use-mode');
-        console.log('Removed use-mode class (Edit Mode)');
+        // console.log('Removed use-mode class (Edit Mode)');
       } else {
         document.body.classList.add('use-mode');
-        console.log('Added use-mode class (Use Mode)');
+        // console.log('Added use-mode class (Use Mode)');
       }
 
-      console.log('Body classes after:', document.body.className);
+      // console.log('Body classes after:', document.body.className);
     });
 
     // Add click listener for closing rest menu
