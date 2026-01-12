@@ -51,18 +51,18 @@
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
   let showRestMenu = false;
-  
-    // Tooltip state for header effects
-    let effectTooltipIdx: number | null = null;
-    function showEffectTooltip(idx: number) {
-      effectTooltipIdx = idx;
-    }
-    function hideEffectTooltip() {
-      effectTooltipIdx = null;
-    }
-    function toggleEffectTooltip(idx: number) {
-      effectTooltipIdx = effectTooltipIdx === idx ? null : idx;
-    }
+
+  // Tooltip state for header effects
+  let effectTooltipIdx: number | null = null;
+  function showEffectTooltip(idx: number) {
+    effectTooltipIdx = idx;
+  }
+  function hideEffectTooltip() {
+    effectTooltipIdx = null;
+  }
+  function toggleEffectTooltip(idx: number) {
+    effectTooltipIdx = effectTooltipIdx === idx ? null : idx;
+  }
 
   function takeShortRest() {
     const restoredItems: string[] = [];
@@ -397,10 +397,14 @@
                     <strong>{state.name}</strong><br />
                     {state.description}<br />
                     {#if state.attackBonus}
-                      <span>Attack Bonus: {state.attackBonus > 0 ? '+' : ''}{state.attackBonus}</span><br />
+                      <span
+                        >Attack Bonus: {state.attackBonus > 0 ? '+' : ''}{state.attackBonus}</span
+                      ><br />
                     {/if}
                     {#if state.damageBonus}
-                      <span>Damage Bonus: {state.damageBonus > 0 ? '+' : ''}{state.damageBonus}</span>
+                      <span
+                        >Damage Bonus: {Number(state.damageBonus) > 0 ? '+' : ''}{state.damageBonus}</span
+                      >
                     {/if}
                   </span>
                 {/if}
@@ -421,31 +425,31 @@
               </span>
             {/each}
           </div>
-        <style>
-          .effect-badge {
-            position: relative;
-          }
-          .effect-tooltip {
-            position: absolute;
-            top: 120%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #fff;
-            color: #222;
-            border: 1px solid #a5b4fc;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.95em;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-            z-index: 10;
-            min-width: 180px;
-            max-width: 260px;
-            white-space: normal;
-            pointer-events: none;
-            opacity: 1;
-            transition: opacity 0.15s;
-          }
-        </style>
+          <style>
+            .effect-badge {
+              position: relative;
+            }
+            .effect-tooltip {
+              position: absolute;
+              top: 120%;
+              left: 50%;
+              transform: translateX(-50%);
+              background: #fff;
+              color: #222;
+              border: 1px solid #a5b4fc;
+              border-radius: 6px;
+              padding: 8px 12px;
+              font-size: 0.95em;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+              z-index: 10;
+              min-width: 180px;
+              max-width: 260px;
+              white-space: normal;
+              pointer-events: none;
+              opacity: 1;
+              transition: opacity 0.15s;
+            }
+          </style>
         {/if}
       </div>
       <div class="header-right">
@@ -521,9 +525,9 @@
 
   <main>
     <CharacterInfo />
-    <CombatStats on:rollHitDice={handleHitDiceRoll} />
     <AbilityScores on:roll={(e) => openDiceRoller(e.detail)} />
     <Skills on:roll={(e) => openDiceRoller(e.detail)} />
+    <CombatStats on:rollHitDice={handleHitDiceRoll} />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
     <ClassFeatures />
     <Notes />
