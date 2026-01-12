@@ -201,6 +201,12 @@
 		}
 
 		console.log('Rolling dice:', notation, 'type:', type);
+		
+		// Clear previous roll result and state when starting a new roll
+		rollResult = null;
+		followUpActions = [];
+		isCritical = false;
+		
 		rollType = type;
 		guidedStrikeUsed = false; // Reset Guided Strike usage for new rolls
 		
