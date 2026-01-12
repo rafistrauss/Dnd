@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
-	import type { Attack, Spell } from '$lib/types';
+	import type { Attack, Spell, SpellState } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
-	import { getSavingThrowInfo, addsSpellcastingModifierToDamage } from '$lib/spellUtils';
+	import { getSavingThrowInfo, addsSpellcastingModifierToDamage, isBuffSpell, extractSpellEffectBonuses } from '$lib/spellUtils';
 	import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
 
 	const dispatch = createEventDispatcher();
@@ -345,6 +345,56 @@
 		});
 	}
 
+	function castBuffSpell(attack: Attack) {
+		const spell = getSpellByName(attack.spellRef!);
+		if (!spell) {
+			alert('Spell not found');
+			return;
+		}
+		
+		// Consume spell slot if needed
+		const castLevel = attack.castAtLevel || spell.level;
+		if (castLevel > 0) { // Cantrips don't use slots
+			const hasSlot = checkAndConsumeSpellSlot(castLevel);
+			if (!hasSlot) {
+				alert(`No level ${castLevel} spell slots available!`);
+				return;
+			}
+		}
+		
+		// Extract bonuses from the spell
+		const bonuses = extractSpellEffectBonuses(spell);
+		if (!bonuses) {
+			alert(`${spell.name} cast! Check spell description for effects.`);
+			return;
+		}
+		
+		// Create or update the active state
+		character.update(c => {
+			if (!c.activeStates) {
+				c.activeStates = [];
+			}
+			
+			// Check if this spell is already active - if so, remove it first (concentration rules)
+			c.activeStates = c.activeStates.filter(state => state.name !== spell.name);
+			
+			// Add the new state
+			c.activeStates = [
+				...c.activeStates,
+				{
+					name: spell.name,
+					attackBonus: bonuses.attackBonus,
+					damageBonus: bonuses.damageBonus,
+					description: bonuses.description
+				}
+			];
+			
+			return c;
+		});
+		
+		alert(`${spell.name} cast! Effect added to Active Spell Effects.`);
+	}
+
 	$: filteredAttacks = $character.attacks
 		.filter((attack) => {
 			if (!$searchFilter) return true;
@@ -541,13 +591,17 @@
 					{/if}
 					{#if attack.spellRef && spellsLoaded}
 						{@const spell = getSpellByName(attack.spellRef)}
-						<button on:click={() => rollDamage(attack)} class="btn btn-secondary">
-							{#if spell && isHealingSpell(spell)}
-								Roll Healing
-							{:else}
-								Roll Damage
-							{/if}
-						</button>
+						{#if spell && isBuffSpell(spell)}
+							<button on:click={() => castBuffSpell(attack)} class="btn btn-success">Cast Spell</button>
+						{:else}
+							<button on:click={() => rollDamage(attack)} class="btn btn-secondary">
+								{#if spell && isHealingSpell(spell)}
+									Roll Healing
+								{:else}
+									Roll Damage
+								{/if}
+							</button>
+						{/if}
 					{:else}
 						<button on:click={() => rollDamage(attack)} class="btn btn-secondary">Roll Damage</button>
 					{/if}

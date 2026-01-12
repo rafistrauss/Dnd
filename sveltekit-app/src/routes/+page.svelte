@@ -647,6 +647,16 @@
 		background-color: #b89872;
 	}
 
+	:global(.btn-success) {
+		background-color: #28a745;
+		color: white;
+		border: 1px solid #28a745;
+	}
+
+	:global(.btn-success:hover) {
+		background-color: #218838;
+	}
+
 	.btn-mode {
 		background-color: rgba(255, 255, 255, 0.2);
 		color: white;
