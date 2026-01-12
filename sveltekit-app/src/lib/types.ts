@@ -82,6 +82,13 @@ export interface HitDice {
 	max: number;
 }
 
+export interface SpellState {
+	name: string;
+	attackBonus: number;
+	damageBonus: number;
+	description: string;
+}
+
 export interface ClassFeatures {
 	features: Record<string, boolean[] | number>;
 	spellSlots: boolean[]; // Legacy - 1st level only
@@ -113,6 +120,7 @@ export interface Character {
 	equipment: string;
 	notes: string;
 	classFeatures: ClassFeatures;
+	activeStates?: SpellState[];
 }
 
 // Class Configuration Types

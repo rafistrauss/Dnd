@@ -33,3 +33,16 @@ export function getSavingThrowInfo(spell: Spell): { ability: string; halfDamageO
 		noDamageOnSave
 	};
 }
+
+/**
+ * Check if a spell adds the spellcasting ability modifier to damage
+ * Examples: "1d8 plus your spellcasting ability modifier"
+ * @param spell The spell to analyze
+ * @returns true if the spell adds spellcasting modifier to damage
+ */
+export function addsSpellcastingModifierToDamage(spell: Spell): boolean {
+	const description = spell.description;
+	// Pattern to detect "plus your spellcasting ability modifier" or similar
+	const modifierPattern = /plus\s+your\s+spellcasting\s+ability\s+modifier/i;
+	return modifierPattern.test(description);
+}

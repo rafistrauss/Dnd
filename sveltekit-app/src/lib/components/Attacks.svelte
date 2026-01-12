@@ -3,8 +3,8 @@
 	import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
 	import type { Attack, Spell } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
-	import { getSavingThrowInfo } from '$lib/spellUtils';
-	import { getSpellSaveDC } from '$lib/combatUtils';
+	import { getSavingThrowInfo, addsSpellcastingModifierToDamage } from '$lib/spellUtils';
+	import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
 
 	const dispatch = createEventDispatcher();
 
@@ -70,7 +70,15 @@
 			}
 		}
 		
-		const notation = `1d20${attack.bonus >= 0 ? '+' : ''}${attack.bonus}`;
+		// Apply active state bonuses to attack roll
+		let attackBonus = attack.bonus;
+		if ($character.activeStates) {
+			for (const state of $character.activeStates) {
+				attackBonus += state.attackBonus;
+			}
+		}
+		
+		const notation = `1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`;
 		dispatch('roll', { 
 			notation, 
 			damageNotation: damageToRoll,
@@ -105,6 +113,29 @@
 				} else {
 					applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
 					damageToRoll = getScaledSpellDamage(attack, spell);
+				}
+			}
+		} else {
+			// For non-spell attacks, apply active state bonuses
+			if ($character.activeStates && $character.activeStates.length > 0) {
+				let additionalModifier = 0;
+				for (const state of $character.activeStates) {
+					additionalModifier += state.damageBonus;
+				}
+				
+				if (additionalModifier !== 0) {
+					// Parse existing damage and add modifier
+					const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
+					if (damageMatch) {
+						const [, dice, existingMod] = damageMatch;
+						const baseModifier = existingMod ? parseInt(existingMod) : 0;
+						const totalModifier = baseModifier + additionalModifier;
+						damageToRoll = `${dice}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+					} else {
+						// Just a flat modifier
+						const baseValue = parseInt(damageToRoll) || 0;
+						damageToRoll = `${baseValue + additionalModifier}`;
+					}
 				}
 			}
 		}
@@ -165,6 +196,19 @@
 	function getScaledSpellDamage(attack: Attack, spell: Spell): string {
 		let baseDamage = attack.damage;
 		let additionalDice = 0;
+		let additionalModifier = 0;
+		
+		// Check if spell adds spellcasting modifier to damage
+		if (addsSpellcastingModifierToDamage(spell)) {
+			additionalModifier += getSpellcastingModifier($character, $abilityModifiers);
+		}
+		
+		// Apply active state bonuses to damage
+		if ($character.activeStates) {
+			for (const state of $character.activeStates) {
+				additionalModifier += state.damageBonus;
+			}
+		}
 		
 		// Handle higher level slot scaling
 		if (spell.higherLevelSlot && attack.castAtLevel) {
@@ -191,16 +235,28 @@
 			}
 		}
 		
-		// Parse the base damage (e.g., "3d6")
-		const damageMatch = baseDamage.match(/(\d+)d(\d+)/);
+		// Parse the base damage (e.g., "3d6" or "3d6+2")
+		const damageMatch = baseDamage.match(/(\d+)d(\d+)([+-]\d+)?/);
 		if (!damageMatch) {
+			// No dice notation, might just be a modifier
+			if (additionalModifier !== 0) {
+				return additionalModifier >= 0 ? `+${additionalModifier}` : `${additionalModifier}`;
+			}
 			return baseDamage;
 		}
 		
-		const [, numDice, dieSize] = damageMatch;
+		const [, numDice, dieSize, existingMod] = damageMatch;
 		const totalDice = parseInt(numDice) + additionalDice;
-				
-		return `${totalDice}d${dieSize}`;
+		const baseModifier = existingMod ? parseInt(existingMod) : 0;
+		const totalModifier = baseModifier + additionalModifier;
+		
+		// Build the result
+		let result = `${totalDice}d${dieSize}`;
+		if (totalModifier !== 0) {
+			result += totalModifier >= 0 ? `+${totalModifier}` : `${totalModifier}`;
+		}
+		
+		return result;
 	}
 
 	function getAvailableSpellLevels(spell: Spell): number[] {
