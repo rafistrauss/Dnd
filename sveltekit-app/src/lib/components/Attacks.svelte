@@ -613,6 +613,29 @@
                     </ul>
                   {/if}
                 </div>
+                {@const savingThrow = getSavingThrowInfo(spell)}
+                {#if savingThrow}
+                  <div class="target-condition">
+                    <label>
+                      <input
+                        type="checkbox"
+                        bind:checked={attack.targetSucceededSave}
+                        class="use-enabled"
+                      />
+                      Target succeeded on {savingThrow.ability.charAt(0).toUpperCase() + savingThrow.ability.slice(1)} save
+                      {#if $character.class}
+                        <span class="scaled-damage" style="margin-left: 8px;">
+                          (Spell Save DC: {getSpellSaveDC($character, $abilityModifiers)})
+                        </span>
+                      {/if}
+                      {#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
+                        <span class="scaled-damage">(Half damage)</span>
+                      {:else if attack.targetSucceededSave && savingThrow.noDamageOnSave}
+                        <span class="scaled-damage">(No damage)</span>
+                      {/if}
+                    </label>
+                  </div>
+                {/if}
                 {#if spell.higherLevelSlot && spell.level > 0}
                   {@const availableLevels = getAvailableSpellLevels(spell)}
                   {#if availableLevels.length > 0}
@@ -630,7 +653,6 @@
                         {/each}
                       </select>
                       {#if attack.castAtLevel && attack.castAtLevel > spell.level}
-                        {@const savingThrow = getSavingThrowInfo(spell)}
                         {@const scaledDamage = getScaledSpellDamage(attack, spell)}
                         <span class="scaled-damage">
                           {#if isHealingSpell(spell)}
@@ -652,33 +674,8 @@
                           />
                           Target is Fiend or Undead
                           {#if attack.targetIsFiendOrUndead}
-                            {@const savingThrow = getSavingThrowInfo(spell)}
                             {@const scaledDamage = getScaledSpellDamage(attack, spell)}
                             <span class="scaled-damage">(+1d8, total: {scaledDamage})</span>
-                          {/if}
-                        </label>
-                      </div>
-                    {/if}
-                    {@const savingThrow = getSavingThrowInfo(spell)}
-                    {#if savingThrow}
-                      <div class="target-condition">
-                        <label>
-                          <input
-                            type="checkbox"
-                            bind:checked={attack.targetSucceededSave}
-                            class="use-enabled"
-                          />
-                          Target succeeded on {savingThrow.ability.charAt(0).toUpperCase() +
-                            savingThrow.ability.slice(1)} save
-                          {#if $character.class}
-                            <span class="scaled-damage" style="margin-left: 8px;">
-                              (Spell Save DC: {getSpellSaveDC($character, $abilityModifiers)})
-                            </span>
-                          {/if}
-                          {#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
-                            <span class="scaled-damage">(Half damage)</span>
-                          {:else if attack.targetSucceededSave && savingThrow.noDamageOnSave}
-                            <span class="scaled-damage">(No damage)</span>
                           {/if}
                         </label>
                       </div>
