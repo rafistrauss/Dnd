@@ -85,7 +85,7 @@ export interface HitDice {
 export interface SpellState {
   name: string;
   attackBonus: number;
-  damageBonus: number;
+  damageBonus: number | string;
   description: string;
   acBonus?: number; // Optional AC bonus from spell effect
 }

@@ -12,7 +12,7 @@
 
   // Debug flag: set to true to force all d20 rolls to 20
   let debugForceD20Twenty = false;
-  import type { Attack, Spell, SpellState } from '$lib/types';
+  import type { Attack, Spell } from '$lib/types';
   import { loadSpells } from '$lib/dndData';
   import {
     getSavingThrowInfo,
@@ -100,19 +100,31 @@
     } else {
       // For non-spell attacks, apply active state bonuses to damage notation
       if ($character.activeStates && $character.activeStates.length > 0) {
-        let additionalModifier = 0;
+        let numericModifier = 0;
+        let stringModifiers: string[] = [];
         for (const state of $character.activeStates) {
-          additionalModifier += state.damageBonus;
+          if (typeof state.damageBonus === 'string') {
+            stringModifiers.push(state.damageBonus);
+          } else if (typeof state.damageBonus === 'number') {
+            numericModifier += state.damageBonus;
+          }
         }
 
-        if (additionalModifier !== 0 && damageToRoll) {
+        if ((numericModifier !== 0 || stringModifiers.length > 0) && damageToRoll) {
           // Parse existing damage and add modifier
           const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
           if (damageMatch) {
             const [, dice, existingMod] = damageMatch;
             const baseModifier = existingMod ? parseInt(existingMod) : 0;
-            const totalModifier = baseModifier + additionalModifier;
-            damageToRoll = `${dice}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+            const totalModifier = baseModifier + numericModifier;
+            let newDamage = `${dice}`;
+            if (totalModifier !== 0) {
+              newDamage += `${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+            }
+            if (stringModifiers.length > 0) {
+              newDamage += ' + ' + stringModifiers.join(' + ');
+            }
+            damageToRoll = newDamage;
           }
         }
       }
@@ -130,7 +142,7 @@
     let attackBonus = attack.bonus;
     if ($character.activeStates) {
       for (const state of $character.activeStates) {
-        if (state.attackBonus !== 0) {
+        if (typeof state.attackBonus === 'number' && state.attackBonus !== 0) {
           bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
           attackBonus += state.attackBonus;
         }
@@ -194,17 +206,27 @@
 
         // Apply active state bonuses
         if ($character.activeStates && $character.activeStates.length > 0) {
-          let additionalModifier = 0;
+          let numericModifier = 0;
+          let stringModifiers: string[] = [];
           for (const state of $character.activeStates) {
-            if (state.damageBonus !== 0) {
+            if (typeof state.damageBonus === 'string') {
+              stringModifiers.push(state.damageBonus);
+            } else if (typeof state.damageBonus === 'number' && state.damageBonus !== 0) {
               bonusBreakdown.push({ value: state.damageBonus, source: state.name.toLowerCase() });
-              additionalModifier += state.damageBonus;
+              numericModifier += state.damageBonus;
             }
           }
 
-          if (additionalModifier !== 0) {
-            const totalModifier = baseModifier + additionalModifier;
-            damageToRoll = `${dice}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+          if (numericModifier !== 0 || stringModifiers.length > 0) {
+            const totalModifier = baseModifier + numericModifier;
+            let newDamage = `${dice}`;
+            if (totalModifier !== 0) {
+              newDamage += `${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+            }
+            if (stringModifiers.length > 0) {
+              newDamage += ' + ' + stringModifiers.join(' + ');
+            }
+            damageToRoll = newDamage;
           }
         }
       }
@@ -281,7 +303,10 @@
     // Apply active state bonuses to damage
     if ($character.activeStates) {
       for (const state of $character.activeStates) {
-        additionalModifier += state.damageBonus;
+        if (typeof state.damageBonus === 'number') {
+          additionalModifier += state.damageBonus;
+        }
+        // If string, ignore here (handled elsewhere for extra dice)
       }
     }
 
@@ -533,14 +558,15 @@
           <div class="attack-details">
             {#if attack.bonus !== 0 && attack.bonus !== undefined}
               <div class="attack-field">
-                <label>Bonus</label>
-                <input type="number" bind:value={attack.bonus} class="attack-bonus" />
+                <label for="attack-bonus-{attack.id}">Bonus</label>
+                <input id="attack-bonus-{attack.id}" type="number" bind:value={attack.bonus} class="attack-bonus" />
               </div>
             {/if}
             {#if attack.damage && attack.damage.trim() !== ''}
               <div class="attack-field">
-                <label>Damage</label>
+                <label for="attack-damage-{attack.id}">Damage</label>
                 <input
+                  id="attack-damage-{attack.id}"
                   type="text"
                   bind:value={attack.damage}
                   placeholder="e.g., 2d6+3"
@@ -549,8 +575,9 @@
               </div>
             {/if}
             <div class="attack-field">
-              <label>Type</label>
+              <label for="attack-type-{attack.id}">Type</label>
               <input
+                id="attack-type-{attack.id}"
                 type="text"
                 bind:value={attack.damageType}
                 placeholder="e.g., slashing"
@@ -694,13 +721,14 @@
           {/if}
           {#if !attack.spellRef}
             <div class="attack-notes">
-              <label>Notes</label>
+              <label for="attack-notes-{attack.id}">Notes</label>
               <textarea
+                id="attack-notes-{attack.id}"
                 bind:value={attack.notes}
                 placeholder="e.g., DC 15 Dex save, Range 120 ft, Concentration"
                 class="notes-input"
                 rows="2"
-              />
+              ></textarea>
             </div>
           {/if}
           <div class="attack-actions">
@@ -765,17 +793,18 @@
               </div>
               <div class="state-details">
                 <div class="state-field">
-                  <label>Attack Bonus</label>
-                  <input type="number" bind:value={state.attackBonus} class="state-bonus" />
+                  <label for="state-attack-bonus-{index}">Attack Bonus</label>
+                  <input id="state-attack-bonus-{index}" type="number" bind:value={state.attackBonus} class="state-bonus" />
                 </div>
                 <div class="state-field">
-                  <label>Damage Bonus</label>
-                  <input type="number" bind:value={state.damageBonus} class="state-bonus" />
+                  <label for="state-damage-bonus-{index}">Damage Bonus</label>
+                  <input id="state-damage-bonus-{index}" type="text" bind:value={state.damageBonus} class="state-bonus" />
                 </div>
               </div>
               <div class="state-description">
-                <label>Description</label>
+                <label for="state-desc-{index}">Description</label>
                 <input
+                  id="state-desc-{index}"
                   type="text"
                   bind:value={state.description}
                   placeholder="e.g., +1 to attack and damage rolls (Magic Weapon)"

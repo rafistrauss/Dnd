@@ -58,6 +58,11 @@ export function addsSpellcastingModifierToDamage(spell: Spell): boolean {
 export function isBuffSpell(spell: Spell): boolean {
   const description = spell.description.toLowerCase();
 
+  // Divine Favor is always a buff spell
+  if (spell.name === 'Divine Favor') {
+    return true;
+  }
+
   // Check for damage-dealing keywords that indicate it's NOT a buff spell
   const damageKeywords = [
     'takes',
@@ -112,9 +117,10 @@ export function extractSpellEffectBonuses(
 ): SpellState | null {
   const description = spell.description;
   let attackBonus = 0;
-  let damageBonus = 0;
+  let damageBonus: number | string = 0;
   let acBonus = 0;
   let effectDescription = '';
+
 
   // Magic Weapon: "+1 bonus to attack rolls and damage rolls" or "+2 bonus" or "+3 bonus"
   const magicWeaponMatch = description.match(
@@ -130,6 +136,12 @@ export function extractSpellEffectBonuses(
   // Bless: "adds 1d4 to the attack roll"
   if (spell.name === 'Bless') {
     effectDescription = 'Add 1d4 to attack rolls and saves';
+  }
+
+  // Divine Favor: ongoing effect, not direct damage
+  if (spell.name === 'Divine Favor') {
+    effectDescription = 'Your weapon attacks deal an extra 1d4 radiant damage on a hit.';
+    damageBonus = '1d4'
   }
 
   // Shield of Faith: "+2 bonus to AC"
