@@ -154,6 +154,7 @@ export function extractSpellEffectBonuses(
   // Haste: "+2 bonus to Armor Class"
   if (spell.name === 'Haste') {
     effectDescription = '+2 AC, doubled speed, extra action';
+    acBonus = 2;
   }
 
   // If we found any effect, return it
@@ -162,7 +163,8 @@ export function extractSpellEffectBonuses(
       attackBonus,
       damageBonus,
       acBonus,
-      description: effectDescription || spell.description.substring(0, 100)
+      description: effectDescription || spell.description.substring(0, 100),
+      name: spell.name
     };
   }
 
