@@ -4,6 +4,7 @@
 	import type { Attack, Spell } from '$lib/types';
 	import { loadSpells } from '$lib/dndData';
 	import { getSavingThrowInfo } from '$lib/spellUtils';
+	import { getSpellSaveDC } from '$lib/combatUtils';
 
 	const dispatch = createEventDispatcher();
 
@@ -417,7 +418,12 @@
 												class="use-enabled"
 											/>
 											Target succeeded on {savingThrow.ability.charAt(0).toUpperCase() + savingThrow.ability.slice(1)} save
-											{#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
+											{#if $character.class}
+  <span class="scaled-damage" style="margin-left: 8px;">
+    (Spell Save DC: {getSpellSaveDC($character, $abilityModifiers)})
+  </span>
+{/if}
+{#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
 												<span class="scaled-damage">(Half damage)</span>
 											{:else if attack.targetSucceededSave && savingThrow.noDamageOnSave}
 												<span class="scaled-damage">(No damage)</span>

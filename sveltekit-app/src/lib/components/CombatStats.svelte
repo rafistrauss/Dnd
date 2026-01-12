@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { character, searchFilter, collapsedStates, abilityModifiers } from '$lib/stores';
 	import { getClassConfig } from '$lib/classConfig';
+	import { getSpellSaveDC } from '$lib/combatUtils';
 	import type { Character } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
@@ -50,14 +51,7 @@
 	}
 
 	// Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
-	$: spellSaveDC = (() => {
-		if (!$character.class) return null;
-		const classConfig = getClassConfig($character.class);
-		if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return null;
-		
-		const spellcastingMod = $abilityModifiers[classConfig.spellcastingAbility];
-		return 8 + $character.proficiencyBonus + spellcastingMod;
-	})();
+	$: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
 
 	$: hasVisibleContent = !$searchFilter || 
 		'armor class'.includes($searchFilter.toLowerCase()) ||

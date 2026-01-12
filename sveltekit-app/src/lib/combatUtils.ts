@@ -118,3 +118,14 @@ export function rollHPForLevel(hitDice: string): number {
 	const dieSize = parseInt(hitDice.substring(1));
 	return Math.floor(Math.random() * dieSize) + 1;
 }
+
+/**
+ * Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
+ */
+export function getSpellSaveDC(char: Character, abilities: Abilities): number | null {
+	if (!char.class) return null;
+	const classConfig = getClassConfig(char.class);
+	if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return null;
+	const spellcastingMod = abilities[classConfig.spellcastingAbility];
+	return 8 + char.proficiencyBonus + spellcastingMod;
+}
