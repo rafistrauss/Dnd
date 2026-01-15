@@ -33,62 +33,63 @@
     breakdown: Array<{ value: number | string; source: string }>
   ): Array<{ display: string; source: string }> {
     const parts: Array<{ display: string; source: string }> = [];
-    
+
     if (!result || !result.result) return parts;
 
     // Parse the notation to identify dice rolls
     // Example: "1d20+6+1d4" -> we need to identify the dice positions
     const notationParts = notation.match(/([+-]?\d*d\d+|[+-]?\d+)/g) || [];
-    
+
     let resultIndex = 0; // Track position in result.result array
     const usedBreakdown = new Set<number>();
-    
+
     for (const part of notationParts) {
       const trimmed = part.trim();
       if (!trimmed) continue;
-      
+
       // Check if this is a dice roll (e.g., "1d20", "2d6", "1d4")
       const diceMatch = trimmed.match(/([+-]?)(\d*)d(\d+)/);
       if (diceMatch) {
         const count = parseInt(diceMatch[2] || '1');
-        
+
         // Check if this dice roll matches a string bonus from breakdown (like Bless's "1d4")
         const diceNotation = `${count}d${diceMatch[3]}`;
-        const matchingIndex = breakdown.findIndex((b, idx) => 
-          !usedBreakdown.has(idx) && typeof b.value === 'string' && b.value === diceNotation
+        const matchingIndex = breakdown.findIndex(
+          (b, idx) =>
+            !usedBreakdown.has(idx) && typeof b.value === 'string' && b.value === diceNotation
         );
-        
+
         // Get the actual rolled values for this set of dice
         const diceValues: number[] = [];
         for (let i = 0; i < count && resultIndex < result.result.length; i++) {
           diceValues.push(result.result[resultIndex++]);
         }
-        
+
         const source = matchingIndex >= 0 ? breakdown[matchingIndex].source : 'base die';
         if (matchingIndex >= 0) usedBreakdown.add(matchingIndex);
-        
+
         // Show each die result separately
         for (const value of diceValues) {
-          parts.push({ 
-            display: `${value}`, 
-            source: source 
+          parts.push({
+            display: `${value}`,
+            source: source
           });
         }
       }
     }
-    
+
     // Now add all numeric bonuses from the breakdown (not from parsing notation)
     // This ensures we show each bonus component separately (e.g., +5 attack, +1 magic weapon)
     for (let i = 0; i < breakdown.length; i++) {
       if (!usedBreakdown.has(i) && typeof breakdown[i].value === 'number') {
         const numValue = breakdown[i].value;
-        parts.push({ 
-          display: numValue >= 0 ? `+${numValue}` : `${numValue}`, 
-          source: breakdown[i].source 
+        parts.push({
+          display: numValue >= 0 ? `+${numValue}` : `${numValue}`,
+          source: breakdown[i].source
         });
       }
     }
-    
+
     return parts;
   }
 
@@ -312,7 +313,7 @@
       };
 
       console.log('Final roll result:', rollResult);
-      console.log({type});
+      console.log({ type });
 
       // Detect critical hits/fails on d20 rolls (check first die roll)
       if (type === 'attack') {
@@ -320,9 +321,8 @@
           const firstDie = notationObj.result[0];
           isCriticalSuccess = firstDie === 20;
           isCriticalFail = firstDie === 1;
-          
+
           // TODO: Play sounds for crit/fail
-          
         }
       }
 
@@ -349,7 +349,7 @@
               label: `Roll Critical Damage (${critDamage})`,
               notation: critDamage
             });
-          } else if(isCriticalFail) {
+          } else if (isCriticalFail) {
             // No damage on critical fail
             // console.log('No damage roll on critical fail');
           } else {
@@ -680,9 +680,9 @@
           {/if}
         </div>
         {#if isCriticalFail}
-           <div>
+          <div>
             <em>No damage is dealt on a critical miss.</em>
-           </div>
+          </div>
         {/if}
         {#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0)}
           <div class="follow-up-actions">

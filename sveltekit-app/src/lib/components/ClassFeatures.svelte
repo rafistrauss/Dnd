@@ -9,7 +9,8 @@
     getPreparedSpellsCount,
     getSpellSaveDC
   } from '$lib/classConfig';
-  import SectionHeader from './SectionHeader.svelte';``
+  import SectionHeader from './SectionHeader.svelte';
+  ``;
 
   $: classConfig = $character.class ? getClassConfig($character.class) : null;
   $: features = $character.class

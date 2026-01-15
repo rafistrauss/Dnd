@@ -23,28 +23,28 @@
 </div>
 
 <style>
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--primary-color);
-  border-bottom: 2px solid var(--border-color);
-  cursor: pointer;
-}
-.collapse-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--primary-color);
-  padding: 5px 10px;
-  transition: transform 0.2s ease;
-}
-.collapse-btn:hover {
-  transform: scale(1.1);
-}
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+    cursor: pointer;
+  }
+  .collapse-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--primary-color);
+    padding: 5px 10px;
+    transition: transform 0.2s ease;
+  }
+  .collapse-btn:hover {
+    transform: scale(1.1);
+  }
 
-h2 {
-  margin: 0;
-}
+  h2 {
+    margin: 0;
+  }
 </style>

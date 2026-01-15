@@ -123,15 +123,12 @@ export function isBuffSpell(spell: Spell): boolean {
  * @param spell The spell to analyze
  * @returns SpellState object with extracted bonuses, or null if no bonuses found
  */
-export function extractSpellEffectBonuses(
-  spell: Spell
-): SpellState | null {
+export function extractSpellEffectBonuses(spell: Spell): SpellState | null {
   const description = spell.description;
   let attackBonus: number | string = 0;
   let damageBonus: number | string = 0;
   let acBonus = 0;
   let effectDescription = '';
-
 
   // Magic Weapon: "+1 bonus to attack rolls and damage rolls" or "+2 bonus" or "+3 bonus"
   const magicWeaponMatch = description.match(

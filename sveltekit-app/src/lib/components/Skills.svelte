@@ -92,7 +92,9 @@
             {label}
             <span class="ability-tag">({SKILL_ABILITIES[key].substring(0, 3).toUpperCase()})</span>
           </label>
-          <span class="skill-modifier">{skillModifiers[key] >= 0 ? '+' : ''}{skillModifiers[key]}</span>
+          <span class="skill-modifier"
+            >{skillModifiers[key] >= 0 ? '+' : ''}{skillModifiers[key]}</span
+          >
           <button class="roll-btn" on:click={() => rollSkill(key)}>Roll</button>
         </div>
       {/each}
