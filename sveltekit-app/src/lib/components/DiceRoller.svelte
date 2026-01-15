@@ -13,6 +13,7 @@
   export let attackName = ''; // Optional attack name for context
   export let applyHalfDamage = false; // If true, halve the result after rolling
   export let bonusBreakdown: Array<{ value: number; source: string }> = []; // Breakdown of bonuses by source
+  export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
 
   let diceBox: any = null;
   let diceContainer: HTMLDivElement | undefined = undefined;
@@ -103,7 +104,6 @@
   // Follow-up actions for multi-step rolls
   let followUpActions: Array<{ label: string; notation: string }> = [];
   let isCritical = false;
-  let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
   let guidedStrikeUsed = false;
 
   // Dice color customization
@@ -309,12 +309,15 @@
         resultString
       };
 
-      // Detect critical hits/fails on d20 rolls
+      // Detect critical hits/fails on d20 rolls (check first die roll)
       if (type === 'attack' || type === 'check' || type === 'save') {
-        const d20Rolls = notationObj.result?.filter((r: any) => r === 20) || [];
-        if (d20Rolls.length > 0) {
-          const d20Value = d20Rolls[0];
-          isCritical = d20Value === 20;
+        if (notationObj.result && notationObj.result.length > 0) {
+          const firstDie = notationObj.result[0];
+          isCritical = firstDie === 20;
+          // Natural 1 is always a critical fail, regardless of bonuses
+          if (firstDie === 1) {
+            isCritical = false; // Ensure we don't treat it as a crit success
+          }
         }
       }
 
@@ -454,17 +457,17 @@
     followUpActions = [];
     isCritical = false;
     guidedStrikeUsed = false;
-    // Detect roll type from notation pattern (simple heuristic)
-    const detectedType = notation.includes('1d20') ? 'attack' : 'other';
     console.log(
       'Auto-roll triggered. notation:',
       notation,
       'damageNotation:',
       damageNotation,
       'attackName:',
-      attackName
+      attackName,
+      'rollType:',
+      rollType
     );
-    setTimeout(() => rollDice(notation, detectedType), 200);
+    setTimeout(() => rollDice(notation, rollType), 200);
   }
 
   function close() {
@@ -659,7 +662,7 @@
             {/if}
           {/if}
         </div>
-        {#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed)}
+        {#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0)}
           <div class="follow-up-actions">
             {#each followUpActions as action}
               <button
@@ -669,7 +672,7 @@
                 {action.label}
               </button>
             {/each}
-            {#if hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed}
+            {#if hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0}
               <button
                 class="btn btn-guided-strike"
                 on:click={useGuidedStrike}

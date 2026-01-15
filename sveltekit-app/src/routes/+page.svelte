@@ -48,6 +48,7 @@
   let diceAttackName = '';
   let diceApplyHalfDamage = false;
   let diceBonusBreakdown: Array<{ value: number; source: string }> = [];
+  let diceRollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
   let showRestMenu = false;
@@ -226,6 +227,7 @@
           attackName?: string;
           applyHalfDamage?: boolean;
           bonusBreakdown?: Array<{ value: number; source: string }>;
+          rollType?: 'attack' | 'damage' | 'check' | 'save' | 'other';
         }
   ) {
     // Reset notation first to ensure Svelte sees a change even if same value
@@ -234,6 +236,7 @@
     diceAttackName = '';
     diceApplyHalfDamage = false;
     diceBonusBreakdown = [];
+    diceRollType = 'other';
     isHitDiceRoll = false;
 
     // Set all values together to ensure they update simultaneously
@@ -245,6 +248,7 @@
       diceAttackName = detail.attackName || '';
       diceApplyHalfDamage = !!detail.applyHalfDamage;
       diceBonusBreakdown = detail.bonusBreakdown || [];
+      diceRollType = detail.rollType || 'other';
     }
     showDiceRoller = true;
   }
@@ -463,7 +467,7 @@
       </div>
       <div class="header-right">
         <div class="header-controls">
-          <button on:click={() => (showDiceRoller = true)} class="btn btn-secondary use-enabled">
+          <button on:click={() => { diceBonusBreakdown = []; showDiceRoller = true; }} class="btn btn-secondary use-enabled">
             <span class="btn-icon">🎲</span><span class="btn-text"> Roll Dice</span>
           </button>
           <div class="rest-button-container">
@@ -550,6 +554,7 @@
   attackName={diceAttackName}
   applyHalfDamage={diceApplyHalfDamage}
   bonusBreakdown={diceBonusBreakdown}
+  rollType={diceRollType}
   visible={showDiceRoller}
   on:close={handleDiceRollerClose}
 />

@@ -45,7 +45,7 @@
   function rollSkill(skill: SkillName) {
     const modifier = skillModifiers[skill];
     const notation = `1d20${modifier >= 0 ? '+' : ''}${modifier}`;
-    dispatch('roll', notation);
+    dispatch('roll', { notation, rollType: 'check' });
   }
 
   function toggleCollapse() {

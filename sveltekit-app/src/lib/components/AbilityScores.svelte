@@ -28,7 +28,7 @@
   function rollAbilityCheck(ability: AbilityName) {
     const modifier = $abilityModifiers[ability];
     const notation = `1d20${modifier >= 0 ? '+' : ''}${modifier}`;
-    dispatch('roll', notation);
+    dispatch('roll', { notation, rollType: 'check' });
   }
 
   function rollSave(ability: AbilityName) {
@@ -36,7 +36,7 @@
     const profBonus = $character.saveProficiencies[ability] ? $character.proficiencyBonus : 0;
     const totalMod = modifier + profBonus;
     const notation = `1d20${totalMod >= 0 ? '+' : ''}${totalMod}`;
-    dispatch('roll', notation);
+    dispatch('roll', { notation, rollType: 'save' });
   }
 
   function toggleCollapse() {
