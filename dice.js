@@ -269,11 +269,11 @@ const DICE = (function() {
                 }
                 notation.resultString = res;
 
-                if (result.length === 1 && result[0] === 20 && notation.set && notation.set.length === 1 && notation.set[0] === 'd20') {
-                    playCriticalSound(box.container);
-                } else if (result.length === 1 && result[0] === 1 && notation.set && notation.set.length === 1 && notation.set[0] === 'd20') {
-                    playFailureSound(box.container);
-                }
+                // if (result.length === 1 && result[0] === 20 && notation.set && notation.set.length === 1 && notation.set[0] === 'd20') {
+                //     playCriticalSound(box.container);
+                // } else if (result.length === 1 && result[0] === 1 && notation.set && notation.set.length === 1 && notation.set[0] === 'd20') {
+                //     playFailureSound(box.container);
+                // }
 
                 if (after_roll) after_roll(notation);
 
