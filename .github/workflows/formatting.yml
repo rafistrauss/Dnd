@@ -15,6 +15,6 @@ jobs:
       - name: Install bun
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies
-        run: bun install
+        run: cd sveltekit-app && bun install
       - name: Build app
-        run: bun run lint
+        run: cd sveltekit-app && bun run lint
