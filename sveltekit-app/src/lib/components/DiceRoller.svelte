@@ -103,7 +103,8 @@
 
   // Follow-up actions for multi-step rolls
   let followUpActions: Array<{ label: string; notation: string }> = [];
-  let isCritical = false;
+  let isCriticalSuccess = false;
+  let isCriticalFail = false;
   let guidedStrikeUsed = false;
 
   // Dice color customization
@@ -274,7 +275,8 @@
     // Clear previous roll result and state when starting a new roll
     rollResult = null;
     followUpActions = [];
-    isCritical = false;
+    isCriticalSuccess = false;
+    isCriticalFail = false;
 
     // Clear bonus breakdown when rolling damage (we don't want attack bonuses showing for damage rolls)
     if (type === 'damage') {
@@ -309,15 +311,18 @@
         resultString
       };
 
+      console.log('Final roll result:', rollResult);
+      console.log({type});
+
       // Detect critical hits/fails on d20 rolls (check first die roll)
-      if (type === 'attack' || type === 'check' || type === 'save') {
+      if (type === 'attack') {
         if (notationObj.result && notationObj.result.length > 0) {
           const firstDie = notationObj.result[0];
-          isCritical = firstDie === 20;
-          // Natural 1 is always a critical fail, regardless of bonuses
-          if (firstDie === 1) {
-            isCritical = false; // Ensure we don't treat it as a crit success
-          }
+          isCriticalSuccess = firstDie === 20;
+          isCriticalFail = firstDie === 1;
+          
+          // TODO: Play sounds for crit/fail
+          
         }
       }
 
@@ -328,13 +333,15 @@
         type,
         'damageNotation:',
         damageNotation,
-        'isCritical:',
-        isCritical
+        'isCriticalSuccess:',
+        isCriticalSuccess,
+        'isCriticalFail:',
+        isCriticalFail
       );
       if (type === 'attack') {
         // If damage notation is provided, offer to roll damage
         if (damageNotation) {
-          if (isCritical) {
+          if (isCriticalSuccess) {
             // Double dice for critical hits (5e rules)
             const critDamage = doubleDiceNotation(damageNotation);
             // console.log('Creating critical damage button:', critDamage);
@@ -342,6 +349,9 @@
               label: `Roll Critical Damage (${critDamage})`,
               notation: critDamage
             });
+          } else if(isCriticalFail) {
+            // No damage on critical fail
+            // console.log('No damage roll on critical fail');
           } else {
             // console.log('Creating normal damage button:', damageNotation);
             followUpActions.push({
@@ -400,7 +410,8 @@
     modifier = 0;
     rollResult = null;
     followUpActions = [];
-    isCritical = false;
+    isCriticalSuccess = false;
+    isCriticalFail = false;
     rollType = 'other';
     guidedStrikeUsed = false;
   }
@@ -455,7 +466,8 @@
     lastRolledNotation = notation;
     rollResult = null;
     followUpActions = [];
-    isCritical = false;
+    isCriticalSuccess = false;
+    isCriticalFail = false;
     guidedStrikeUsed = false;
     console.log(
       'Auto-roll triggered. notation:',
@@ -479,6 +491,8 @@
     lastRolledNotation = '';
     rollResult = null;
     guidedStrikeUsed = false;
+    isCriticalSuccess = false;
+    isCriticalFail = false;
     resetDice();
   }
 </script>
@@ -636,8 +650,11 @@
       {#if rollResult}
         <div class="result-header">
           <h3>{attackName ? `${attackName} - Result` : 'Result'}</h3>
-          {#if isCritical}
-            <span class="crit-badge">CRITICAL!</span>
+          {#if isCriticalSuccess}
+            <span class="crit-badge">CRITICAL HIT!</span>
+          {/if}
+          {#if isCriticalFail}
+            <span class="crit-badge crit-fail">CRITICAL MISS!</span>
           {/if}
         </div>
         <div class="result-total">{rollResult.resultTotal}</div>
@@ -662,6 +679,11 @@
             {/if}
           {/if}
         </div>
+        {#if isCriticalFail}
+           <div>
+            <em>No damage is dealt on a critical miss.</em>
+           </div>
+        {/if}
         {#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0)}
           <div class="follow-up-actions">
             {#each followUpActions as action}
@@ -672,7 +694,7 @@
                 {action.label}
               </button>
             {/each}
-            {#if hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0}
+            {#if hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0 && !isCriticalFail}
               <button
                 class="btn btn-guided-strike"
                 on:click={useGuidedStrike}
@@ -1013,6 +1035,11 @@
     font-size: 0.85rem;
     box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
     animation: pulse 0.5s ease-in-out;
+  }
+  .crit-badge.crit-fail {
+    background: linear-gradient(135deg, #ff6666, #ffb347);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(255, 102, 102, 0.5);
   }
 
   @keyframes pulse {

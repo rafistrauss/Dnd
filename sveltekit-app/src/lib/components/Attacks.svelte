@@ -10,8 +10,8 @@
   } from '$lib/stores';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
 
-  // Debug flag: set to true to force all d20 rolls to 20
-  let debugForceD20Twenty = false;
+  // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
+  let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   import type { Attack, Spell } from '$lib/types';
   import { loadSpells } from '$lib/dndData';
   import {
@@ -93,12 +93,12 @@
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
-    
+
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
       if (spell) {
         isSpellAttack = requiresSpellAttackRoll(spell);
-        
+
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
           const hasSlot = checkAndConsumeSpellSlot(castLevel);
@@ -111,7 +111,8 @@
           if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
             damageToRoll = '0';
           } else {
-            applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
+            applyHalfDamage =
+              (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
             damageToRoll = getScaledSpellDamage(attack, spell);
           }
         }
@@ -155,12 +156,12 @@
     const bonusBreakdown: Array<{ value: number; source: string }> = [];
 
     let attackBonus = 0;
-    
+
     // For spell attacks, use proficiency + spellcasting modifier
     if (isSpellAttack) {
       const spellcastingMod = getSpellcastingModifier($character, $abilityModifiers);
       const proficiency = $character.proficiencyBonus || 0;
-      
+
       bonusBreakdown.push({ value: proficiency, source: 'proficiency' });
       bonusBreakdown.push({ value: spellcastingMod, source: 'spellcasting' });
       attackBonus = proficiency + spellcastingMod;
@@ -187,22 +188,23 @@
       }
     }
 
-    let notation;
-    if (debugForceD20Twenty) {
-      notation = `1d20@20`;
-    } else {
-      notation = `1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`;
-      // Append string bonuses like "1d4" from Bless
-      if (stringAttackBonuses.length > 0) {
-        notation += '+' + stringAttackBonuses.join('+');
-      }
+    let notation = `1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`;
+    // Append string bonuses like "1d4" from Bless
+    if (stringAttackBonuses.length > 0) {
+      notation += '+' + stringAttackBonuses.join('+');
+    }
+    if (debugForceD20Mode === 'd20') {
+      notation += `@20`;
+    } else if (debugForceD20Mode === 'd1') {
+      notation += `@1`;
     }
     dispatch('roll', {
       notation,
       damageNotation: damageToRoll,
       attackName: attack.name,
       applyHalfDamage,
-      bonusBreakdown
+      bonusBreakdown,
+      rollType: 'attack'
     });
   }
 
@@ -421,7 +423,6 @@
     return levels;
   }
 
-
   function addActiveState() {
     character.update((c) => {
       if (!c.activeStates) {
@@ -446,13 +447,13 @@
       if (c.activeStates) {
         // Get the state before removing it
         const stateToRemove = c.activeStates[index];
-        
+
         // If it has HP bonus and targets self, restore HP
         if (stateToRemove?.hpBonus && stateToRemove.target !== 'other') {
           c.maxHP -= stateToRemove.hpBonus;
           c.currentHP = Math.max(1, Math.min(c.currentHP - stateToRemove.hpBonus, c.maxHP));
         }
-        
+
         c.activeStates = c.activeStates.filter((_, i) => i !== index);
       }
       return c;
@@ -489,7 +490,7 @@
     let effectDescription = bonuses.description;
     if (spell.name === 'Aid' && castLevel > spell.level) {
       const levelDiff = castLevel - spell.level;
-      hpBonus = 5 + (levelDiff * 5);
+      hpBonus = 5 + levelDiff * 5;
       effectDescription = `+${hpBonus} HP (max and current) for 8 hours`;
     }
 
@@ -573,11 +574,19 @@
     onToggle={() => collapsedStates.update((s) => ({ ...s, attacks: !s.attacks }))}
   />
   <!-- <div style="margin: 1em 0;">
-	<label style="font-size: 0.95em;">
-		<input type="checkbox" bind:checked={debugForceD20Twenty} />
-		Debug: Force all d20 rolls to 20
-	</label>
-</div> -->
+    <label style="font-size: 0.95em; margin-right: 1em;">
+      <input type="radio" name="debug-d20" value="normal" bind:group={debugForceD20Mode} />
+      Debug: Normal
+    </label>
+    <label style="font-size: 0.95em; margin-right: 1em;">
+      <input type="radio" name="debug-d20" value="d20" bind:group={debugForceD20Mode} />
+      Debug: Force D20
+    </label>
+    <label style="font-size: 0.95em;">
+      <input type="radio" name="debug-d20" value="d1" bind:group={debugForceD20Mode} />
+      Debug: Force D1
+    </label>
+  </div> -->
   {#if !$collapsedStates.attacks}
     {#if $isEditMode}
       <button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
@@ -905,11 +914,7 @@
                 </div>
                 <div class="state-field">
                   <label for="state-target-{index}">Target</label>
-                  <select
-                    id="state-target-{index}"
-                    bind:value={state.target}
-                    class="state-bonus"
-                  >
+                  <select id="state-target-{index}" bind:value={state.target} class="state-bonus">
                     <option value="self">Self</option>
                     <option value="other">Other</option>
                   </select>
