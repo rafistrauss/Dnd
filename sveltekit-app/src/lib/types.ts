@@ -84,10 +84,12 @@ export interface HitDice {
 
 export interface SpellState {
   name: string;
-  attackBonus: number;
+  attackBonus: number | string;
   damageBonus: number | string;
   description: string;
   acBonus?: number; // Optional AC bonus from spell effect
+  target?: 'self' | 'other'; // Who the effect is targeting (undefined = self for backwards compatibility)
+  hpBonus?: number; // HP increase (affects both current and max HP)
 }
 
 export interface ClassFeatures {

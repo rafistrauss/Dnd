@@ -398,12 +398,12 @@
                     {state.description}<br />
                     {#if state.attackBonus}
                       <span
-                        >Attack Bonus: {state.attackBonus > 0 ? '+' : ''}{state.attackBonus}</span
+                        >Attack Bonus: {typeof state.attackBonus === 'number' && state.attackBonus > 0 ? '+' : ''}{state.attackBonus}</span
                       ><br />
                     {/if}
                     {#if state.damageBonus}
                       <span
-                        >Damage Bonus: {Number(state.damageBonus) > 0 ? '+' : ''}{state.damageBonus}</span
+                        >Damage Bonus: {typeof state.damageBonus === 'number' && state.damageBonus > 0 ? '+' : ''}{state.damageBonus}</span
                       >
                     {/if}
                   </span>
@@ -414,6 +414,15 @@
                     on:click={() => {
                       character.update((c) => {
                         if (c.activeStates) {
+                          // Get the state before removing it
+                          const stateToRemove = c.activeStates[index];
+                          
+                          // If it has HP bonus and targets self, restore HP
+                          if (stateToRemove?.hpBonus && stateToRemove.target !== 'other') {
+                            c.maxHP -= stateToRemove.hpBonus;
+                            c.currentHP = Math.max(1, Math.min(c.currentHP - stateToRemove.hpBonus, c.maxHP));
+                          }
+                          
                           c.activeStates = c.activeStates.filter((_, i) => i !== index);
                         }
                         return c;

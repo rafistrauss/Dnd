@@ -127,7 +127,7 @@ export function extractSpellEffectBonuses(
   spell: Spell
 ): SpellState | null {
   const description = spell.description;
-  let attackBonus = 0;
+  let attackBonus: number | string = 0;
   let damageBonus: number | string = 0;
   let acBonus = 0;
   let effectDescription = '';
@@ -147,12 +147,29 @@ export function extractSpellEffectBonuses(
   // Bless: "adds 1d4 to the attack roll"
   if (spell.name === 'Bless') {
     effectDescription = 'Add 1d4 to attack rolls and saves';
+    attackBonus = '1d4';
+  }
+
+  // Aid: increases HP maximum and current HP
+  if (spell.name === 'Aid') {
+    // Aid increases HP by 5, or 5 per spell level above 2nd
+    // The caller will need to pass the cast level to calculate this properly
+    effectDescription = '+5 HP (max and current) for 8 hours';
+    // We'll set a default of 5, the casting function will update based on slot level
+    return {
+      attackBonus: 0,
+      damageBonus: 0,
+      acBonus: 0,
+      hpBonus: 5,
+      description: effectDescription,
+      name: spell.name
+    };
   }
 
   // Divine Favor: ongoing effect, not direct damage
   if (spell.name === 'Divine Favor') {
     effectDescription = 'Your weapon attacks deal an extra 1d4 radiant damage on a hit.';
-    damageBonus = '1d4'
+    damageBonus = '1d4';
   }
 
   // Shield of Faith: "+2 bonus to AC"

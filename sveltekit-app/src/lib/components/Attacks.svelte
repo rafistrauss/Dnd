@@ -28,12 +28,19 @@
   // Track collapsed state for each attack's spell info (collapsed by default)
   let collapsedSpellInfo: Record<string, boolean> = {};
 
+  // Track target selection for targetable spells (default to 'self')
+  let spellTargets: Record<string, 'self' | 'other'> = {};
+
   // Collapse spell info by default for all attacks with spellRef
   $: {
     if ($character && $character.attacks) {
       for (const attack of $character.attacks) {
         if (attack.spellRef && collapsedSpellInfo[attack.id] === undefined) {
           collapsedSpellInfo[attack.id] = true;
+        }
+        // Initialize spell target to 'self' if not set
+        if (attack.spellRef && spellTargets[attack.id] === undefined) {
+          spellTargets[attack.id] = 'self';
         }
       }
     }
@@ -50,6 +57,11 @@
       (spell.description.toLowerCase().includes('hit point') ||
         spell.description.toLowerCase().includes('hp'))
     );
+  }
+
+  function isTargetableSpell(spellName: string): boolean {
+    const targetableSpells = ['Shield of Faith', 'Bless', 'Aid', 'Magic Weapon'];
+    return targetableSpells.includes(spellName);
   }
 
   function addAttack() {
@@ -109,7 +121,9 @@
       if ($character.activeStates && $character.activeStates.length > 0) {
         let numericModifier = 0;
         let stringModifiers: string[] = [];
+        // Only apply bonuses from states targeting self (undefined or 'self')
         for (const state of $character.activeStates) {
+          if (state.target === 'other') continue; // Skip states targeting others
           if (typeof state.damageBonus === 'string') {
             stringModifiers.push(state.damageBonus);
           } else if (typeof state.damageBonus === 'number') {
@@ -158,12 +172,17 @@
       attackBonus = attack.bonus;
     }
 
-    // Apply active state bonuses to attack roll
+    // Apply active state bonuses to attack roll (only from self-targeted states)
+    let stringAttackBonuses: string[] = [];
     if ($character.activeStates) {
       for (const state of $character.activeStates) {
+        if (state.target === 'other') continue; // Skip states targeting others
         if (typeof state.attackBonus === 'number' && state.attackBonus !== 0) {
           bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
           attackBonus += state.attackBonus;
+        } else if (typeof state.attackBonus === 'string' && state.attackBonus) {
+          stringAttackBonuses.push(state.attackBonus);
+          bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
         }
       }
     }
@@ -173,6 +192,10 @@
       notation = `1d20@20`;
     } else {
       notation = `1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`;
+      // Append string bonuses like "1d4" from Bless
+      if (stringAttackBonuses.length > 0) {
+        notation += '+' + stringAttackBonuses.join('+');
+      }
     }
     dispatch('roll', {
       notation,
@@ -223,11 +246,12 @@
           bonusBreakdown.push({ value: baseModifier, source: 'base' });
         }
 
-        // Apply active state bonuses
+        // Apply active state bonuses (only from self-targeted states)
         if ($character.activeStates && $character.activeStates.length > 0) {
           let numericModifier = 0;
           let stringModifiers: string[] = [];
           for (const state of $character.activeStates) {
+            if (state.target === 'other') continue; // Skip states targeting others
             if (typeof state.damageBonus === 'string') {
               stringModifiers.push(state.damageBonus);
             } else if (typeof state.damageBonus === 'number' && state.damageBonus !== 0) {
@@ -319,9 +343,10 @@
       additionalModifier += getSpellcastingModifier($character, $abilityModifiers);
     }
 
-    // Apply active state bonuses to damage
+    // Apply active state bonuses to damage (only from self-targeted states)
     if ($character.activeStates) {
       for (const state of $character.activeStates) {
+        if (state.target === 'other') continue; // Skip states targeting others
         if (typeof state.damageBonus === 'number') {
           additionalModifier += state.damageBonus;
         }
@@ -408,7 +433,8 @@
           name: '',
           attackBonus: 0,
           damageBonus: 0,
-          description: ''
+          description: '',
+          target: 'self'
         }
       ];
       return c;
@@ -418,13 +444,22 @@
   function removeActiveState(index: number) {
     character.update((c) => {
       if (c.activeStates) {
+        // Get the state before removing it
+        const stateToRemove = c.activeStates[index];
+        
+        // If it has HP bonus and targets self, restore HP
+        if (stateToRemove?.hpBonus && stateToRemove.target !== 'other') {
+          c.maxHP -= stateToRemove.hpBonus;
+          c.currentHP = Math.max(1, Math.min(c.currentHP - stateToRemove.hpBonus, c.maxHP));
+        }
+        
         c.activeStates = c.activeStates.filter((_, i) => i !== index);
       }
       return c;
     });
   }
 
-  function castBuffSpell(attack: Attack) {
+  function castBuffSpell(attack: Attack, target: 'self' | 'other' = 'self') {
     const spell = getSpellByName(attack.spellRef!);
     if (!spell) {
       toasts.add('Spell not found', 'error');
@@ -449,14 +484,39 @@
       return;
     }
 
+    // Calculate Aid HP bonus based on cast level
+    let hpBonus = bonuses.hpBonus || 0;
+    let effectDescription = bonuses.description;
+    if (spell.name === 'Aid' && castLevel > spell.level) {
+      const levelDiff = castLevel - spell.level;
+      hpBonus = 5 + (levelDiff * 5);
+      effectDescription = `+${hpBonus} HP (max and current) for 8 hours`;
+    }
+
+    // Spells that can target self or others
+    const targetableSpells = ['Shield of Faith', 'Bless', 'Aid', 'Magic Weapon'];
+    const needsTargetSelection = targetableSpells.includes(spell.name);
+
     // Create or update the active state
     character.update((c) => {
       if (!c.activeStates) {
         c.activeStates = [];
       }
 
-      // Check if this spell is already active - if so, remove it first (concentration rules)
+      // Check if this spell is already active - if so, remove it first (and restore any HP changes)
+      const existingState = c.activeStates.find((state) => state.name === spell.name);
+      if (existingState && existingState.hpBonus && existingState.target !== 'other') {
+        // Restore HP from previous cast
+        c.maxHP -= existingState.hpBonus;
+        c.currentHP = Math.max(1, Math.min(c.currentHP - existingState.hpBonus, c.maxHP));
+      }
       c.activeStates = c.activeStates.filter((state) => state.name !== spell.name);
+
+      // Apply HP bonus if targeting self
+      if (hpBonus > 0 && target === 'self') {
+        c.maxHP += hpBonus;
+        c.currentHP += hpBonus;
+      }
 
       // Add the new state
       c.activeStates = [
@@ -466,14 +526,20 @@
           attackBonus: bonuses.attackBonus,
           damageBonus: bonuses.damageBonus,
           acBonus: bonuses.acBonus,
-          description: bonuses.description
+          description: effectDescription,
+          target,
+          hpBonus
         }
       ];
 
       return c;
     });
 
-    toasts.add(`${spell.name} cast! Effect added to Active Spell Effects.`, 'success');
+    const targetText = target === 'self' ? ' on self' : ' on other';
+    toasts.add(
+      `${spell.name} cast${needsTargetSelection ? targetText : ''}! Effect added to Active Spell Effects.`,
+      'success'
+    );
   }
 
   $: filteredAttacks = $character.attacks
@@ -727,9 +793,40 @@
                   >
                 {:else if isBuffSpell(spell)}
                   <!-- Buff/effect spells like Bless, Aid, Command -->
-                  <button on:click={() => castBuffSpell(attack)} class="btn btn-info"
-                    >Cast Spell</button
-                  >
+                  {#if isTargetableSpell(spell.name)}
+                    <div class="buff-target-selection">
+                      <div class="target-options">
+                        <label class="target-option">
+                          <input
+                            type="radio"
+                            bind:group={spellTargets[attack.id]}
+                            value="self"
+                            name="target-{attack.id}"
+                          />
+                          Self
+                        </label>
+                        <label class="target-option">
+                          <input
+                            type="radio"
+                            bind:group={spellTargets[attack.id]}
+                            value="other"
+                            name="target-{attack.id}"
+                          />
+                          Other
+                        </label>
+                      </div>
+                      <button
+                        on:click={() => castBuffSpell(attack, spellTargets[attack.id])}
+                        class="btn btn-info"
+                      >
+                        Cast {spell.name}
+                      </button>
+                    </div>
+                  {:else}
+                    <button on:click={() => castBuffSpell(attack, 'self')} class="btn btn-info"
+                      >Cast Spell</button
+                    >
+                  {/if}
                 {:else}
                   <!-- Damage/healing spells with saving throws or no attack -->
                   <button
@@ -805,6 +902,17 @@
                     bind:value={state.damageBonus}
                     class="state-bonus"
                   />
+                </div>
+                <div class="state-field">
+                  <label for="state-target-{index}">Target</label>
+                  <select
+                    id="state-target-{index}"
+                    bind:value={state.target}
+                    class="state-bonus"
+                  >
+                    <option value="self">Self</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
               </div>
               <div class="state-description">
@@ -943,6 +1051,39 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+  }
+
+  .buff-target-selection {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .target-options {
+    display: flex;
+    gap: 15px;
+    padding: 8px 12px;
+    background-color: #f0f8ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+  }
+
+  .target-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: normal;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .target-option input[type='radio'] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    margin: 0;
   }
 
   .no-attacks {

@@ -66,6 +66,12 @@
       ? $character.activeStates.reduce((sum, s) => sum + (s.acBonus || 0), 0)
       : 0;
 
+  // Check if Aid effect is active and targeting self
+  $: hasAidEffect =
+    $character.activeStates && $character.activeStates.length > 0
+      ? $character.activeStates.some((s) => s.name === 'Aid' && s.target === 'self')
+      : false;
+
   $: hasVisibleContent =
     !$searchFilter ||
     'armor class'.includes($searchFilter.toLowerCase()) ||
@@ -139,7 +145,7 @@
 
     <div class="hp-section">
       <h3>Hit Points</h3>
-      <div class="hp-display">
+      <div class="hp-display" class:aid-active={hasAidEffect}>
         <div class="hp-inputs">
           <input
             type="number"
@@ -302,6 +308,15 @@
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+    padding: 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .hp-display.aid-active {
+    background: linear-gradient(135deg, #fff9e6 0%, #ffe6cc 100%);
+    border: 2px solid #ffb347;
+    box-shadow: 0 0 15px rgba(255, 179, 71, 0.3);
   }
 
   .hp-inputs {
