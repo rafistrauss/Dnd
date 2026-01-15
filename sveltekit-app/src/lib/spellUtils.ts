@@ -51,6 +51,16 @@ export function addsSpellcastingModifierToDamage(spell: Spell): boolean {
 }
 
 /**
+ * Check if a spell requires a spell attack roll (ranged or melee)
+ * @param spell The spell to analyze
+ * @returns true if the spell requires an attack roll
+ */
+export function requiresSpellAttackRoll(spell: Spell): boolean {
+  const description = spell.description.toLowerCase();
+  return description.includes('ranged spell attack') || description.includes('melee spell attack');
+}
+
+/**
  * Check if a spell is a buff spell (provides bonuses but doesn't deal damage directly)
  * @param spell The spell to analyze
  * @returns true if the spell is a buff spell
@@ -58,8 +68,9 @@ export function addsSpellcastingModifierToDamage(spell: Spell): boolean {
 export function isBuffSpell(spell: Spell): boolean {
   const description = spell.description.toLowerCase();
 
-  // Divine Favor is always a buff spell
-  if (spell.name === 'Divine Favor') {
+  // Specific spells that are always buff/utility spells
+  const buffSpellNames = ['Divine Favor', 'Bless', 'Aid', 'Command'];
+  if (buffSpellNames.includes(spell.name)) {
     return true;
   }
 

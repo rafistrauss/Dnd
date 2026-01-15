@@ -137,5 +137,5 @@ export function getSpellcastingModifier(char: Character, abilities: Abilities): 
   if (!char.class) return 0;
   const classConfig = getClassConfig(char.class);
   if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return 0;
-  return calculateModifier(abilities[classConfig.spellcastingAbility]);
+  return abilities[classConfig.spellcastingAbility];
 }

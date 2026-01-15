@@ -1,5 +1,24 @@
 /* Use Mode Styles */
 
+/* Button color classes */
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-info {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #0056b3;
+}
+
 /* Button styling for use mode */
 .btn-mode.use-mode {
   background-color: #4caf50;

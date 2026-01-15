@@ -18,7 +18,8 @@
     getSavingThrowInfo,
     addsSpellcastingModifierToDamage,
     isBuffSpell,
-    extractSpellEffectBonuses
+    extractSpellEffectBonuses,
+    requiresSpellAttackRoll
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
 
@@ -79,22 +80,28 @@
     // If this is a spell attack, consume a spell slot
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
+    let isSpellAttack = false;
+    
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
-      if (spell && spell.level > 0) {
-        const castLevel = attack.castAtLevel || spell.level;
-        const hasSlot = checkAndConsumeSpellSlot(castLevel);
-        if (!hasSlot) {
-          toasts.add(`No level ${castLevel} spell slots available!`, 'error');
-          return;
-        }
-        // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
-        const savingThrow = getSavingThrowInfo(spell);
-        if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
-          damageToRoll = '0';
-        } else {
-          applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
-          damageToRoll = getScaledSpellDamage(attack, spell);
+      if (spell) {
+        isSpellAttack = requiresSpellAttackRoll(spell);
+        
+        if (spell.level > 0) {
+          const castLevel = attack.castAtLevel || spell.level;
+          const hasSlot = checkAndConsumeSpellSlot(castLevel);
+          if (!hasSlot) {
+            toasts.add(`No level ${castLevel} spell slots available!`, 'error');
+            return;
+          }
+          // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
+          const savingThrow = getSavingThrowInfo(spell);
+          if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
+            damageToRoll = '0';
+          } else {
+            applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
+            damageToRoll = getScaledSpellDamage(attack, spell);
+          }
         }
       }
     } else {
@@ -133,13 +140,25 @@
     // Build bonus breakdown for attack roll
     const bonusBreakdown: Array<{ value: number; source: string }> = [];
 
-    // Add base attack bonus
-    if (attack.bonus !== 0) {
-      bonusBreakdown.push({ value: attack.bonus, source: 'base' });
+    let attackBonus = 0;
+    
+    // For spell attacks, use proficiency + spellcasting modifier
+    if (isSpellAttack) {
+      const spellcastingMod = getSpellcastingModifier($character, $abilityModifiers);
+      const proficiency = $character.proficiencyBonus || 0;
+      
+      bonusBreakdown.push({ value: proficiency, source: 'proficiency' });
+      bonusBreakdown.push({ value: spellcastingMod, source: 'spellcasting' });
+      attackBonus = proficiency + spellcastingMod;
+    } else {
+      // For non-spell attacks, use the base attack bonus
+      if (attack.bonus !== 0) {
+        bonusBreakdown.push({ value: attack.bonus, source: 'base' });
+      }
+      attackBonus = attack.bonus;
     }
 
     // Apply active state bonuses to attack roll
-    let attackBonus = attack.bonus;
     if ($character.activeStates) {
       for (const state of $character.activeStates) {
         if (typeof state.attackBonus === 'number' && state.attackBonus !== 0) {
@@ -698,27 +717,38 @@
             </div>
           {/if}
           <div class="attack-actions">
-            {#if attack.bonus !== 0 || !attack.spellRef}
+            {#if attack.spellRef && spellsLoaded}
+              {@const spell = getSpellByName(attack.spellRef)}
+              {#if spell}
+                {#if requiresSpellAttackRoll(spell)}
+                  <!-- Spell requires attack roll (e.g., Guiding Bolt, Eldritch Blast) -->
+                  <button on:click={() => rollAttack(attack)} class="btn btn-primary"
+                    >Roll Attack</button
+                  >
+                {:else if isBuffSpell(spell)}
+                  <!-- Buff/effect spells like Bless, Aid, Command -->
+                  <button on:click={() => castBuffSpell(attack)} class="btn btn-info"
+                    >Cast Spell</button
+                  >
+                {:else}
+                  <!-- Damage/healing spells with saving throws or no attack -->
+                  <button
+                    on:click={() => rollDamage(attack)}
+                    class="btn {isHealingSpell(spell) ? 'btn-success' : 'btn-secondary'}"
+                  >
+                    {#if isHealingSpell(spell)}
+                      Roll Healing
+                    {:else}
+                      Roll Damage
+                    {/if}
+                  </button>
+                {/if}
+              {/if}
+            {:else if !attack.spellRef}
+              <!-- Non-spell attacks always show both buttons -->
               <button on:click={() => rollAttack(attack)} class="btn btn-primary"
                 >Roll Attack</button
               >
-            {/if}
-            {#if attack.spellRef && spellsLoaded}
-              {@const spell = getSpellByName(attack.spellRef)}
-              {#if spell && isBuffSpell(spell)}
-                <button on:click={() => castBuffSpell(attack)} class="btn btn-success"
-                  >Cast Spell</button
-                >
-              {:else}
-                <button on:click={() => rollDamage(attack)} class="btn btn-secondary">
-                  {#if spell && isHealingSpell(spell)}
-                    Roll Healing
-                  {:else}
-                    Roll Damage
-                  {/if}
-                </button>
-              {/if}
-            {:else}
               <button on:click={() => rollDamage(attack)} class="btn btn-secondary"
                 >Roll Damage</button
               >
