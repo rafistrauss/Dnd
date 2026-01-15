@@ -954,8 +954,12 @@
 
   .attacks-list {
     margin-top: 15px;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    /* Max 3 columns */
+    @media (min-width: 900px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
     gap: 15px;
   }
 
