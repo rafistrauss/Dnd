@@ -29,14 +29,14 @@
   function rollAbilityCheck(ability: AbilityName) {
     const modifier = $abilityModifiers[ability];
     const notation = `1d20${modifier >= 0 ? '+' : ''}${modifier}`;
-    
+
     // Build bonus breakdown
     const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
     bonusBreakdown.push({ value: '1d20', source: 'base die' });
     if (modifier !== 0) {
       bonusBreakdown.push({ value: modifier, source: ability });
     }
-    
+
     dispatch('roll', { notation, rollType: 'check', bonusBreakdown });
   }
 
@@ -45,7 +45,7 @@
     const profBonus = $character.saveProficiencies[ability] ? $character.proficiencyBonus : 0;
     const totalMod = modifier + profBonus;
     const notation = `1d20${totalMod >= 0 ? '+' : ''}${totalMod}`;
-    
+
     // Build bonus breakdown
     const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
     bonusBreakdown.push({ value: '1d20', source: 'base die' });
@@ -55,7 +55,7 @@
     if (profBonus !== 0) {
       bonusBreakdown.push({ value: profBonus, source: 'proficiency' });
     }
-    
+
     dispatch('roll', { notation, rollType: 'save', bonusBreakdown });
   }
 

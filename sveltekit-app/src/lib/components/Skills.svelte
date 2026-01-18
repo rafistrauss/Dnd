@@ -1,6 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
+  import {
+    character,
+    abilityModifiers,
+    searchFilter,
+    collapsedStates,
+    isEditMode
+  } from '$lib/stores';
   import { SKILL_ABILITIES } from '$lib/types';
   import type { SkillName } from '$lib/types';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -48,7 +54,7 @@
     const profBonus = $character.skillProficiencies[skill] ? $character.proficiencyBonus : 0;
     const modifier = skillModifiers[skill];
     const notation = `1d20${modifier >= 0 ? '+' : ''}${modifier}`;
-    
+
     // Build bonus breakdown
     const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
     bonusBreakdown.push({ value: '1d20', source: 'base die' });
@@ -58,7 +64,7 @@
     if (profBonus !== 0) {
       bonusBreakdown.push({ value: profBonus, source: 'proficiency' });
     }
-    
+
     dispatch('roll', { notation, rollType: 'check', bonusBreakdown });
   }
 

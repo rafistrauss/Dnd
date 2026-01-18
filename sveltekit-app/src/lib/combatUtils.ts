@@ -139,3 +139,71 @@ export function getSpellcastingModifier(char: Character, abilities: Abilities): 
   if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return 0;
   return abilities[classConfig.spellcastingAbility];
 }
+
+/**
+ * Generate AC breakdown tooltip text
+ */
+export function getACBreakdown(char: Character, abilities: Abilities): string {
+  const parts: string[] = [];
+  const dexMod = calculateModifier(abilities.dexterity);
+
+  // For now, we'll provide a simplified breakdown based on what we know
+  // The actual AC value is stored directly in char.armorClass
+  parts.push('Base: 10');
+
+  // Dexterity modifier
+  if (dexMod !== 0) {
+    parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+  }
+
+  // Calculate the difference between stored AC and base+dex
+  const basePlusDex = 10 + dexMod;
+  const difference = char.armorClass - basePlusDex;
+
+  if (difference !== 0) {
+    parts.push(`Armor/Other: ${difference >= 0 ? '+' : ''}${difference}`);
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Generate Initiative breakdown tooltip text
+ */
+export function getInitiativeBreakdown(char: Character, abilities: Abilities): string {
+  const parts: string[] = [];
+  const dexMod = calculateModifier(abilities.dexterity);
+
+  // Base initiative is just dexterity modifier
+  parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+
+  // Calculate the difference between stored initiative and dex mod
+  const difference = char.initiative - dexMod;
+
+  if (difference !== 0) {
+    parts.push(`Other Bonuses: ${difference >= 0 ? '+' : ''}${difference}`);
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Generate Spell Save DC breakdown tooltip text
+ */
+export function getSpellSaveDCBreakdown(char: Character, abilities: Abilities): string {
+  if (!char.class) return '';
+  const classConfig = getClassConfig(char.class);
+  if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return '';
+
+  const parts: string[] = [];
+  const spellcastingMod = abilities[classConfig.spellcastingAbility];
+  const abilityName =
+    classConfig.spellcastingAbility.charAt(0).toUpperCase() +
+    classConfig.spellcastingAbility.slice(1);
+
+  parts.push('Base: 8');
+  parts.push(`Proficiency: +${char.proficiencyBonus}`);
+  parts.push(`${abilityName}: ${spellcastingMod >= 0 ? '+' : ''}${spellcastingMod}`);
+
+  return parts.join('\n');
+}
