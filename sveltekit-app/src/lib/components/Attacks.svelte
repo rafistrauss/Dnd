@@ -837,7 +837,7 @@
                     >
                   {/if}
                 {:else}
-                  <!-- Damage/healing spells with saving throws or no attack -->
+                  <!-- Damage/healing spells with saving throws or no attack, or control spells -->
                   {#if attack.damage && attack.damage.trim() !== ''}
                     <button
                       on:click={() => rollDamage(attack)}
@@ -849,6 +849,11 @@
                         Roll Damage
                       {/if}
                     </button>
+                  {:else}
+                    <!-- Control spells or spells without damage (e.g., Hold Person) -->
+                    <button on:click={() => castBuffSpell(attack, 'self')} class="btn btn-info"
+                      >Cast Spell</button
+                    >
                   {/if}
                 {/if}
               {/if}
