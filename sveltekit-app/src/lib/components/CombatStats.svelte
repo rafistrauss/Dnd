@@ -8,7 +8,12 @@
     isEditMode
   } from '$lib/stores';
   import { getClassConfig } from '$lib/classConfig';
-  import { getSpellSaveDC } from '$lib/combatUtils';
+  import {
+    getSpellSaveDC,
+    getACBreakdown,
+    getInitiativeBreakdown,
+    getSpellSaveDCBreakdown
+  } from '$lib/combatUtils';
   import type { Character } from '$lib/types';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
 
@@ -63,10 +68,10 @@
 
     // Build bonus breakdown - show individual dice and CON modifier per die
     const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
-    
+
     // Add the hit dice to breakdown (will be extracted from roll result)
     bonusBreakdown.push({ value: `${actualCount}${hitDie}`, source: 'hit dice' });
-    
+
     // Add CON modifier per die
     if (conMod !== 0) {
       for (let i = 0; i < actualCount; i++) {
@@ -84,6 +89,11 @@
 
   // Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
   $: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
+
+  // Generate tooltip breakdowns
+  $: acTooltip = getACBreakdown($character, $abilityModifiers);
+  $: initiativeTooltip = getInitiativeBreakdown($character, $abilityModifiers);
+  $: spellSaveDCTooltip = getSpellSaveDCBreakdown($character, $abilityModifiers);
 
   // Ensure hitDiceCount doesn't exceed available hit dice
   // Note: When 0 dice available, hitDiceCount stays at 1 (HTML input min), but Roll button is disabled
@@ -135,6 +145,7 @@
             id="armorClass"
             bind:value={$character.armorClass}
             class="stat-input"
+            title={acTooltip}
           />
         {:else}
           <input
@@ -145,7 +156,9 @@
               : `${$character.armorClass}`}
             class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
             readonly
-            title={totalAcBonus !== 0 ? 'Base AC plus active effect bonuses' : 'Base Armor Class'}
+            title={totalAcBonus !== 0
+              ? `${acTooltip}\nActive Effects: +${totalAcBonus}`
+              : acTooltip}
           />
         {/if}
       </div>
@@ -156,6 +169,7 @@
           id="initiative"
           bind:value={$character.initiative}
           class="stat-input"
+          title={initiativeTooltip}
         />
       </div>
       <div class="stat-box">
@@ -171,7 +185,7 @@
             value={spellSaveDC}
             class="stat-input"
             readonly
-            title="8 + Proficiency Bonus + Spellcasting Ability Modifier"
+            title={spellSaveDCTooltip}
           />
         </div>
       {/if}
