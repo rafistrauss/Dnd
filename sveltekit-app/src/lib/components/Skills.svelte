@@ -43,9 +43,23 @@
   }
 
   function rollSkill(skill: SkillName) {
+    const ability = SKILL_ABILITIES[skill];
+    const abilityMod = $abilityModifiers[ability];
+    const profBonus = $character.skillProficiencies[skill] ? $character.proficiencyBonus : 0;
     const modifier = skillModifiers[skill];
     const notation = `1d20${modifier >= 0 ? '+' : ''}${modifier}`;
-    dispatch('roll', { notation, rollType: 'check' });
+    
+    // Build bonus breakdown
+    const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
+    bonusBreakdown.push({ value: '1d20', source: 'base die' });
+    if (abilityMod !== 0) {
+      bonusBreakdown.push({ value: abilityMod, source: ability });
+    }
+    if (profBonus !== 0) {
+      bonusBreakdown.push({ value: profBonus, source: 'proficiency' });
+    }
+    
+    dispatch('roll', { notation, rollType: 'check', bonusBreakdown });
   }
 
   function toggleCollapse() {

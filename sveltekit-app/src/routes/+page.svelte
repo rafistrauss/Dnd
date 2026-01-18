@@ -51,6 +51,7 @@
   let diceRollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
+  let hitDiceCountToDecrement = 1;
   let showRestMenu = false;
 
   // Tooltip state for header effects
@@ -226,7 +227,7 @@
           damageNotation?: string;
           attackName?: string;
           applyHalfDamage?: boolean;
-          bonusBreakdown?: Array<{ value: number; source: string }>;
+          bonusBreakdown?: Array<{ value: number | string; source: string }>;
           rollType?: 'attack' | 'damage' | 'check' | 'save' | 'other';
         }
   ) {
@@ -254,14 +255,17 @@
   }
 
   function handleHitDiceRoll(event: CustomEvent) {
-    const { notation } = event.detail;
+    const { notation, count, bonusBreakdown } = event.detail;
     diceNotation = '';
     isHitDiceRoll = true;
+    hitDiceCountToDecrement = count || 1;
 
     setTimeout(() => {
       diceNotation = notation;
       diceDamageNotation = '';
       diceAttackName = 'Hit Die';
+      diceBonusBreakdown = bonusBreakdown || [];
+      diceRollType = 'other';
     }, 0);
 
     showDiceRoller = true;
@@ -278,7 +282,7 @@
         const healing = Math.max(1, rollTotal);
 
         character.update((c: Character) => {
-          c.hitDice.current = Math.max(0, c.hitDice.current - 1);
+          c.hitDice.current = Math.max(0, c.hitDice.current - hitDiceCountToDecrement);
           c.currentHP = Math.min(c.maxHP, c.currentHP + healing);
           return c;
         });
