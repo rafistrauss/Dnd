@@ -25,8 +25,9 @@
 
   function adjustHitDiceCount(amount: number) {
     const newCount = hitDiceCount + amount;
-    const maxAllowed = Math.max(1, $character.hitDice.current);
-    // Ensure count stays between 1 and available hit dice (or at least 1 if no dice available)
+    const maxAllowed = $character.hitDice.current;
+    // Clamp between 1 and available hit dice
+    // Note: Input min is 1 even when 0 dice available; Roll button will be disabled
     hitDiceCount = Math.max(1, Math.min(maxAllowed, newCount));
   }
 
@@ -70,10 +71,12 @@
   $: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
 
   // Ensure hitDiceCount doesn't exceed available hit dice
-  $: if (hitDiceCount > $character.hitDice.current && $character.hitDice.current > 0) {
-    hitDiceCount = $character.hitDice.current;
-  } else if ($character.hitDice.current === 0) {
-    hitDiceCount = 1; // Keep at 1 for display, but roll button will be disabled
+  // Note: When 0 dice available, hitDiceCount stays at 1 (HTML input min), but Roll button is disabled
+  $: {
+    const maxAvailable = $character.hitDice.current;
+    if (maxAvailable > 0 && hitDiceCount > maxAvailable) {
+      hitDiceCount = maxAvailable;
+    }
   }
 
   // Calculate total AC bonus from active states
