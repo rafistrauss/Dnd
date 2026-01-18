@@ -54,7 +54,9 @@
     // Get the hit die notation (e.g., 'd10')
     const hitDie = classConfig.hitDice;
     const conMod = $abilityModifiers.constitution;
-    const modString = conMod >= 0 ? `+${conMod}` : `${conMod}`;
+    // Multiply modifier by number of dice (CON mod is added for each die rolled)
+    const totalMod = conMod * actualCount;
+    const modString = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
 
     // Build the notation with constitution modifier for multiple dice
     const notation = `${actualCount}${hitDie}${modString}`;
