@@ -20,6 +20,25 @@
   const dispatch = createEventDispatcher();
 
   let hitDiceCount = 1;
+  let showACTooltip = false;
+  let showInitiativeTooltip = false;
+  let showSpellSaveDCTooltip = false;
+
+  function toggleTooltip(tooltip: 'ac' | 'initiative' | 'spellSaveDC') {
+    if (tooltip === 'ac') {
+      showACTooltip = !showACTooltip;
+      showInitiativeTooltip = false;
+      showSpellSaveDCTooltip = false;
+    } else if (tooltip === 'initiative') {
+      showInitiativeTooltip = !showInitiativeTooltip;
+      showACTooltip = false;
+      showSpellSaveDCTooltip = false;
+    } else {
+      showSpellSaveDCTooltip = !showSpellSaveDCTooltip;
+      showACTooltip = false;
+      showInitiativeTooltip = false;
+    }
+  }
 
   function adjustHP(amount: number) {
     character.update((c: Character) => {
@@ -138,14 +157,23 @@
   {#if !$collapsedStates.combatStats}
     <div class="stats-grid">
       <div class="stat-box">
-        <label for="armorClass">Armor Class</label>
+        <div class="stat-label-with-icon">
+          <label for="armorClass">Armor Class</label>
+          <button
+            class="info-icon"
+            on:click={() => toggleTooltip('ac')}
+            aria-label="Show AC breakdown"
+            type="button"
+          >
+            ℹ️
+          </button>
+        </div>
         {#if $isEditMode}
           <input
             type="number"
             id="armorClass"
             bind:value={$character.armorClass}
             class="stat-input"
-            title={acTooltip}
           />
         {:else}
           <input
@@ -156,21 +184,42 @@
               : `${$character.armorClass}`}
             class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
             readonly
-            title={totalAcBonus !== 0
-              ? `${acTooltip}\nActive Effects: +${totalAcBonus}`
-              : acTooltip}
           />
+        {/if}
+        {#if showACTooltip}
+          <div class="tooltip-popup">
+            {#if totalAcBonus !== 0}
+              <div>{acTooltip}</div>
+              <div style="margin-top: 5px;">Active Effects: +{totalAcBonus}</div>
+            {:else}
+              <div>{acTooltip}</div>
+            {/if}
+          </div>
         {/if}
       </div>
       <div class="stat-box">
-        <label for="initiative">Initiative</label>
+        <div class="stat-label-with-icon">
+          <label for="initiative">Initiative</label>
+          <button
+            class="info-icon"
+            on:click={() => toggleTooltip('initiative')}
+            aria-label="Show Initiative breakdown"
+            type="button"
+          >
+            ℹ️
+          </button>
+        </div>
         <input
           type="number"
           id="initiative"
           bind:value={$character.initiative}
           class="stat-input"
-          title={initiativeTooltip}
         />
+        {#if showInitiativeTooltip}
+          <div class="tooltip-popup">
+            {initiativeTooltip}
+          </div>
+        {/if}
       </div>
       <div class="stat-box">
         <label for="speed">Speed</label>
@@ -178,15 +227,23 @@
       </div>
       {#if spellSaveDC !== null}
         <div class="stat-box">
-          <label for="spellSaveDC">Spell Save DC</label>
-          <input
-            type="number"
-            id="spellSaveDC"
-            value={spellSaveDC}
-            class="stat-input"
-            readonly
-            title={spellSaveDCTooltip}
-          />
+          <div class="stat-label-with-icon">
+            <label for="spellSaveDC">Spell Save DC</label>
+            <button
+              class="info-icon"
+              on:click={() => toggleTooltip('spellSaveDC')}
+              aria-label="Show Spell Save DC breakdown"
+              type="button"
+            >
+              ℹ️
+            </button>
+          </div>
+          <input type="number" id="spellSaveDC" value={spellSaveDC} class="stat-input" readonly />
+          {#if showSpellSaveDCTooltip}
+            <div class="tooltip-popup">
+              {spellSaveDCTooltip}
+            </div>
+          {/if}
         </div>
       {/if}
     </div>
@@ -340,6 +397,7 @@
   .stat-box {
     display: flex;
     flex-direction: column;
+    position: relative;
   }
 
   label {
@@ -521,5 +579,57 @@
     font-weight: bold;
     background: #e9f5ff;
     border: 2px solid #b3e0ff;
+  }
+
+  .stat-label-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+
+  .info-icon {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.7;
+    transition:
+      opacity 0.2s,
+      transform 0.2s;
+  }
+
+  .info-icon:hover {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .tooltip-popup {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-line;
+    z-index: 1000;
+    margin-top: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 250px;
+    animation: fadeIn 0.2s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 </style>
