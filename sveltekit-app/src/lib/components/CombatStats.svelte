@@ -61,8 +61,21 @@
     // Build the notation with constitution modifier for multiple dice
     const notation = `${actualCount}${hitDie}${modString}`;
 
+    // Build bonus breakdown - show individual dice and CON modifier per die
+    const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
+    
+    // Add the hit dice to breakdown (will be extracted from roll result)
+    bonusBreakdown.push({ value: `${actualCount}${hitDie}`, source: 'hit dice' });
+    
+    // Add CON modifier per die
+    if (conMod !== 0) {
+      for (let i = 0; i < actualCount; i++) {
+        bonusBreakdown.push({ value: conMod, source: 'constitution' });
+      }
+    }
+
     // Dispatch event to open dice roller with a callback to handle the result
-    dispatch('rollHitDice', { notation, hitDie, count: actualCount });
+    dispatch('rollHitDice', { notation, hitDie, count: actualCount, bonusBreakdown });
   }
 
   function toggleCollapse() {

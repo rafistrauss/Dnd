@@ -255,7 +255,7 @@
   }
 
   function handleHitDiceRoll(event: CustomEvent) {
-    const { notation, count } = event.detail;
+    const { notation, count, bonusBreakdown } = event.detail;
     diceNotation = '';
     isHitDiceRoll = true;
     hitDiceCountToDecrement = count || 1;
@@ -264,6 +264,8 @@
       diceNotation = notation;
       diceDamageNotation = '';
       diceAttackName = 'Hit Die';
+      diceBonusBreakdown = bonusBreakdown || [];
+      diceRollType = 'other';
     }, 0);
 
     showDiceRoller = true;
