@@ -14,11 +14,17 @@
 
   const dispatch = createEventDispatcher();
 
+  let hitDiceCount = 1;
+
   function adjustHP(amount: number) {
     character.update((c: Character) => {
       c.currentHP = Math.max(0, Math.min(c.maxHP, c.currentHP + amount));
       return c;
     });
+  }
+
+  function adjustHitDiceCount(amount: number) {
+    hitDiceCount = Math.max(1, Math.min($character.hitDice.current, hitDiceCount + amount));
   }
 
   function rollHitDice(count: number = 1) {
@@ -59,6 +65,11 @@
 
   // Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
   $: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
+
+  // Ensure hitDiceCount doesn't exceed available hit dice
+  $: if (hitDiceCount > $character.hitDice.current) {
+    hitDiceCount = Math.max(1, $character.hitDice.current);
+  }
 
   // Calculate total AC bonus from active states
   $: totalAcBonus =
@@ -194,27 +205,39 @@
       </div>
       <div class="hit-dice-controls">
         <label for="hitDiceCount">Roll</label>
-        <input
-          type="number"
-          id="hitDiceCount"
-          class="hit-dice-count-input"
-          min="1"
-          max={$character.hitDice.current}
-          value="1"
-          on:input={(e) => {
-            const input = e.target as HTMLInputElement;
-            const val = parseInt(input.value);
-            if (val > $character.hitDice.current) input.value = String($character.hitDice.current);
-            if (val < 1) input.value = '1';
-          }}
-        />
+        <div class="hit-dice-count-controls">
+          <button
+            class="hit-dice-btn"
+            on:click={() => adjustHitDiceCount(-1)}
+            disabled={hitDiceCount <= 1}
+          >
+            −
+          </button>
+          <input
+            type="number"
+            id="hitDiceCount"
+            class="hit-dice-count-input"
+            min="1"
+            max={$character.hitDice.current}
+            bind:value={hitDiceCount}
+            on:input={(e) => {
+              const input = e.target as HTMLInputElement;
+              const val = parseInt(input.value);
+              if (val > $character.hitDice.current) hitDiceCount = $character.hitDice.current;
+              if (val < 1) hitDiceCount = 1;
+            }}
+          />
+          <button
+            class="hit-dice-btn"
+            on:click={() => adjustHitDiceCount(1)}
+            disabled={hitDiceCount >= $character.hitDice.current}
+          >
+            +
+          </button>
+        </div>
         <button
           class="btn btn-primary roll-hit-dice use-enabled"
-          on:click={() => {
-            const countInput = document.getElementById('hitDiceCount') as HTMLInputElement;
-            const count = parseInt(countInput?.value || '1');
-            rollHitDice(count);
-          }}
+          on:click={() => rollHitDice(hitDiceCount)}
           disabled={$character.hitDice.current <= 0 || !$character.class}
         >
           🎲 Roll
@@ -397,6 +420,48 @@
     border: 1px solid var(--border-color);
     border-radius: 4px;
     text-align: center;
+  }
+
+  .hit-dice-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .hit-dice-count-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .hit-dice-count-input {
+    width: 60px;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  .hit-dice-btn {
+    padding: 6px 12px;
+    background-color: var(--secondary-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+    min-width: 35px;
+  }
+
+  .hit-dice-btn:hover:not(:disabled) {
+    background-color: #b89872;
+  }
+
+  .hit-dice-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .roll-hit-dice {
