@@ -219,6 +219,14 @@ body.use-mode input[type="checkbox"].use-checkbox {
     pointer-events: auto;
 }
 
+/* Explicitly disable skill and save proficiency checkboxes in use mode */
+body.use-mode .skill-item input[type="checkbox"],
+body.use-mode .save-item input[type="checkbox"] {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 body.use-mode #currentHP,
 body.use-mode #layOnHandsPool,
 body.use-mode #tempHP,

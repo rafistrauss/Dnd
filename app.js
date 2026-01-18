@@ -293,7 +293,7 @@ function setupEventListeners() {
     });
     
     // Roll buttons for ability checks
-    document.querySelectorAll('.ability-card .roll-btn').forEach(btn => {
+    document.querySelectorAll('.ability-card [data-check]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const ability = e.target.getAttribute('data-check');
             rollAbilityCheck(ability);
@@ -1077,6 +1077,9 @@ function renderAttacks() {
         const attackDiv = document.createElement('div');
         attackDiv.className = 'attack-item';
         
+        // Check if this attack has damage (not empty and contains valid dice notation)
+        const hasDamage = attack.damage && attack.damage.trim() !== '';
+        
         // Check if this is a melee weapon for divine smite
         const isMelee = attack.name.toLowerCase().includes('longsword') || 
                         attack.name.toLowerCase().includes('greatsword') ||
@@ -1107,6 +1110,11 @@ function renderAttacks() {
             `;
         }
         
+        // Only show Roll Damage button if there's damage dice
+        const damageButton = hasDamage 
+            ? '<button class="btn btn-primary" onclick="rollDamage(' + index + ')">Roll Damage</button>'
+            : '';
+        
         attackDiv.innerHTML = `
             <div class="attack-header">
                 <input type="text" value="${attack.name}" placeholder="Attack name" 
@@ -1122,7 +1130,7 @@ function renderAttacks() {
                 <div class="form-group">
                     <label>Damage</label>
                     <input type="text" value="${attack.damage}" placeholder="e.g., 2d6+3"
-                        onchange="character.attacks[${index}].damage = this.value">
+                        onchange="character.attacks[${index}].damage = this.value; renderAttacks();">
                 </div>
                 <div class="form-group">
                     <label>Damage Type</label>
@@ -1132,7 +1140,7 @@ function renderAttacks() {
             </div>
             <div class="attack-actions">
                 <button class="btn btn-primary" onclick="rollAttack(${index})">Roll Attack</button>
-                <button class="btn btn-primary" onclick="rollDamage(${index})">Roll Damage</button>
+                ${damageButton}
             </div>
             ${smiteSection}
         `;
