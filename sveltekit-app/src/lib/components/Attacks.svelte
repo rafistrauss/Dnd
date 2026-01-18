@@ -837,17 +837,24 @@
                     >
                   {/if}
                 {:else}
-                  <!-- Damage/healing spells with saving throws or no attack -->
-                  <button
-                    on:click={() => rollDamage(attack)}
-                    class="btn {isHealingSpell(spell) ? 'btn-success' : 'btn-secondary'}"
-                  >
-                    {#if isHealingSpell(spell)}
-                      Roll Healing
-                    {:else}
-                      Roll Damage
-                    {/if}
-                  </button>
+                  <!-- Damage/healing spells with saving throws or no attack, or control spells -->
+                  {#if attack.damage && attack.damage.trim() !== ''}
+                    <button
+                      on:click={() => rollDamage(attack)}
+                      class="btn {isHealingSpell(spell) ? 'btn-success' : 'btn-secondary'}"
+                    >
+                      {#if isHealingSpell(spell)}
+                        Roll Healing
+                      {:else}
+                        Roll Damage
+                      {/if}
+                    </button>
+                  {:else}
+                    <!-- Control spells or spells without damage (e.g., Hold Person) -->
+                    <button on:click={() => castBuffSpell(attack, 'self')} class="btn btn-info"
+                      >Cast Spell</button
+                    >
+                  {/if}
                 {/if}
               {/if}
             {:else if !attack.spellRef}
@@ -855,9 +862,11 @@
               <button on:click={() => rollAttack(attack)} class="btn btn-primary"
                 >Roll Attack</button
               >
-              <button on:click={() => rollDamage(attack)} class="btn btn-secondary"
-                >Roll Damage</button
-              >
+              {#if attack.damage && attack.damage.trim() !== ''}
+                <button on:click={() => rollDamage(attack)} class="btn btn-secondary"
+                  >Roll Damage</button
+                >
+              {/if}
             {/if}
           </div>
         </div>

@@ -5,7 +5,8 @@
     abilityModifiers,
     searchFilter,
     collapsedStates,
-    updateProficiencyBonus
+    updateProficiencyBonus,
+    isEditMode
   } from '$lib/stores';
   import type { AbilityName } from '$lib/types';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -106,15 +107,18 @@
           <div class="ability-modifier">
             {$abilityModifiers[key] >= 0 ? '+' : ''}{$abilityModifiers[key]}
           </div>
-          <button class="roll-btn" on:click={() => rollAbilityCheck(key)}>Check</button>
-          <div class="save-row">
+          <div class="roll-buttons">
+            <button class="roll-btn" on:click={() => rollAbilityCheck(key)}>Check</button>
+            <button class="roll-btn" on:click={() => rollSave(key)}>Save</button>
+          </div>
+          <div class="save-proficiency">
             <input
               type="checkbox"
               bind:checked={$character.saveProficiencies[key]}
+              disabled={!$isEditMode}
               id={`${key}-save`}
             />
-            <label for={`${key}-save`}>Save</label>
-            <button class="roll-btn-small" on:click={() => rollSave(key)}>Roll</button>
+            <label for={`${key}-save`}>Save Prof.</label>
           </div>
         </div>
       {/each}
@@ -236,29 +240,31 @@
     background-color: var(--primary-color-hover);
   }
 
-  .save-row {
+  .roll-buttons {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .roll-buttons .roll-btn {
+    flex: 1;
+  }
+
+  .save-proficiency {
     display: flex;
     align-items: center;
     gap: 5px;
     width: 100%;
-    font-size: 0.85rem;
-  }
-
-  .save-row label {
-    flex: 1;
-  }
-
-  .roll-btn-small {
-    padding: 4px 8px;
-    background-color: var(--secondary-color);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
     font-size: 0.75rem;
+    justify-content: center;
   }
 
-  .roll-btn-small:hover {
-    background-color: #b89872;
+  .save-proficiency label {
+    cursor: pointer;
+  }
+
+  .save-proficiency input[type='checkbox'] {
+    cursor: pointer;
   }
 
   input:focus {

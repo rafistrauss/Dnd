@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
+  import { character, abilityModifiers, searchFilter, collapsedStates, isEditMode } from '$lib/stores';
   import { SKILL_ABILITIES } from '$lib/types';
   import type { SkillName } from '$lib/types';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -88,6 +88,7 @@
           <input
             type="checkbox"
             checked={skillProficiencies[key]}
+            disabled={!$isEditMode}
             id={key}
             on:change={(e) => {
               console.log('Skill proficiency changed:', key, e.target.checked);
