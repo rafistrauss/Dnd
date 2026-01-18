@@ -12,7 +12,7 @@
   export let damageNotation = ''; // Optional damage notation for attacks
   export let attackName = ''; // Optional attack name for context
   export let applyHalfDamage = false; // If true, halve the result after rolling
-  export let bonusBreakdown: Array<{ value: number; source: string }> = []; // Breakdown of bonuses by source
+  export let bonusBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown of bonuses by source
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
 
   let diceBox: any = null;

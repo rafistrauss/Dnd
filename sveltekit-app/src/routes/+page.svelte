@@ -227,7 +227,7 @@
           damageNotation?: string;
           attackName?: string;
           applyHalfDamage?: boolean;
-          bonusBreakdown?: Array<{ value: number; source: string }>;
+          bonusBreakdown?: Array<{ value: number | string; source: string }>;
           rollType?: 'attack' | 'damage' | 'check' | 'save' | 'other';
         }
   ) {
