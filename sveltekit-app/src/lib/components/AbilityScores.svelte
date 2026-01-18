@@ -5,7 +5,8 @@
     abilityModifiers,
     searchFilter,
     collapsedStates,
-    updateProficiencyBonus
+    updateProficiencyBonus,
+    isEditMode
   } from '$lib/stores';
   import type { AbilityName } from '$lib/types';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -114,6 +115,7 @@
             <input
               type="checkbox"
               bind:checked={$character.saveProficiencies[key]}
+              disabled={!$isEditMode}
               id={`${key}-save`}
             />
             <label for={`${key}-save`}>Save Prof.</label>
