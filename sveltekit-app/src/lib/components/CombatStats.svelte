@@ -195,10 +195,7 @@
       <div class="stat-box">
         <div class="stat-label-with-icon">
           <label for="armorClass">Armor Class</label>
-          <TooltipInfo
-            tooltipContent={acTooltip}
-            ariaLabel="Show AC breakdown"
-          />
+          <TooltipInfo tooltipContent={acTooltip} ariaLabel="Show AC breakdown" />
         </div>
         <input
           type="text"
@@ -231,7 +228,10 @@
         <div class="stat-box">
           <div class="stat-label-with-icon">
             <label for="spellSaveDC">Spell Save DC</label>
-            <TooltipInfo tooltipContent={spellSaveDCTooltip} ariaLabel="Show Spell Save DC breakdown" />
+            <TooltipInfo
+              tooltipContent={spellSaveDCTooltip}
+              ariaLabel="Show Spell Save DC breakdown"
+            />
           </div>
           <input type="number" id="spellSaveDC" value={spellSaveDC} class="stat-input" readonly />
         </div>

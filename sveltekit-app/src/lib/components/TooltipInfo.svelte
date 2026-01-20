@@ -12,8 +12,12 @@
     isTouch = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
   }
 
-  function show() { showTooltip = true; }
-  function hide() { showTooltip = false; }
+  function show() {
+    showTooltip = true;
+  }
+  function hide() {
+    showTooltip = false;
+  }
 
   function toggleTooltip(event: MouseEvent) {
     event.stopPropagation();
@@ -38,12 +42,7 @@
 
 <div class="tooltip-wrapper" bind:this={tooltipContainer}>
   {#if isTouch}
-    <button
-      class="info-icon"
-      on:click={toggleTooltip}
-      aria-label={ariaLabel}
-      type="button"
-    >
+    <button class="info-icon" on:click={toggleTooltip} aria-label={ariaLabel} type="button">
       ℹ️
     </button>
   {:else}
