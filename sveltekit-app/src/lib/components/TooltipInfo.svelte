@@ -95,7 +95,7 @@
     border-radius: 8px;
     font-size: 0.95rem;
     line-height: 1.7;
-    white-space: normal;
+    white-space: pre;
     z-index: 1000;
     margin-top: 5px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);

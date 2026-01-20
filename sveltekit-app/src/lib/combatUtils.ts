@@ -148,7 +148,6 @@ import { getArmorByName } from './armorData';
 export function getACBreakdown(char: Character, abilities: Abilities): string {
   const parts: string[] = [];
   const dexMod = calculateModifier(abilities.dexterity);
-
   const armor = char.armorName ? getArmorByName(char.armorName) : undefined;
 
   if (armor) {
@@ -185,6 +184,15 @@ export function getACBreakdown(char: Character, abilities: Abilities): string {
     if (difference !== 0) {
       parts.push(`Other: ${difference >= 0 ? '+' : ''}${difference}`);
     }
+  }
+
+  // Add spell effects and other active states that affect AC
+  if (char.activeStates && char.activeStates.length > 0) {
+    char.activeStates.forEach((state) => {
+      if (typeof state.acBonus === 'number' && state.acBonus !== 0 && (!state.target || state.target === 'self')) {
+        parts.push(`${state.name}: ${state.acBonus >= 0 ? '+' : ''}${state.acBonus}`);
+      }
+    });
   }
 
   return parts.join('\n');
