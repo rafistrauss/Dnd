@@ -8,13 +8,45 @@
     isEditMode
   } from '$lib/stores';
   import { getClassConfig } from '$lib/classConfig';
-  import { getSpellSaveDC } from '$lib/combatUtils';
+  import {
+    getSpellSaveDC,
+    getACBreakdown,
+    getInitiativeBreakdown,
+    getSpellSaveDCBreakdown,
+    calculateModifier
+  } from '$lib/combatUtils';
   import type { Character } from '$lib/types';
+  import { ARMOR_LIST, calculateArmorClass } from '$lib/armorData';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
+  import TooltipInfo from '$lib/components/TooltipInfo.svelte';
 
   const dispatch = createEventDispatcher();
 
   let hitDiceCount = 1;
+
+  // Automatically calculate AC when armor or DEX changes
+  $: {
+    if ($character.armorName !== undefined || $character.shieldEquipped !== undefined) {
+      const dexMod = $abilityModifiers.dexterity;
+      const calculatedAC = calculateArmorClass(
+        $character.armorName,
+        dexMod,
+        $character.shieldEquipped || false
+      );
+      // Only update if different to avoid infinite loop
+      if ($character.armorClass !== calculatedAC) {
+        character.update((c) => ({ ...c, armorClass: calculatedAC }));
+      }
+    }
+  }
+
+  // Automatically calculate initiative when DEX changes
+  $: {
+    const dexMod = $abilityModifiers.dexterity;
+    if ($character.initiative !== dexMod) {
+      character.update((c) => ({ ...c, initiative: dexMod }));
+    }
+  }
 
   function adjustHP(amount: number) {
     character.update((c: Character) => {
@@ -63,10 +95,10 @@
 
     // Build bonus breakdown - show individual dice and CON modifier per die
     const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
-    
+
     // Add the hit dice to breakdown (will be extracted from roll result)
     bonusBreakdown.push({ value: `${actualCount}${hitDie}`, source: 'hit dice' });
-    
+
     // Add CON modifier per die
     if (conMod !== 0) {
       for (let i = 0; i < actualCount; i++) {
@@ -83,7 +115,12 @@
   }
 
   // Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
-  $: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
+  $: spellSaveDC = getSpellSaveDC($character, $character.abilities);
+
+  // Generate tooltip breakdowns
+  $: acTooltip = getACBreakdown($character, $character.abilities);
+  $: initiativeTooltip = getInitiativeBreakdown($character, $character.abilities);
+  $: spellSaveDCTooltip = getSpellSaveDCBreakdown($character, $character.abilities);
 
   // Ensure hitDiceCount doesn't exceed available hit dice
   // Note: When 0 dice available, hitDiceCount stays at 1 (HTML input min), but Roll button is disabled
@@ -126,36 +163,61 @@
     onToggle={() => collapsedStates.update((s) => ({ ...s, combatStats: !s.combatStats }))}
   />
   {#if !$collapsedStates.combatStats}
+    {#if $isEditMode}
+      <div class="armor-config">
+        <h4>Armor Configuration</h4>
+        <div class="armor-controls">
+          <div class="armor-field">
+            <label for="armorName">Armor</label>
+            <select id="armorName" bind:value={$character.armorName} class="armor-select">
+              <option value={undefined}>None (Unarmored)</option>
+              {#each ARMOR_LIST as armor}
+                {#if armor.name !== 'Unarmored'}
+                  <option value={armor.name}>{armor.name} (AC {armor.baseAC})</option>
+                {/if}
+              {/each}
+            </select>
+          </div>
+          <div class="armor-field">
+            <label class="shield-label">
+              <input
+                type="checkbox"
+                bind:checked={$character.shieldEquipped}
+                class="shield-checkbox"
+              />
+              Shield Equipped (+2 AC)
+            </label>
+          </div>
+        </div>
+      </div>
+    {/if}
     <div class="stats-grid">
       <div class="stat-box">
-        <label for="armorClass">Armor Class</label>
-        {#if $isEditMode}
-          <input
-            type="number"
-            id="armorClass"
-            bind:value={$character.armorClass}
-            class="stat-input"
-          />
-        {:else}
-          <input
-            type="text"
-            id="armorClass"
-            value={totalAcBonus !== 0
-              ? `${$character.armorClass} → ${$character.armorClass + totalAcBonus}`
-              : `${$character.armorClass}`}
-            class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
-            readonly
-            title={totalAcBonus !== 0 ? 'Base AC plus active effect bonuses' : 'Base Armor Class'}
-          />
-        {/if}
+        <div class="stat-label-with-icon">
+          <label for="armorClass">Armor Class</label>
+          <TooltipInfo tooltipContent={acTooltip} ariaLabel="Show AC breakdown" />
+        </div>
+        <input
+          type="text"
+          id="armorClass"
+          value={totalAcBonus !== 0
+            ? `${$character.armorClass} → ${$character.armorClass + totalAcBonus}`
+            : `${$character.armorClass}`}
+          class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
+          readonly
+        />
       </div>
       <div class="stat-box">
-        <label for="initiative">Initiative</label>
+        <div class="stat-label-with-icon">
+          <label for="initiative">Initiative</label>
+          <TooltipInfo tooltipContent={initiativeTooltip} ariaLabel="Show Initiative breakdown" />
+        </div>
         <input
-          type="number"
+          type="text"
           id="initiative"
-          bind:value={$character.initiative}
+          value={$character.initiative}
           class="stat-input"
+          readonly
         />
       </div>
       <div class="stat-box">
@@ -164,15 +226,14 @@
       </div>
       {#if spellSaveDC !== null}
         <div class="stat-box">
-          <label for="spellSaveDC">Spell Save DC</label>
-          <input
-            type="number"
-            id="spellSaveDC"
-            value={spellSaveDC}
-            class="stat-input"
-            readonly
-            title="8 + Proficiency Bonus + Spellcasting Ability Modifier"
-          />
+          <div class="stat-label-with-icon">
+            <label for="spellSaveDC">Spell Save DC</label>
+            <TooltipInfo
+              tooltipContent={spellSaveDCTooltip}
+              ariaLabel="Show Spell Save DC breakdown"
+            />
+          </div>
+          <input type="number" id="spellSaveDC" value={spellSaveDC} class="stat-input" readonly />
         </div>
       {/if}
     </div>
@@ -326,6 +387,7 @@
   .stat-box {
     display: flex;
     flex-direction: column;
+    position: relative;
   }
 
   label {
@@ -507,5 +569,67 @@
     font-weight: bold;
     background: #e9f5ff;
     border: 2px solid #b3e0ff;
+  }
+
+  .stat-label-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+
+  .armor-config {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+  }
+
+  .armor-config h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    font-size: 1rem;
+  }
+
+  .armor-controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .armor-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .armor-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .armor-select,
+  .armor-input {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 150px;
+  }
+
+  .shield-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    cursor: pointer;
+  }
+
+  .shield-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
   }
 </style>

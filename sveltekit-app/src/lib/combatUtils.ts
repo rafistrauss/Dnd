@@ -126,7 +126,7 @@ export function getSpellSaveDC(char: Character, abilities: Abilities): number | 
   if (!char.class) return null;
   const classConfig = getClassConfig(char.class);
   if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return null;
-  const spellcastingMod = abilities[classConfig.spellcastingAbility];
+  const spellcastingMod = calculateModifier(abilities[classConfig.spellcastingAbility]);
   return 8 + char.proficiencyBonus + spellcastingMod;
 }
 
@@ -137,5 +137,104 @@ export function getSpellcastingModifier(char: Character, abilities: Abilities): 
   if (!char.class) return 0;
   const classConfig = getClassConfig(char.class);
   if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return 0;
-  return abilities[classConfig.spellcastingAbility];
+  return calculateModifier(abilities[classConfig.spellcastingAbility]);
+}
+
+import { getArmorByName } from './armorData';
+
+/**
+ * Generate AC breakdown tooltip text
+ */
+export function getACBreakdown(char: Character, abilities: Abilities): string {
+  const parts: string[] = [];
+  const dexMod = calculateModifier(abilities.dexterity);
+  const armor = char.armorName ? getArmorByName(char.armorName) : undefined;
+
+  if (armor) {
+    if (armor.type === 'none') {
+      parts.push('Unarmored');
+      parts.push(`Base: 10`);
+      parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+    } else if (armor.type === 'light') {
+      parts.push(`${armor.name}: ${armor.baseAC}`);
+      parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+    } else if (armor.type === 'medium') {
+      const effectiveDex = Math.min(2, dexMod);
+      parts.push(`${armor.name}: ${armor.baseAC}`);
+      parts.push(`Dexterity: ${effectiveDex >= 0 ? '+' : ''}${effectiveDex} (max +2)`);
+    } else if (armor.type === 'heavy') {
+      parts.push(`${armor.name}: ${armor.baseAC}`);
+      parts.push('Dexterity: +0 (heavy armor)');
+    }
+
+    if (char.shieldEquipped) {
+      parts.push('Shield: +2');
+    }
+  } else {
+    // Fallback if no armor specified
+    parts.push('Base: 10');
+
+    if (dexMod !== 0) {
+      parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+    }
+
+    const basePlusDex = 10 + dexMod;
+    const difference = char.armorClass - basePlusDex;
+
+    if (difference !== 0) {
+      parts.push(`Other: ${difference >= 0 ? '+' : ''}${difference}`);
+    }
+  }
+
+  // Add spell effects and other active states that affect AC
+  if (char.activeStates && char.activeStates.length > 0) {
+    char.activeStates.forEach((state) => {
+      if (typeof state.acBonus === 'number' && state.acBonus !== 0 && (!state.target || state.target === 'self')) {
+        parts.push(`${state.name}: ${state.acBonus >= 0 ? '+' : ''}${state.acBonus}`);
+      }
+    });
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Generate Initiative breakdown tooltip text
+ */
+export function getInitiativeBreakdown(char: Character, abilities: Abilities): string {
+  const parts: string[] = [];
+  const dexMod = calculateModifier(abilities.dexterity);
+
+  // Base initiative is just dexterity modifier
+  parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+
+  // Calculate the difference between stored initiative and dex mod
+  const difference = char.initiative - dexMod;
+
+  if (difference !== 0) {
+    parts.push(`Other Bonuses: ${difference >= 0 ? '+' : ''}${difference}`);
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Generate Spell Save DC breakdown tooltip text
+ */
+export function getSpellSaveDCBreakdown(char: Character, abilities: Abilities): string {
+  if (!char.class) return '';
+  const classConfig = getClassConfig(char.class);
+  if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return '';
+
+  const parts: string[] = [];
+  const spellcastingMod = calculateModifier(abilities[classConfig.spellcastingAbility]);
+  const abilityName =
+    classConfig.spellcastingAbility.charAt(0).toUpperCase() +
+    classConfig.spellcastingAbility.slice(1);
+
+  parts.push('Base: 8');
+  parts.push(`Proficiency: +${char.proficiencyBonus}`);
+  parts.push(`${abilityName}: ${spellcastingMod >= 0 ? '+' : ''}${spellcastingMod}`);
+
+  return parts.join('\n');
 }
