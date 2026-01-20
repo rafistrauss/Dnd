@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import {
     character,
     searchFilter,
@@ -18,14 +18,11 @@
   import type { Character } from '$lib/types';
   import { ARMOR_LIST, calculateArmorClass } from '$lib/armorData';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
+  import TooltipInfo from '$lib/components/TooltipInfo.svelte';
 
   const dispatch = createEventDispatcher();
 
   let hitDiceCount = 1;
-  let showACTooltip = false;
-  let showInitiativeTooltip = false;
-  let showSpellSaveDCTooltip = false;
-  let tooltipContainer: HTMLElement;
 
   // Automatically calculate AC when armor or DEX changes
   $: {
@@ -50,43 +47,6 @@
       character.update((c) => ({ ...c, initiative: dexMod }));
     }
   }
-
-  function toggleTooltip(tooltip: 'ac' | 'initiative' | 'spellSaveDC', event: MouseEvent) {
-    event.stopPropagation(); // Prevent click from bubbling to document
-    if (tooltip === 'ac') {
-      showACTooltip = !showACTooltip;
-      showInitiativeTooltip = false;
-      showSpellSaveDCTooltip = false;
-    } else if (tooltip === 'initiative') {
-      showInitiativeTooltip = !showInitiativeTooltip;
-      showACTooltip = false;
-      showSpellSaveDCTooltip = false;
-    } else {
-      showSpellSaveDCTooltip = !showSpellSaveDCTooltip;
-      showACTooltip = false;
-      showInitiativeTooltip = false;
-    }
-  }
-
-  function closeAllTooltips() {
-    showACTooltip = false;
-    showInitiativeTooltip = false;
-    showSpellSaveDCTooltip = false;
-  }
-
-  function handleClickOutside(event: MouseEvent) {
-    if (tooltipContainer && !tooltipContainer.contains(event.target as Node)) {
-      closeAllTooltips();
-    }
-  }
-
-  onMount(() => {
-    document.addEventListener('click', handleClickOutside);
-  });
-
-  onDestroy(() => {
-    document.removeEventListener('click', handleClickOutside);
-  });
 
   function adjustHP(amount: number) {
     character.update((c: Character) => {
@@ -195,7 +155,7 @@
     'combat'.includes($searchFilter.toLowerCase());
 </script>
 
-<section class="combat-stats" class:hidden={!hasVisibleContent} bind:this={tooltipContainer}>
+<section class="combat-stats" class:hidden={!hasVisibleContent}>
   <SectionHeader
     title="Combat Stats"
     collapsed={$collapsedStates.combatStats}
@@ -235,14 +195,10 @@
       <div class="stat-box">
         <div class="stat-label-with-icon">
           <label for="armorClass">Armor Class</label>
-          <button
-            class="info-icon"
-            on:click={(e) => toggleTooltip('ac', e)}
-            aria-label="Show AC breakdown"
-            type="button"
-          >
-            ℹ️
-          </button>
+          <TooltipInfo
+            tooltipContent={acTooltip}
+            ariaLabel="Show AC breakdown"
+          />
         </div>
         <input
           type="text"
@@ -253,28 +209,11 @@
           class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
           readonly
         />
-        {#if showACTooltip}
-          <div class="tooltip-popup">
-            {#if totalAcBonus !== 0}
-              <div>{acTooltip}</div>
-              <div style="margin-top: 5px;">Active Effects: +{totalAcBonus}</div>
-            {:else}
-              <div>{acTooltip}</div>
-            {/if}
-          </div>
-        {/if}
       </div>
       <div class="stat-box">
         <div class="stat-label-with-icon">
           <label for="initiative">Initiative</label>
-          <button
-            class="info-icon"
-            on:click={(e) => toggleTooltip('initiative', e)}
-            aria-label="Show Initiative breakdown"
-            type="button"
-          >
-            ℹ️
-          </button>
+          <TooltipInfo tooltipContent={initiativeTooltip} ariaLabel="Show Initiative breakdown" />
         </div>
         <input
           type="text"
@@ -283,11 +222,6 @@
           class="stat-input"
           readonly
         />
-        {#if showInitiativeTooltip}
-          <div class="tooltip-popup">
-            {initiativeTooltip}
-          </div>
-        {/if}
       </div>
       <div class="stat-box">
         <label for="speed">Speed</label>
@@ -297,21 +231,9 @@
         <div class="stat-box">
           <div class="stat-label-with-icon">
             <label for="spellSaveDC">Spell Save DC</label>
-            <button
-              class="info-icon"
-              on:click={(e) => toggleTooltip('spellSaveDC', e)}
-              aria-label="Show Spell Save DC breakdown"
-              type="button"
-            >
-              ℹ️
-            </button>
+            <TooltipInfo tooltipContent={spellSaveDCTooltip} ariaLabel="Show Spell Save DC breakdown" />
           </div>
           <input type="number" id="spellSaveDC" value={spellSaveDC} class="stat-input" readonly />
-          {#if showSpellSaveDCTooltip}
-            <div class="tooltip-popup">
-              {spellSaveDCTooltip}
-            </div>
-          {/if}
         </div>
       {/if}
     </div>
@@ -654,51 +576,6 @@
     align-items: center;
     gap: 5px;
     margin-bottom: 5px;
-  }
-
-  .info-icon {
-    background: none;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    opacity: 0.7;
-    transition:
-      opacity 0.2s,
-      transform 0.2s;
-  }
-
-  .info-icon:hover {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-
-  .tooltip-popup {
-    position: absolute;
-    background: #333;
-    color: white;
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    white-space: pre-line;
-    z-index: 1000;
-    margin-top: 5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    max-width: 250px;
-    animation: fadeIn 0.2s ease-in;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-5px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 
   .armor-config {
