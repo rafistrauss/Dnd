@@ -30,7 +30,7 @@
   // Automatically calculate AC when armor or DEX changes
   $: {
     if ($character.armorName !== undefined || $character.shieldEquipped !== undefined) {
-      const dexMod = calculateModifier($abilityModifiers.dexterity);
+      const dexMod = $abilityModifiers.dexterity;
       const calculatedAC = calculateArmorClass(
         $character.armorName,
         dexMod,
@@ -45,13 +45,14 @@
 
   // Automatically calculate initiative when DEX changes
   $: {
-    const dexMod = calculateModifier($abilityModifiers.dexterity);
+    const dexMod = $abilityModifiers.dexterity;
     if ($character.initiative !== dexMod) {
       character.update((c) => ({ ...c, initiative: dexMod }));
     }
   }
 
-  function toggleTooltip(tooltip: 'ac' | 'initiative' | 'spellSaveDC') {
+  function toggleTooltip(tooltip: 'ac' | 'initiative' | 'spellSaveDC', event: MouseEvent) {
+    event.stopPropagation(); // Prevent click from bubbling to document
     if (tooltip === 'ac') {
       showACTooltip = !showACTooltip;
       showInitiativeTooltip = false;
@@ -154,12 +155,12 @@
   }
 
   // Calculate Spell Save DC: 8 + proficiency bonus + spellcasting ability modifier
-  $: spellSaveDC = getSpellSaveDC($character, $abilityModifiers);
+  $: spellSaveDC = getSpellSaveDC($character, $character.abilities);
 
   // Generate tooltip breakdowns
-  $: acTooltip = getACBreakdown($character, $abilityModifiers);
-  $: initiativeTooltip = getInitiativeBreakdown($character, $abilityModifiers);
-  $: spellSaveDCTooltip = getSpellSaveDCBreakdown($character, $abilityModifiers);
+  $: acTooltip = getACBreakdown($character, $character.abilities);
+  $: initiativeTooltip = getInitiativeBreakdown($character, $character.abilities);
+  $: spellSaveDCTooltip = getSpellSaveDCBreakdown($character, $character.abilities);
 
   // Ensure hitDiceCount doesn't exceed available hit dice
   // Note: When 0 dice available, hitDiceCount stays at 1 (HTML input min), but Roll button is disabled
@@ -236,7 +237,7 @@
           <label for="armorClass">Armor Class</label>
           <button
             class="info-icon"
-            on:click={() => toggleTooltip('ac')}
+            on:click={(e) => toggleTooltip('ac', e)}
             aria-label="Show AC breakdown"
             type="button"
           >
@@ -268,7 +269,7 @@
           <label for="initiative">Initiative</label>
           <button
             class="info-icon"
-            on:click={() => toggleTooltip('initiative')}
+            on:click={(e) => toggleTooltip('initiative', e)}
             aria-label="Show Initiative breakdown"
             type="button"
           >
@@ -298,7 +299,7 @@
             <label for="spellSaveDC">Spell Save DC</label>
             <button
               class="info-icon"
-              on:click={() => toggleTooltip('spellSaveDC')}
+              on:click={(e) => toggleTooltip('spellSaveDC', e)}
               aria-label="Show Spell Save DC breakdown"
               type="button"
             >

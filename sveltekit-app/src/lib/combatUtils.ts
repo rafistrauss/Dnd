@@ -126,7 +126,7 @@ export function getSpellSaveDC(char: Character, abilities: Abilities): number | 
   if (!char.class) return null;
   const classConfig = getClassConfig(char.class);
   if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return null;
-  const spellcastingMod = abilities[classConfig.spellcastingAbility];
+  const spellcastingMod = calculateModifier(abilities[classConfig.spellcastingAbility]);
   return 8 + char.proficiencyBonus + spellcastingMod;
 }
 
@@ -137,7 +137,7 @@ export function getSpellcastingModifier(char: Character, abilities: Abilities): 
   if (!char.class) return 0;
   const classConfig = getClassConfig(char.class);
   if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return 0;
-  return abilities[classConfig.spellcastingAbility];
+  return calculateModifier(abilities[classConfig.spellcastingAbility]);
 }
 
 import { getArmorByName } from './armorData';
@@ -219,7 +219,7 @@ export function getSpellSaveDCBreakdown(char: Character, abilities: Abilities): 
   if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return '';
 
   const parts: string[] = [];
-  const spellcastingMod = abilities[classConfig.spellcastingAbility];
+  const spellcastingMod = calculateModifier(abilities[classConfig.spellcastingAbility]);
   const abilityName =
     classConfig.spellcastingAbility.charAt(0).toUpperCase() +
     classConfig.spellcastingAbility.slice(1);
