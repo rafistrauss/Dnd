@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import {
     character,
     searchFilter,
@@ -12,9 +12,11 @@
     getSpellSaveDC,
     getACBreakdown,
     getInitiativeBreakdown,
-    getSpellSaveDCBreakdown
+    getSpellSaveDCBreakdown,
+    calculateModifier
   } from '$lib/combatUtils';
   import type { Character } from '$lib/types';
+  import { ARMOR_LIST, calculateArmorClass } from '$lib/armorData';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   const dispatch = createEventDispatcher();
@@ -23,6 +25,31 @@
   let showACTooltip = false;
   let showInitiativeTooltip = false;
   let showSpellSaveDCTooltip = false;
+  let tooltipContainer: HTMLElement;
+
+  // Automatically calculate AC when armor or DEX changes
+  $: {
+    if ($character.armorName !== undefined || $character.shieldEquipped !== undefined) {
+      const dexMod = calculateModifier($abilityModifiers.dexterity);
+      const calculatedAC = calculateArmorClass(
+        $character.armorName,
+        dexMod,
+        $character.shieldEquipped || false
+      );
+      // Only update if different to avoid infinite loop
+      if ($character.armorClass !== calculatedAC) {
+        character.update((c) => ({ ...c, armorClass: calculatedAC }));
+      }
+    }
+  }
+
+  // Automatically calculate initiative when DEX changes
+  $: {
+    const dexMod = calculateModifier($abilityModifiers.dexterity);
+    if ($character.initiative !== dexMod) {
+      character.update((c) => ({ ...c, initiative: dexMod }));
+    }
+  }
 
   function toggleTooltip(tooltip: 'ac' | 'initiative' | 'spellSaveDC') {
     if (tooltip === 'ac') {
@@ -39,6 +66,26 @@
       showInitiativeTooltip = false;
     }
   }
+
+  function closeAllTooltips() {
+    showACTooltip = false;
+    showInitiativeTooltip = false;
+    showSpellSaveDCTooltip = false;
+  }
+
+  function handleClickOutside(event: MouseEvent) {
+    if (tooltipContainer && !tooltipContainer.contains(event.target as Node)) {
+      closeAllTooltips();
+    }
+  }
+
+  onMount(() => {
+    document.addEventListener('click', handleClickOutside);
+  });
+
+  onDestroy(() => {
+    document.removeEventListener('click', handleClickOutside);
+  });
 
   function adjustHP(amount: number) {
     character.update((c: Character) => {
@@ -147,7 +194,7 @@
     'combat'.includes($searchFilter.toLowerCase());
 </script>
 
-<section class="combat-stats" class:hidden={!hasVisibleContent}>
+<section class="combat-stats" class:hidden={!hasVisibleContent} bind:this={tooltipContainer}>
   <SectionHeader
     title="Combat Stats"
     collapsed={$collapsedStates.combatStats}
@@ -155,6 +202,34 @@
     onToggle={() => collapsedStates.update((s) => ({ ...s, combatStats: !s.combatStats }))}
   />
   {#if !$collapsedStates.combatStats}
+    {#if $isEditMode}
+      <div class="armor-config">
+        <h4>Armor Configuration</h4>
+        <div class="armor-controls">
+          <div class="armor-field">
+            <label for="armorName">Armor</label>
+            <select id="armorName" bind:value={$character.armorName} class="armor-select">
+              <option value={undefined}>None (Unarmored)</option>
+              {#each ARMOR_LIST as armor}
+                {#if armor.name !== 'Unarmored'}
+                  <option value={armor.name}>{armor.name} (AC {armor.baseAC})</option>
+                {/if}
+              {/each}
+            </select>
+          </div>
+          <div class="armor-field">
+            <label class="shield-label">
+              <input
+                type="checkbox"
+                bind:checked={$character.shieldEquipped}
+                class="shield-checkbox"
+              />
+              Shield Equipped (+2 AC)
+            </label>
+          </div>
+        </div>
+      </div>
+    {/if}
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-label-with-icon">
@@ -168,24 +243,15 @@
             ℹ️
           </button>
         </div>
-        {#if $isEditMode}
-          <input
-            type="number"
-            id="armorClass"
-            bind:value={$character.armorClass}
-            class="stat-input"
-          />
-        {:else}
-          <input
-            type="text"
-            id="armorClass"
-            value={totalAcBonus !== 0
-              ? `${$character.armorClass} → ${$character.armorClass + totalAcBonus}`
-              : `${$character.armorClass}`}
-            class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
-            readonly
-          />
-        {/if}
+        <input
+          type="text"
+          id="armorClass"
+          value={totalAcBonus !== 0
+            ? `${$character.armorClass} → ${$character.armorClass + totalAcBonus}`
+            : `${$character.armorClass}`}
+          class={totalAcBonus !== 0 ? 'stat-input ac-enhanced' : 'stat-input'}
+          readonly
+        />
         {#if showACTooltip}
           <div class="tooltip-popup">
             {#if totalAcBonus !== 0}
@@ -210,10 +276,11 @@
           </button>
         </div>
         <input
-          type="number"
+          type="text"
           id="initiative"
-          bind:value={$character.initiative}
+          value={$character.initiative}
           class="stat-input"
+          readonly
         />
         {#if showInitiativeTooltip}
           <div class="tooltip-popup">
@@ -631,5 +698,60 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  .armor-config {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+  }
+
+  .armor-config h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    font-size: 1rem;
+  }
+
+  .armor-controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .armor-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .armor-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .armor-select,
+  .armor-input {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 150px;
+  }
+
+  .shield-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    cursor: pointer;
+  }
+
+  .shield-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
   }
 </style>

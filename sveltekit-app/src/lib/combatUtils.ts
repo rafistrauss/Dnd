@@ -140,6 +140,8 @@ export function getSpellcastingModifier(char: Character, abilities: Abilities): 
   return abilities[classConfig.spellcastingAbility];
 }
 
+import { getArmorByName } from './armorData';
+
 /**
  * Generate AC breakdown tooltip text
  */
@@ -147,21 +149,42 @@ export function getACBreakdown(char: Character, abilities: Abilities): string {
   const parts: string[] = [];
   const dexMod = calculateModifier(abilities.dexterity);
 
-  // For now, we'll provide a simplified breakdown based on what we know
-  // The actual AC value is stored directly in char.armorClass
-  parts.push('Base: 10');
+  const armor = char.armorName ? getArmorByName(char.armorName) : undefined;
 
-  // Dexterity modifier
-  if (dexMod !== 0) {
-    parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
-  }
+  if (armor) {
+    if (armor.type === 'none') {
+      parts.push('Unarmored');
+      parts.push(`Base: 10`);
+      parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+    } else if (armor.type === 'light') {
+      parts.push(`${armor.name}: ${armor.baseAC}`);
+      parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+    } else if (armor.type === 'medium') {
+      const effectiveDex = Math.min(2, dexMod);
+      parts.push(`${armor.name}: ${armor.baseAC}`);
+      parts.push(`Dexterity: ${effectiveDex >= 0 ? '+' : ''}${effectiveDex} (max +2)`);
+    } else if (armor.type === 'heavy') {
+      parts.push(`${armor.name}: ${armor.baseAC}`);
+      parts.push('Dexterity: +0 (heavy armor)');
+    }
 
-  // Calculate the difference between stored AC and base+dex
-  const basePlusDex = 10 + dexMod;
-  const difference = char.armorClass - basePlusDex;
+    if (char.shieldEquipped) {
+      parts.push('Shield: +2');
+    }
+  } else {
+    // Fallback if no armor specified
+    parts.push('Base: 10');
 
-  if (difference !== 0) {
-    parts.push(`Armor/Other: ${difference >= 0 ? '+' : ''}${difference}`);
+    if (dexMod !== 0) {
+      parts.push(`Dexterity: ${dexMod >= 0 ? '+' : ''}${dexMod}`);
+    }
+
+    const basePlusDex = 10 + dexMod;
+    const difference = char.armorClass - basePlusDex;
+
+    if (difference !== 0) {
+      parts.push(`Other: ${difference >= 0 ? '+' : ''}${difference}`);
+    }
   }
 
   return parts.join('\n');

@@ -108,6 +108,8 @@ export interface Character {
   background: string;
   alignment: string;
   armorClass: number;
+  armorName?: string; // Specific armor name like "Chain Mail", "Leather", etc.
+  shieldEquipped?: boolean;
   initiative: number;
   speed: string;
   currentHP: number;
