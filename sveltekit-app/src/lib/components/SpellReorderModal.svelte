@@ -12,21 +12,22 @@
     localAttacks = [...attacks];
   }
 
+  function swapElements(index1: number, index2: number) {
+    const temp = localAttacks[index1];
+    localAttacks[index1] = localAttacks[index2];
+    localAttacks[index2] = temp;
+    localAttacks = [...localAttacks]; // Trigger reactivity
+  }
+
   function moveUp(index: number) {
     if (index > 0) {
-      const temp = localAttacks[index];
-      localAttacks[index] = localAttacks[index - 1];
-      localAttacks[index - 1] = temp;
-      localAttacks = [...localAttacks]; // Trigger reactivity
+      swapElements(index, index - 1);
     }
   }
 
   function moveDown(index: number) {
     if (index < localAttacks.length - 1) {
-      const temp = localAttacks[index];
-      localAttacks[index] = localAttacks[index + 1];
-      localAttacks[index + 1] = temp;
-      localAttacks = [...localAttacks]; // Trigger reactivity
+      swapElements(index, index + 1);
     }
   }
 
@@ -60,7 +61,7 @@
           <ul class="reorder-list">
             {#each localAttacks as attack, index (attack.id)}
               <li class="reorder-item">
-                <span class="attack-name">{attack.name || '(Unnamed Attack)'}</span>
+                <span class="attack-name">{attack.name || '(Unnamed attack or spell)'}</span>
                 <div class="reorder-buttons">
                   <button
                     class="btn-move"
