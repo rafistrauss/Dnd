@@ -19,7 +19,8 @@
     addsSpellcastingModifierToDamage,
     isBuffSpell,
     extractSpellEffectBonuses,
-    requiresSpellAttackRoll
+    requiresSpellAttackRoll,
+    getAlternateDamageForDamagedTarget
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
 
@@ -339,6 +340,13 @@
     let baseDamage = attack.damage;
     let additionalDice = 0;
     let additionalModifier = 0;
+
+    // Handle alternate damage for damaged targets (e.g., Toll of the Dead)
+    const alternateDamage = getAlternateDamageForDamagedTarget(spell);
+    if (alternateDamage && attack.targetIsDamaged) {
+      // Use the alternate damage dice (e.g., 1d12 instead of 1d8)
+      baseDamage = alternateDamage.alternateDamage;
+    }
 
     // Check if spell adds spellcasting modifier to damage
     if (addsSpellcastingModifierToDamage(spell)) {
@@ -718,6 +726,27 @@
                         <span class="scaled-damage">(Half damage)</span>
                       {:else if attack.targetSucceededSave && savingThrow.noDamageOnSave}
                         <span class="scaled-damage">(No damage)</span>
+                      {/if}
+                    </label>
+                  </div>
+                {/if}
+                {@const alternateDamageInfo = getAlternateDamageForDamagedTarget(spell)}
+                {#if alternateDamageInfo}
+                  <div class="target-condition">
+                    <label>
+                      <input
+                        type="checkbox"
+                        bind:checked={attack.targetIsDamaged}
+                        class="use-enabled"
+                      />
+                      Target is missing HP
+                      {#if attack.targetIsDamaged}
+                        {@const scaledDamage = getScaledSpellDamage(attack, spell)}
+                        <span class="scaled-damage"
+                          >({alternateDamageInfo.alternateDamage}, total: {scaledDamage})</span
+                        >
+                      {:else}
+                        <span class="scaled-damage">({alternateDamageInfo.baseDamage})</span>
                       {/if}
                     </label>
                   </div>
