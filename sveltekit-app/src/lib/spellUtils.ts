@@ -195,3 +195,28 @@ export function extractSpellEffectBonuses(spell: Spell): SpellState | null {
 
   return null;
 }
+
+/**
+ * Check if a spell has alternate damage for damaged targets (like Toll of the Dead)
+ * @param spell The spell to analyze
+ * @returns Object with alternateDamage if the spell has conditional damage for damaged targets
+ */
+export function getAlternateDamageForDamagedTarget(
+  spell: Spell
+): { baseDamage: string; alternateDamage: string } | null {
+  const description = spell.description;
+
+  // Pattern for "If the target is missing any of its Hit Points, it instead takes XdY damage"
+  const alternateDamagePattern =
+    /takes?\s+(\d+d\d+).*?missing.*?Hit\s+Points.*?instead\s+takes?\s+(\d+d\d+)/i;
+  const match = description.match(alternateDamagePattern);
+
+  if (match) {
+    return {
+      baseDamage: match[1], // e.g., "1d8"
+      alternateDamage: match[2] // e.g., "1d12"
+    };
+  }
+
+  return null;
+}

@@ -55,6 +55,7 @@ export interface Attack {
   castAtLevel?: number; // for spells that can be cast at higher levels
   targetIsFiendOrUndead?: boolean; // for conditional damage like Divine Smite
   targetSucceededSave?: boolean; // for spells with saving throws
+  targetIsDamaged?: boolean; // for spells like Toll of the Dead with alternate damage
   notes?: string; // for non-spell attacks
 }
 
