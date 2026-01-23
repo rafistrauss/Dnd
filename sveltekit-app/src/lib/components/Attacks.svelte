@@ -730,6 +730,27 @@
                     </label>
                   </div>
                 {/if}
+                {@const alternateDamageInfo = getAlternateDamageForDamagedTarget(spell)}
+                {#if alternateDamageInfo}
+                  <div class="target-condition">
+                    <label>
+                      <input
+                        type="checkbox"
+                        bind:checked={attack.targetIsDamaged}
+                        class="use-enabled"
+                      />
+                      Target is missing HP
+                      {#if attack.targetIsDamaged}
+                        {@const scaledDamage = getScaledSpellDamage(attack, spell)}
+                        <span class="scaled-damage"
+                          >({alternateDamageInfo.alternateDamage}, total: {scaledDamage})</span
+                        >
+                      {:else}
+                        <span class="scaled-damage">({alternateDamageInfo.baseDamage})</span>
+                      {/if}
+                    </label>
+                  </div>
+                {/if}
                 {#if spell.higherLevelSlot && spell.level > 0}
                   {@const availableLevels = getAvailableSpellLevels(spell)}
                   {#if availableLevels.length > 0}
@@ -770,27 +791,6 @@
                           {#if attack.targetIsFiendOrUndead}
                             {@const scaledDamage = getScaledSpellDamage(attack, spell)}
                             <span class="scaled-damage">(+1d8, total: {scaledDamage})</span>
-                          {/if}
-                        </label>
-                      </div>
-                    {/if}
-                    {@const alternateDamageInfo = getAlternateDamageForDamagedTarget(spell)}
-                    {#if alternateDamageInfo}
-                      <div class="target-condition">
-                        <label>
-                          <input
-                            type="checkbox"
-                            bind:checked={attack.targetIsDamaged}
-                            class="use-enabled"
-                          />
-                          Target is missing HP
-                          {#if attack.targetIsDamaged}
-                            {@const scaledDamage = getScaledSpellDamage(attack, spell)}
-                            <span class="scaled-damage"
-                              >({alternateDamageInfo.alternateDamage}, total: {scaledDamage})</span
-                            >
-                          {:else}
-                            <span class="scaled-damage">({alternateDamageInfo.baseDamage})</span>
                           {/if}
                         </label>
                       </div>
