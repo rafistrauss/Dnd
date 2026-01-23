@@ -109,8 +109,8 @@
   }
 
   .modal-content {
-    background: var(--card-background, #2a2a2a);
-    border: 1px solid var(--border-color, #444);
+    background: #f5f5f5;
+    border: 1px solid #ccc;
     border-radius: 8px;
     max-width: 500px;
     width: 90%;
@@ -122,7 +122,7 @@
 
   .modal-header {
     padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color, #444);
+    border-bottom: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -131,7 +131,7 @@
   .modal-header h3 {
     margin: 0;
     font-size: 1.25rem;
-    color: var(--text-color, #f0f0f0);
+    color: #2c1810;
   }
 
   .btn-close {
@@ -139,7 +139,7 @@
     border: none;
     font-size: 2rem;
     line-height: 1;
-    color: var(--text-color, #f0f0f0);
+    color: #333;
     cursor: pointer;
     padding: 0;
     width: 2rem;
@@ -151,7 +151,7 @@
   }
 
   .btn-close:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.1);
   }
 
   .modal-body {
@@ -162,7 +162,7 @@
 
   .empty-message {
     text-align: center;
-    color: var(--text-muted, #999);
+    color: #666;
     margin: 2rem 0;
   }
 
@@ -178,15 +178,16 @@
     align-items: center;
     padding: 1rem;
     margin-bottom: 0.5rem;
-    background-color: var(--input-background, #1a1a1a);
-    border: 1px solid var(--border-color, #444);
+    background-color: #fff;
+    border: 1px solid #ddd;
     border-radius: 4px;
   }
 
   .attack-name {
     flex: 1;
     font-size: 1rem;
-    color: var(--text-color, #f0f0f0);
+    color: #2c1810;
+    font-weight: 500;
   }
 
   .reorder-buttons {
@@ -195,9 +196,9 @@
   }
 
   .btn-move {
-    background-color: var(--button-secondary-bg, #444);
-    border: 1px solid var(--border-color, #666);
-    color: var(--text-color, #f0f0f0);
+    background-color: #e0e0e0;
+    border: 1px solid #bbb;
+    color: #333;
     cursor: pointer;
     padding: 0.5rem;
     border-radius: 4px;
@@ -211,7 +212,7 @@
   }
 
   .btn-move:hover:not(:disabled) {
-    background-color: var(--button-secondary-hover, #555);
+    background-color: #d0d0d0;
   }
 
   .btn-move:disabled {
@@ -221,7 +222,7 @@
 
   .modal-footer {
     padding: 1.5rem;
-    border-top: 1px solid var(--border-color, #444);
+    border-top: 1px solid #ddd;
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
@@ -238,20 +239,20 @@
   }
 
   .btn-primary {
-    background-color: var(--primary-color, #0066cc);
+    background-color: #8b2e16;
     color: white;
   }
 
   .btn-primary:hover {
-    background-color: var(--primary-color-hover, #0052a3);
+    background-color: #6d2311;
   }
 
   .btn-secondary {
-    background-color: var(--button-secondary-bg, #444);
-    color: var(--text-color, #f0f0f0);
+    background-color: #666;
+    color: white;
   }
 
   .btn-secondary:hover {
-    background-color: var(--button-secondary-hover, #555);
+    background-color: #555;
   }
 </style>
