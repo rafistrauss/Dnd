@@ -206,9 +206,10 @@ export function getAlternateDamageForDamagedTarget(
 ): { baseDamage: string; alternateDamage: string } | null {
   const description = spell.description;
 
-  // Pattern for "If the target is missing any of its Hit Points, it instead takes XdY damage"
+  // Pattern for "take/takes XdY damage. If the target is missing any of its Hit Points, it instead takes XdY damage"
+  // Made more flexible to handle sentence breaks and variations
   const alternateDamagePattern =
-    /takes?\s+(\d+d\d+).*?missing.*?Hit\s+Points.*?instead\s+takes?\s+(\d+d\d+)/i;
+    /takes?\s+(\d+d\d+)\s+\w+\s+damage[^.]*\.\s*If\s+the\s+target\s+is\s+missing.*?instead\s+takes?\s+(\d+d\d+)/is;
   const match = description.match(alternateDamagePattern);
 
   if (match) {

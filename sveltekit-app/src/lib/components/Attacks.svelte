@@ -774,8 +774,8 @@
                         </label>
                       </div>
                     {/if}
-                    {#if getAlternateDamageForDamagedTarget(spell)}
-                      {@const alternateDamageInfo = getAlternateDamageForDamagedTarget(spell)}
+                    {@const alternateDamageInfo = getAlternateDamageForDamagedTarget(spell)}
+                    {#if alternateDamageInfo}
                       <div class="target-condition">
                         <label>
                           <input
@@ -784,12 +784,12 @@
                             class="use-enabled"
                           />
                           Target is missing HP
-                          {#if attack.targetIsDamaged && alternateDamageInfo}
+                          {#if attack.targetIsDamaged}
                             {@const scaledDamage = getScaledSpellDamage(attack, spell)}
                             <span class="scaled-damage"
                               >({alternateDamageInfo.alternateDamage}, total: {scaledDamage})</span
                             >
-                          {:else if alternateDamageInfo}
+                          {:else}
                             <span class="scaled-damage">({alternateDamageInfo.baseDamage})</span>
                           {/if}
                         </label>
