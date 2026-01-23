@@ -9,6 +9,7 @@
     toasts
   } from '$lib/stores';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
+  import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
@@ -31,6 +32,9 @@
 
   // Track target selection for targetable spells (default to 'self')
   let spellTargets: Record<string, 'self' | 'other'> = {};
+
+  // Track reorder modal state
+  let showReorderModal = false;
 
   // Collapse spell info by default for all attacks with spellRef
   $: {
@@ -87,6 +91,23 @@
       c.attacks = c.attacks.filter((a) => a.id !== id);
       return c;
     });
+  }
+
+  function openReorderModal() {
+    showReorderModal = true;
+  }
+
+  function closeReorderModal() {
+    showReorderModal = false;
+  }
+
+  function saveReorderedAttacks(reorderedAttacks: Attack[]) {
+    character.update((c) => {
+      c.attacks = reorderedAttacks;
+      return c;
+    });
+    showReorderModal = false;
+    toasts.add('Attack order updated successfully!', 'success');
   }
 
   function rollAttack(attack: Attack) {
@@ -597,7 +618,12 @@
   </div> -->
   {#if !$collapsedStates.attacks}
     {#if $isEditMode}
-      <button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
+      <div class="edit-buttons">
+        <button on:click={addAttack} class="btn btn-secondary">Add Attack</button>
+        {#if $character.attacks.length > 0}
+          <button on:click={openReorderModal} class="btn btn-secondary">Reorder</button>
+        {/if}
+      </div>
     {/if}
 
     <div class="attacks-list">
@@ -978,6 +1004,13 @@
   {/if}
 </section>
 
+<SpellReorderModal
+  show={showReorderModal}
+  attacks={$character.attacks}
+  onSave={saveReorderedAttacks}
+  onCancel={closeReorderModal}
+/>
+
 <style>
   .attacks {
     background-color: var(--card-bg);
@@ -988,6 +1021,12 @@
 
   .hidden {
     display: none;
+  }
+
+  .edit-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .attacks-list {
