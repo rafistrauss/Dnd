@@ -127,7 +127,9 @@
     <div
       class="tooltip-popup {alignRight ? 'right-align' : ''}"
       bind:this={popupEl}
-      style={!ready ? 'opacity:0;pointer-events:none;position:fixed;top:0;left:0;z-index:1000;' : fixedStyle + 'opacity:1;pointer-events:auto;'}
+      style={!ready
+        ? 'opacity:0;pointer-events:none;position:fixed;top:0;left:0;z-index:1000;'
+        : fixedStyle + 'opacity:1;pointer-events:auto;'}
     >
       <slot name="content">
         {@html tooltipContent}

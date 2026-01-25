@@ -49,11 +49,8 @@
 
   function applyCalculatedDamage() {
     character.update((c) => applyDamage(c, calculatedDamage));
-    
-    toasts.add(
-      `Applied ${calculatedDamage} damage to character (${damageType})`,
-      'info'
-    );
+
+    toasts.add(`Applied ${calculatedDamage} damage to character (${damageType})`, 'info');
 
     // Reset form
     damageAmount = 0;
@@ -160,9 +157,7 @@
             <button class="btn btn-primary apply-btn" on:click={applyCalculatedDamage}>
               Apply Damage
             </button>
-            <button class="btn btn-secondary cancel-btn" on:click={cancel}>
-              Cancel
-            </button>
+            <button class="btn btn-secondary cancel-btn" on:click={cancel}> Cancel </button>
           </div>
         </div>
       {/if}

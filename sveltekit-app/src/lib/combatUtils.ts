@@ -189,7 +189,11 @@ export function getACBreakdown(char: Character, abilities: Abilities): string {
   // Add spell effects and other active states that affect AC
   if (char.activeStates && char.activeStates.length > 0) {
     char.activeStates.forEach((state) => {
-      if (typeof state.acBonus === 'number' && state.acBonus !== 0 && (!state.target || state.target === 'self')) {
+      if (
+        typeof state.acBonus === 'number' &&
+        state.acBonus !== 0 &&
+        (!state.target || state.target === 'self')
+      ) {
         parts.push(`${state.name}: ${state.acBonus >= 0 ? '+' : ''}${state.acBonus}`);
       }
     });
@@ -277,7 +281,9 @@ export function calculateDamage(
         );
         if (isResistant) {
           const reducedAmount = Math.floor(finalDamage / 2);
-          adjustments.push(`Resistant to ${damageType} (${state.name}): ${finalDamage} → ${reducedAmount}`);
+          adjustments.push(
+            `Resistant to ${damageType} (${state.name}): ${finalDamage} → ${reducedAmount}`
+          );
           finalDamage = reducedAmount;
           break; // Resistance only applies once
         }

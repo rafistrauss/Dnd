@@ -55,7 +55,10 @@
       if (ability.currentUses !== undefined && ability.currentUses > 0) {
         ability.currentUses -= 1;
         if (ability.usesPerRest !== undefined) {
-          toasts.add(`Used ${abilityName} (${ability.currentUses}/${ability.usesPerRest} remaining)`, 'info');
+          toasts.add(
+            `Used ${abilityName} (${ability.currentUses}/${ability.usesPerRest} remaining)`,
+            'info'
+          );
         } else {
           toasts.add(`Used ${abilityName}`, 'info');
         }

@@ -134,7 +134,7 @@
           if (state.abilities) {
             state.abilities.forEach((ability) => {
               if (ability.restType === 'short' && ability.usesPerRest) {
-                const abilityRestored = (ability.usesPerRest - (ability.currentUses || 0)) > 0;
+                const abilityRestored = ability.usesPerRest - (ability.currentUses || 0) > 0;
                 ability.currentUses = ability.usesPerRest;
                 if (abilityRestored) {
                   restoredItems.push(`${state.name}: ${ability.name}`);
