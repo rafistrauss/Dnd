@@ -1557,9 +1557,11 @@ function findAvailableSpellSlot(level) {
 
 function updateSpellSaveDC() {
     const config = getClassConfig(character.class);
-    if (!config || !config.spellcaster) return;
+    if (!config || !config.spellcaster || !config.spellcastingAbility) return;
     
-    const abilityMod = calculateModifier(character.abilities[config.spellcastingAbility]);
+    const ability = config.spellcastingAbility;
+    const abilityScore = character.abilities[ability] || 10;
+    const abilityMod = calculateModifier(abilityScore);
     const profBonus = character.proficiencyBonus;
     const spellSaveDC = 8 + abilityMod + profBonus;
     
