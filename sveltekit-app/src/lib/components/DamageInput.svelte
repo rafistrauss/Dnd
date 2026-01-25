@@ -92,7 +92,7 @@
             bind:value={damageAmount}
             min="0"
             placeholder="0"
-            class="damage-input-field"
+            class="damage-input-field use-enabled"
           />
         </div>
 
@@ -104,7 +104,7 @@
             bind:value={damageType}
             list="damageTypes"
             placeholder="e.g., fire, cold"
-            class="damage-input-field"
+            class="damage-input-field use-enabled"
           />
           <datalist id="damageTypes">
             {#each commonDamageTypes as type}
@@ -118,7 +118,7 @@
         <span class="quick-types-label">Quick Select:</span>
         {#each commonDamageTypes.slice(0, 6) as type}
           <button
-            class="quick-type-btn"
+            class="quick-type-btn use-enabled"
             on:click={() => (damageType = type)}
             class:active={damageType === type}
           >
@@ -128,7 +128,10 @@
       </div>
 
       {#if !showCalculation}
-        <button class="btn btn-primary calculate-btn" on:click={calculateDamageWithAdjustments}>
+        <button
+          class="btn btn-primary calculate-btn use-enabled"
+          on:click={calculateDamageWithAdjustments}
+        >
           Calculate Damage
         </button>
       {:else}
@@ -154,10 +157,12 @@
             </div>
           </div>
           <div class="result-actions">
-            <button class="btn btn-primary apply-btn" on:click={applyCalculatedDamage}>
+            <button class="btn btn-primary apply-btn use-enabled" on:click={applyCalculatedDamage}>
               Apply Damage
             </button>
-            <button class="btn btn-secondary cancel-btn" on:click={cancel}> Cancel </button>
+            <button class="btn btn-secondary cancel-btn use-enabled" on:click={cancel}>
+              Cancel
+            </button>
           </div>
         </div>
       {/if}
