@@ -52,9 +52,13 @@
       if (abilityIndex === -1) return c;
 
       const ability = state.abilities[abilityIndex];
-      if (ability.currentUses && ability.currentUses > 0) {
+      if (ability.currentUses !== undefined && ability.currentUses > 0) {
         ability.currentUses -= 1;
-        toasts.add(`Used ${abilityName} (${ability.currentUses}/${ability.usesPerRest} remaining)`, 'info');
+        if (ability.usesPerRest !== undefined) {
+          toasts.add(`Used ${abilityName} (${ability.currentUses}/${ability.usesPerRest} remaining)`, 'info');
+        } else {
+          toasts.add(`Used ${abilityName}`, 'info');
+        }
       }
 
       return c;
@@ -1001,7 +1005,7 @@
                   <button
                     on:click={() => useConditionAbility(ability.conditionName, ability.name)}
                     class="btn btn-ability"
-                    disabled={!ability.currentUses || ability.currentUses === 0}
+                    disabled={ability.currentUses === undefined || ability.currentUses === 0}
                   >
                     Use Ability
                   </button>
