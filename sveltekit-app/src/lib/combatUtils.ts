@@ -272,7 +272,7 @@ export function calculateDamage(
     }
   }
 
-  // Check resistances
+  // Check resistances (D&D 5e: resistance halves damage, rounded down)
   if (char.activeStates) {
     for (const state of char.activeStates) {
       if (state.resistances && state.resistances.length > 0) {

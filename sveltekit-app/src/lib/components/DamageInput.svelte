@@ -31,8 +31,8 @@
   ];
 
   function calculateDamageWithAdjustments() {
-    if (damageAmount <= 0) {
-      toasts.add('Please enter a damage amount greater than 0', 'error');
+    if (damageAmount < 0) {
+      toasts.add('Damage amount cannot be negative', 'error');
       return;
     }
 
