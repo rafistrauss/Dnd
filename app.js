@@ -1556,16 +1556,29 @@ function findAvailableSpellSlot(level) {
 }
 
 function updateSpellSaveDC() {
-    const chaMod = calculateModifier(character.abilities.charisma);
-    const profBonus = character.proficiencyBonus;
-    const spellSaveDC = 8 + chaMod + profBonus;
+    const config = getClassConfig(character.class);
+    if (!config || !config.spellcaster) return;
     
-    document.getElementById('spellSaveDC').textContent = spellSaveDC;
-    document.getElementById('spellSaveDC2').textContent = spellSaveDC;
+    const abilityMod = calculateModifier(character.abilities[config.spellcastingAbility]);
+    const profBonus = character.proficiencyBonus;
+    const spellSaveDC = 8 + abilityMod + profBonus;
+    
+    const spellSaveDCElement = document.getElementById('spellSaveDC');
+    if (spellSaveDCElement) {
+        spellSaveDCElement.textContent = spellSaveDC;
+    }
+    
+    const spellSaveDC2Element = document.getElementById('spellSaveDC2');
+    if (spellSaveDC2Element) {
+        spellSaveDC2Element.textContent = spellSaveDC;
+    }
     
     // Update prepared spells count
-    const preparedCount = chaMod + 1;
-    document.getElementById('preparedSpellsCount').textContent = Math.max(1, preparedCount);
+    const preparedCount = abilityMod + 1;
+    const preparedSpellsElement = document.getElementById('preparedSpellsCount');
+    if (preparedSpellsElement) {
+        preparedSpellsElement.textContent = Math.max(1, preparedCount);
+    }
 }
 
 // Mode toggle functionality
