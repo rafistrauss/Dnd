@@ -287,6 +287,7 @@ interface CollapsedStates {
   attacks: boolean;
   classFeatures: boolean;
   notes: boolean;
+  damageInput: boolean;
 }
 
 function loadCollapsedStates(): CollapsedStates {
@@ -298,14 +299,26 @@ function loadCollapsedStates(): CollapsedStates {
       skills: false,
       attacks: false,
       classFeatures: false,
-      notes: false
+      notes: false,
+      damageInput: false
     };
   }
 
   try {
     const saved = localStorage.getItem('dndCollapsedStates');
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Ensure damageInput exists in loaded state
+      return {
+        characterInfo: parsed.characterInfo ?? false,
+        combatStats: parsed.combatStats ?? false,
+        abilityScores: parsed.abilityScores ?? false,
+        skills: parsed.skills ?? false,
+        attacks: parsed.attacks ?? false,
+        classFeatures: parsed.classFeatures ?? false,
+        notes: parsed.notes ?? false,
+        damageInput: parsed.damageInput ?? false
+      };
     }
   } catch (e) {
     console.error('Failed to load collapsed states:', e);
@@ -318,7 +331,8 @@ function loadCollapsedStates(): CollapsedStates {
     skills: false,
     attacks: false,
     classFeatures: false,
-    notes: false
+    notes: false,
+    damageInput: false
   };
 }
 

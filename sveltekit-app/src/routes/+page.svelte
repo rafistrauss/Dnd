@@ -20,6 +20,7 @@
   import GistModal from '$lib/components/GistModal.svelte';
   import WikidotImport from '$lib/components/WikidotImport.svelte';
   import AddConditionModal from '$lib/components/AddConditionModal.svelte';
+  import DamageInput from '$lib/components/DamageInput.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import type { Character, SpellState } from '$lib/types';
 
@@ -677,6 +678,7 @@
     <AbilityScores on:roll={(e) => openDiceRoller(e.detail)} />
     <Skills on:roll={(e) => openDiceRoller(e.detail)} />
     <CombatStats on:rollHitDice={handleHitDiceRoll} />
+    <DamageInput />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
     <ClassFeatures />
     <Notes />

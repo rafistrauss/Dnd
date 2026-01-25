@@ -238,3 +238,79 @@ export function getSpellSaveDCBreakdown(char: Character, abilities: Abilities): 
 
   return parts.join('\n');
 }
+
+/**
+ * Calculate damage after applying resistances and immunities
+ */
+export function calculateDamage(
+  damageAmount: number,
+  damageType: string,
+  char: Character
+): { finalDamage: number; adjustments: string[] } {
+  const adjustments: string[] = [];
+  let finalDamage = damageAmount;
+
+  // Normalize damage type for comparison (lowercase)
+  const normalizedType = damageType.toLowerCase().trim();
+
+  // Check immunities first
+  if (char.activeStates) {
+    for (const state of char.activeStates) {
+      if (state.immunities && state.immunities.length > 0) {
+        const isImmune = state.immunities.some(
+          (immunity) => immunity.toLowerCase().trim() === normalizedType
+        );
+        if (isImmune) {
+          adjustments.push(`Immune to ${damageType} (${state.name})`);
+          return { finalDamage: 0, adjustments };
+        }
+      }
+    }
+  }
+
+  // Check resistances
+  if (char.activeStates) {
+    for (const state of char.activeStates) {
+      if (state.resistances && state.resistances.length > 0) {
+        const isResistant = state.resistances.some(
+          (resistance) => resistance.toLowerCase().trim() === normalizedType
+        );
+        if (isResistant) {
+          const reducedAmount = Math.floor(finalDamage / 2);
+          adjustments.push(`Resistant to ${damageType} (${state.name}): ${finalDamage} → ${reducedAmount}`);
+          finalDamage = reducedAmount;
+          break; // Resistance only applies once
+        }
+      }
+    }
+  }
+
+  if (adjustments.length === 0) {
+    adjustments.push(`No adjustments for ${damageType}`);
+  }
+
+  return { finalDamage, adjustments };
+}
+
+/**
+ * Apply damage to character HP
+ */
+export function applyDamage(char: Character, damage: number): Character {
+  const updatedChar = { ...char };
+
+  // Apply to temp HP first
+  if (updatedChar.tempHP > 0) {
+    if (damage <= updatedChar.tempHP) {
+      updatedChar.tempHP -= damage;
+      return updatedChar;
+    } else {
+      damage -= updatedChar.tempHP;
+      updatedChar.tempHP = 0;
+    }
+  }
+
+  // Apply remaining damage to current HP
+  updatedChar.currentHP = Math.max(0, updatedChar.currentHP - damage);
+
+  return updatedChar;
+}
