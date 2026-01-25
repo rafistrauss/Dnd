@@ -19,8 +19,9 @@
   import DiceRoller from '$lib/components/DiceRoller.svelte';
   import GistModal from '$lib/components/GistModal.svelte';
   import WikidotImport from '$lib/components/WikidotImport.svelte';
+  import AddConditionModal from '$lib/components/AddConditionModal.svelte';
   import Toast from '$lib/components/Toast.svelte';
-  import type { Character } from '$lib/types';
+  import type { Character, SpellState } from '$lib/types';
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
     const result: { level: number; available: number; total: number }[] = [];
@@ -41,6 +42,7 @@
   let showDiceRoller = false;
   let showGistModal = false;
   let showWikidotImport = false;
+  let showAddConditionModal = false;
   let gistMode: 'save' | 'load' = 'save';
   let fileInput: HTMLInputElement | undefined = undefined;
   let diceNotation = '';
@@ -64,6 +66,22 @@
   }
   function toggleEffectTooltip(idx: number) {
     effectTooltipIdx = effectTooltipIdx === idx ? null : idx;
+  }
+
+  function handleAddCondition(condition: SpellState) {
+    character.update((c) => {
+      if (!c.activeStates) {
+        c.activeStates = [];
+      }
+      c.activeStates = [...c.activeStates, condition];
+      return c;
+    });
+    showAddConditionModal = false;
+    toasts.success(`Added condition: ${condition.name}`);
+  }
+
+  function handleCancelAddCondition() {
+    showAddConditionModal = false;
   }
 
   function takeShortRest() {
@@ -105,6 +123,23 @@
                 restoredItems.push(feature.name);
               }
             }
+          }
+        });
+      }
+
+      // Restore condition abilities that reset on short rest
+      if (c.activeStates) {
+        c.activeStates.forEach((state) => {
+          if (state.abilities) {
+            state.abilities.forEach((ability) => {
+              if (ability.restType === 'short' && ability.usesPerRest) {
+                const abilityRestored = (ability.usesPerRest - (ability.currentUses || 0)) > 0;
+                ability.currentUses = ability.usesPerRest;
+                if (abilityRestored) {
+                  restoredItems.push(`${state.name}: ${ability.name}`);
+                }
+              }
+            });
           }
         });
       }
@@ -193,6 +228,27 @@
 
         if (featuresRestored) {
           restoredItems.push('all class features');
+        }
+      }
+
+      // Restore all condition abilities (both short and long rest)
+      if (c.activeStates) {
+        let abilitiesRestored = false;
+        c.activeStates.forEach((state) => {
+          if (state.abilities) {
+            state.abilities.forEach((ability) => {
+              if (ability.usesPerRest) {
+                const wasUsed = (ability.currentUses || 0) < ability.usesPerRest;
+                ability.currentUses = ability.usesPerRest;
+                if (wasUsed) {
+                  abilitiesRestored = true;
+                }
+              }
+            });
+          }
+        });
+        if (abilitiesRestored) {
+          restoredItems.push('condition abilities');
         }
       }
 
@@ -418,7 +474,38 @@
                         state.damageBonus > 0
                           ? '+'
                           : ''}{state.damageBonus}</span
-                      >
+                      ><br />
+                    {/if}
+                    {#if state.acBonus}
+                      <span>AC Bonus: {state.acBonus > 0 ? '+' : ''}{state.acBonus}</span><br />
+                    {/if}
+                    {#if state.darkvision}
+                      <span>Darkvision: {state.darkvision} feet</span><br />
+                    {/if}
+                    {#if state.resistances && state.resistances.length > 0}
+                      <span>Resistances: {state.resistances.join(', ')}</span><br />
+                    {/if}
+                    {#if state.immunities && state.immunities.length > 0}
+                      <span>Immunities: {state.immunities.join(', ')}</span><br />
+                    {/if}
+                    {#if state.abilities && state.abilities.length > 0}
+                      <div class="abilities-section">
+                        <strong>Abilities:</strong><br />
+                        {#each state.abilities as ability}
+                          <div class="ability-detail">
+                            <strong>{ability.name}:</strong>
+                            {ability.description}
+                            {#if ability.usesPerRest}
+                              <br /><em
+                                >({ability.currentUses || 0}/{ability.usesPerRest} uses per {ability.restType}
+                                rest{#if ability.requiresReaction}, requires reaction{/if})</em
+                              >
+                            {:else if ability.requiresReaction}
+                              <br /><em>(requires reaction)</em>
+                            {/if}
+                          </div>
+                        {/each}
+                      </div>
                     {/if}
                   </span>
                 {/if}
@@ -469,11 +556,34 @@
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
               z-index: 10;
               min-width: 180px;
-              max-width: 260px;
+              max-width: 300px;
               white-space: normal;
               pointer-events: none;
               opacity: 1;
               transition: opacity 0.15s;
+            }
+
+            .abilities-section {
+              margin-top: 8px;
+              padding-top: 8px;
+              border-top: 1px solid #e5e7eb;
+            }
+
+            .ability-detail {
+              margin-top: 6px;
+              padding: 4px;
+              background: #f9fafb;
+              border-radius: 4px;
+              font-size: 0.9em;
+            }
+
+            .ability-detail strong {
+              color: #6366f1;
+            }
+
+            .ability-detail em {
+              font-size: 0.85em;
+              color: #6b7280;
             }
           </style>
         {/if}
@@ -503,6 +613,13 @@
               </div>
             {/if}
           </div>
+          <button
+            on:click={() => (showAddConditionModal = true)}
+            class="btn btn-secondary use-enabled"
+            title="Add custom condition with effects"
+          >
+            <span class="btn-icon">✨</span><span class="btn-text"> Add Condition</span>
+          </button>
           <div class="mode-toggle">
             <button on:click={toggleMode} class="btn btn-mode" class:use-mode={!$isEditMode}>
               <span class="btn-icon">{$isEditMode ? '📝' : '🎲'}</span><span class="btn-text">
@@ -585,6 +702,12 @@
 {#if showWikidotImport}
   <WikidotImport onClose={() => (showWikidotImport = false)} />
 {/if}
+
+<AddConditionModal
+  show={showAddConditionModal}
+  onSave={handleAddCondition}
+  onCancel={handleCancelAddCondition}
+/>
 
 <Toast />
 
