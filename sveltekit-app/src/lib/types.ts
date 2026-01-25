@@ -83,6 +83,15 @@ export interface HitDice {
   max: number;
 }
 
+export interface ConditionAbility {
+  name: string;
+  description: string;
+  usesPerRest?: number; // Number of uses per rest (optional)
+  restType?: 'short' | 'long'; // Type of rest needed to restore uses
+  currentUses?: number; // Current remaining uses
+  requiresReaction?: boolean; // Whether this ability requires a reaction
+}
+
 export interface SpellState {
   name: string;
   attackBonus: number | string;
@@ -91,6 +100,12 @@ export interface SpellState {
   acBonus?: number; // Optional AC bonus from spell effect
   target?: 'self' | 'other'; // Who the effect is targeting (undefined = self for backwards compatibility)
   hpBonus?: number; // HP increase (affects both current and max HP)
+  // New fields for arbitrary effects
+  darkvision?: number; // Darkvision range in feet (e.g., 60), or bonus to existing darkvision (if hasExistingDarkvision is true)
+  resistances?: string[]; // Damage resistances (e.g., ['cold', 'fire'])
+  immunities?: string[]; // Damage immunities
+  conditions?: string[]; // Conditions applied (e.g., ['blinded', 'restrained'])
+  abilities?: ConditionAbility[]; // Special abilities granted by this condition
 }
 
 export interface ClassFeatures {

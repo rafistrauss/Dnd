@@ -13,7 +13,7 @@
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
-  import type { Attack, Spell } from '$lib/types';
+  import type { Attack, Spell, ConditionAbility } from '$lib/types';
   import { loadSpells } from '$lib/dndData';
   import {
     getSavingThrowInfo,
@@ -24,6 +24,46 @@
     getAlternateDamageForDamagedTarget
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
+
+  // Computed: Get all abilities from active conditions
+  $: conditionAbilities = $character.activeStates
+    ? $character.activeStates
+        .filter((state) => state.abilities && state.abilities.length > 0)
+        .flatMap((state) =>
+          state.abilities!.map((ability) => ({
+            ...ability,
+            conditionName: state.name
+          }))
+        )
+    : [];
+
+  // Function to use a condition ability
+  function useConditionAbility(conditionName: string, abilityName: string) {
+    character.update((c) => {
+      if (!c.activeStates) return c;
+
+      const stateIndex = c.activeStates.findIndex((s) => s.name === conditionName);
+      if (stateIndex === -1) return c;
+
+      const state = c.activeStates[stateIndex];
+      if (!state.abilities) return c;
+
+      const abilityIndex = state.abilities.findIndex((a) => a.name === abilityName);
+      if (abilityIndex === -1) return c;
+
+      const ability = state.abilities[abilityIndex];
+      if (ability.currentUses !== undefined && ability.currentUses > 0) {
+        ability.currentUses -= 1;
+        if (ability.usesPerRest !== undefined) {
+          toasts.add(`Used ${abilityName} (${ability.currentUses}/${ability.usesPerRest} remaining)`, 'info');
+        } else {
+          toasts.add(`Used ${abilityName}`, 'info');
+        }
+      }
+
+      return c;
+    });
+  }
 
   const dispatch = createEventDispatcher();
 
@@ -934,6 +974,49 @@
       {/if}
     </div>
 
+    <!-- Condition Abilities Section -->
+    {#if conditionAbilities.length > 0}
+      <div class="condition-abilities-section">
+        <h3 class="abilities-header">Condition Abilities</h3>
+        <p class="section-description">
+          Special actions granted by active conditions (e.g., Flicker of Deceit)
+        </p>
+        <div class="abilities-list">
+          {#each conditionAbilities as ability}
+            <div class="ability-card">
+              <div class="ability-header">
+                <h4 class="ability-name">{ability.name}</h4>
+                <span class="ability-source">({ability.conditionName})</span>
+              </div>
+              <p class="ability-description">{ability.description}</p>
+              <div class="ability-footer">
+                {#if ability.usesPerRest}
+                  <span class="ability-uses">
+                    {ability.currentUses ?? ability.usesPerRest}/{ability.usesPerRest} uses
+                    {#if ability.restType}
+                      per {ability.restType} rest
+                    {/if}
+                  </span>
+                {/if}
+                {#if ability.requiresReaction}
+                  <span class="ability-reaction">⚡ Reaction</span>
+                {/if}
+                {#if !$isEditMode && ability.usesPerRest}
+                  <button
+                    on:click={() => useConditionAbility(ability.conditionName, ability.name)}
+                    class="btn btn-ability"
+                    disabled={ability.currentUses === undefined || ability.currentUses === 0}
+                  >
+                    Use Ability
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
     <!-- Active Spell States Section -->
     <div class="active-states-section">
       <h3>Active Spell Effects</h3>
@@ -1423,5 +1506,110 @@
     color: var(--primary-color);
     margin: 0;
     font-size: 1.2em;
+  }
+
+  /* Condition Abilities Styles */
+  .condition-abilities-section {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f0f8ff;
+    border: 2px solid #4a90e2;
+    border-radius: 8px;
+  }
+
+  .abilities-header {
+    margin: 0 0 10px 0;
+    color: #2c5aa0;
+    font-size: 1.3rem;
+  }
+
+  .abilities-list {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .ability-card {
+    background-color: #e6f2ff;
+    border: 2px solid #6ba3d8;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(74, 144, 226, 0.1);
+  }
+
+  .ability-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .ability-name {
+    color: #2c5aa0;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+
+  .ability-source {
+    color: #5a7ba8;
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  .ability-description {
+    color: #333;
+    margin: 8px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .ability-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .ability-uses {
+    color: #2c5aa0;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 4px 8px;
+    background-color: #d4e8fa;
+    border-radius: 4px;
+  }
+
+  .ability-reaction {
+    color: #e67e22;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 4px 8px;
+    background-color: #fef3e8;
+    border-radius: 4px;
+  }
+
+  .btn-ability {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color 0.2s;
+  }
+
+  .btn-ability:hover:not(:disabled) {
+    background-color: #357abd;
+  }
+
+  .btn-ability:disabled {
+    background-color: #b0c4de;
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 </style>
