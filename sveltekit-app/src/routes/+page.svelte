@@ -77,7 +77,7 @@
       return c;
     });
     showAddConditionModal = false;
-    toasts.success(`Added condition: ${condition.name}`);
+    toasts.add(`Added condition: ${condition.name}`, 'success');
   }
 
   function handleCancelAddCondition() {
