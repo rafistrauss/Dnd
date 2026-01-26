@@ -290,12 +290,12 @@
       if (spell) {
         // Check if this is a healing spell
         const isHealing = isHealingSpell(spell);
-        
+
         if (isHealing) {
           // For healing spells, use spellcasting modifier
           const spellcastingMod = getSpellcastingModifier($character, $character.abilities);
           // Extract dice notation and rebuild with correct modifier
-          const diceMatch = damageToRoll.match(/^(\d+d\d+)/);  
+          const diceMatch = damageToRoll.match(/^(\d+d\d+)/);
           if (diceMatch) {
             damageToRoll = diceMatch[1];
             if (spellcastingMod > 0) {
@@ -305,7 +305,7 @@
           }
           damageType = 'Healing';
         }
-        
+
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
           const hasSlot = checkAndConsumeSpellSlot(castLevel);
@@ -318,7 +318,8 @@
           if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
             damageToRoll = '0';
           } else {
-            applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
+            applyHalfDamage =
+              (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
             if (!isHealing) {
               damageToRoll = getScaledSpellDamage(attack, spell);
             }
@@ -906,16 +907,19 @@
             {/if}
           {/if}
           {#if !attack.spellRef}
-            <div class="attack-notes">
-              <label for="attack-notes-{attack.id}">Notes</label>
-              <textarea
-                id="attack-notes-{attack.id}"
-                bind:value={attack.notes}
-                placeholder="e.g., DC 15 Dex save, Range 120 ft, Concentration"
-                class="notes-input"
-                rows="2"
-              ></textarea>
-            </div>
+            {#if attack.notes && attack.notes.trim() !== ''}
+              <!-- content here -->
+              <div class="attack-notes">
+                <label for="attack-notes-{attack.id}">Notes</label>
+                <textarea
+                  id="attack-notes-{attack.id}"
+                  bind:value={attack.notes}
+                  placeholder="e.g., DC 15 Dex save, Range 120 ft, Concentration"
+                  class="notes-input"
+                  rows="2"
+                ></textarea>
+              </div>
+            {/if}
           {/if}
           <div class="attack-actions">
             {#if attack.spellRef && spellsLoaded}
@@ -1195,7 +1199,7 @@
 
   .attack-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
     gap: 10px;
     margin-bottom: 10px;
   }

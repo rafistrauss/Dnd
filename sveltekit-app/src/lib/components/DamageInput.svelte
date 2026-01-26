@@ -116,7 +116,7 @@
 
       <div class="quick-types">
         <span class="quick-types-label">Quick Select:</span>
-        {#each commonDamageTypes.slice(0, 6) as type}
+        {#each commonDamageTypes as type}
           <button
             class="quick-type-btn use-enabled"
             on:click={() => (damageType = type)}
@@ -364,11 +364,6 @@
   @media (max-width: 600px) {
     .input-group {
       grid-template-columns: 1fr;
-    }
-
-    .quick-types {
-      flex-direction: column;
-      align-items: flex-start;
     }
 
     .result-actions {
