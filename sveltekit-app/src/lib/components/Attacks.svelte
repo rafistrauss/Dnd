@@ -788,7 +788,7 @@
                         savingThrow.ability.slice(1)} save
                       {#if $character.class}
                         <span class="scaled-damage" style="margin-left: 8px;">
-                          (Spell Save DC: {getSpellSaveDC($character, $abilityModifiers)})
+                          (Spell Save DC: {getSpellSaveDC($character, $character.abilities)})
                         </span>
                       {/if}
                       {#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
