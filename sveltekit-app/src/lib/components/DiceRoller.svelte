@@ -507,7 +507,23 @@
 >
   <div class="modal-content" on:click|stopPropagation on:keydown role="dialog" tabindex="0">
     <div class="modal-header">
-      <h2>Dice Roller</h2>
+      <h2>
+        {#if attackName}
+          {attackName}
+          {#if rollType === 'attack'}
+            - Attack Roll{/if}
+          {#if rollType === 'damage'}
+            - Damage Roll{/if}
+          {#if rollType === 'healing'}
+            - Healing Roll{/if}
+          {#if rollType === 'check'}
+            - Ability Check{/if}
+          {#if rollType === 'save'}
+            - Saving Throw{/if}
+        {:else}
+          Dice Roller
+        {/if}
+      </h2>
       <div class="header-buttons">
         <button class="color-btn" on:click={toggleColorPicker} title="Customize dice colors">
           🎨
