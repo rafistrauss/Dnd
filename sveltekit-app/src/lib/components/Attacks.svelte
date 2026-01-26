@@ -224,7 +224,7 @@
 
     // For spell attacks, use proficiency + spellcasting modifier
     if (isSpellAttack) {
-      const spellcastingMod = getSpellcastingModifier($character, $abilityModifiers);
+      const spellcastingMod = getSpellcastingModifier($character, $character.abilities);
       const proficiency = $character.proficiencyBonus || 0;
 
       bonusBreakdown.push({ value: proficiency, source: 'proficiency' });
@@ -282,24 +282,51 @@
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     const bonusBreakdown: Array<{ value: number; source: string }> = [];
+    let damageType = attack.damageType || '';
 
     // If this is a spell, handle slot consumption and scaling
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
-      if (spell && spell.level > 0) {
-        const castLevel = attack.castAtLevel || spell.level;
-        const hasSlot = checkAndConsumeSpellSlot(castLevel);
-        if (!hasSlot) {
-          toasts.add(`No level ${castLevel} spell slots available!`, 'error');
-          return;
+      if (spell) {
+        // Check if this is a healing spell
+        const isHealing = isHealingSpell(spell);
+        
+        if (isHealing) {
+          // For healing spells, use spellcasting modifier
+          const spellcastingMod = getSpellcastingModifier($character, $character.abilities);
+          // Extract dice notation and rebuild with correct modifier
+          const diceMatch = damageToRoll.match(/^(\d+d\d+)/);  
+          if (diceMatch) {
+            damageToRoll = diceMatch[1];
+            if (spellcastingMod > 0) {
+              damageToRoll += `+${spellcastingMod}`;
+              bonusBreakdown.push({ value: spellcastingMod, source: 'spellcasting' });
+            }
+          }
+          damageType = 'Healing';
         }
-        // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
-        const savingThrow = getSavingThrowInfo(spell);
-        if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
-          damageToRoll = '0';
-        } else {
-          applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
-          damageToRoll = getScaledSpellDamage(attack, spell);
+        
+        if (spell.level > 0) {
+          const castLevel = attack.castAtLevel || spell.level;
+          const hasSlot = checkAndConsumeSpellSlot(castLevel);
+          if (!hasSlot) {
+            toasts.add(`No level ${castLevel} spell slots available!`, 'error');
+            return;
+          }
+          // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
+          const savingThrow = getSavingThrowInfo(spell);
+          if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
+            damageToRoll = '0';
+          } else {
+            applyHalfDamage = (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
+            if (!isHealing) {
+              damageToRoll = getScaledSpellDamage(attack, spell);
+            }
+          }
+          // Set damage type from spell if not already set
+          if (spell.damageType && !isHealing) {
+            damageType = spell.damageType;
+          }
         }
       }
     } else {
@@ -346,7 +373,8 @@
       notation: damageToRoll,
       attackName: attack.name,
       applyHalfDamage,
-      bonusBreakdown
+      bonusBreakdown,
+      damageType
     });
   }
 
@@ -414,7 +442,7 @@
 
     // Check if spell adds spellcasting modifier to damage
     if (addsSpellcastingModifierToDamage(spell)) {
-      additionalModifier += getSpellcastingModifier($character, $abilityModifiers);
+      additionalModifier += getSpellcastingModifier($character, $character.abilities);
     }
 
     // Apply active state bonuses to damage (only from self-targeted states)

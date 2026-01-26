@@ -10,6 +10,7 @@
   export let notation = '';
   export let visible = false;
   export let damageNotation = ''; // Optional damage notation for attacks
+  export let damageType = ''; // Optional damage type (e.g., 'Radiant', 'Healing')
   export let attackName = ''; // Optional attack name for context
   export let applyHalfDamage = false; // If true, halve the result after rolling
   export let bonusBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown of bonuses by source
@@ -665,7 +666,15 @@
     <div class="roll-result" class:has-result={rollResult}>
       {#if rollResult}
         <div class="result-header">
-          <h3>{attackName ? `${attackName} - Result` : 'Result'}</h3>
+          {#if rollType === 'damage' && damageType === 'Healing'}
+            <h3>{attackName ? `${attackName} - Healing` : 'Healing'}</h3>
+          {:else if rollType === 'damage' && damageType}
+            <h3>{attackName ? `${attackName} - ${damageType} Damage` : `${damageType} Damage`}</h3>
+          {:else if rollType === 'damage'}
+            <h3>{attackName ? `${attackName} - Damage` : 'Damage'}</h3>
+          {:else}
+            <h3>{attackName ? `${attackName} - Result` : 'Result'}</h3>
+          {/if}
           {#if isCriticalSuccess}
             <span class="crit-badge">CRITICAL HIT!</span>
           {/if}
