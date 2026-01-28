@@ -10,9 +10,9 @@
   } from '$lib/stores';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
   import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
+  import EditableDisplay from '$lib/components/EditableDisplay.svelte';
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
-  let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   import type { Attack, Spell, ConditionAbility } from '$lib/types';
   import { loadSpells } from '$lib/dndData';
   import {
@@ -24,7 +24,8 @@
     getAlternateDamageForDamagedTarget
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
-
+  
+  let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   // Computed: Get all abilities from active conditions
   $: conditionAbilities = $character.activeStates
     ? $character.activeStates
@@ -720,12 +721,13 @@
             {#if attack.bonus !== 0 && attack.bonus !== undefined}
               <div class="attack-field">
                 <label for="attack-bonus-{attack.id}">Bonus</label>
-                <input
-                  id="attack-bonus-{attack.id}"
-                  type="number"
+                <EditableDisplay 
                   bind:value={attack.bonus}
+                  type="number"
                   class="attack-bonus"
-                />
+                >
+                </EditableDisplay>
+                
               </div>
             {/if}
             {#if attack.damage && attack.damage.trim() !== ''}
