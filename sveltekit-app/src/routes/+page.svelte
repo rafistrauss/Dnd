@@ -6,9 +6,11 @@
     exportCharacter,
     importCharacter,
     searchFilter,
-    toasts
+    toasts,
+    resetRacialTraitUses
   } from '$lib/stores';
   import { getClassConfig, getAvailableFeatures } from '$lib/classConfig';
+  import { getRacialSpellsForLevel } from '$lib/raceConfig';
   import CharacterInfo from '$lib/components/CharacterInfo.svelte';
   import AbilityScores from '$lib/components/AbilityScores.svelte';
   import CombatStats from '$lib/components/CombatStats.svelte';
@@ -22,6 +24,7 @@
   import AddConditionModal from '$lib/components/AddConditionModal.svelte';
   import DamageInput from '$lib/components/DamageInput.svelte';
   import Toast from '$lib/components/Toast.svelte';
+  import ConsoleViewer from '$lib/components/ConsoleViewer.svelte';
   import type { Character, SpellState } from '$lib/types';
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
@@ -148,6 +151,18 @@
       return c;
     });
 
+    // Restore racial trait uses that reset on short rest (using helper function)
+    resetRacialTraitUses('short');
+    
+    // Check if any racial traits were restored for the toast message
+    const racialSpells = getRacialSpellsForLevel($character.race, $character.level);
+    const racialTraitsRestored = racialSpells.some(
+      (spell) => spell.restType === 'short' && spell.usesPerRest
+    );
+    if (racialTraitsRestored) {
+      restoredItems.push('racial traits');
+    }
+
     showRestMenu = false;
 
     // Show toast with what was restored
@@ -255,6 +270,16 @@
 
       return c;
     });
+
+    // Restore all racial trait uses (using helper function)
+    resetRacialTraitUses('long');
+    
+    // Check if any racial traits were restored for the toast message
+    const racialSpells = getRacialSpellsForLevel($character.race, $character.level);
+    const racialTraitsRestored = racialSpells.some((spell) => spell.usesPerRest);
+    if (racialTraitsRestored) {
+      restoredItems.push('racial traits');
+    }
 
     showRestMenu = false;
 
@@ -712,6 +737,8 @@
 />
 
 <Toast />
+
+<ConsoleViewer />
 
 <style>
   :global(body) {

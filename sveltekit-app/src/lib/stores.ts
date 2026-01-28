@@ -1,6 +1,7 @@
 import { writable, derived } from 'svelte/store';
-import type { Character } from './types';
+import type { Character, RacialTraitUses } from './types';
 import { browser } from '$app/environment';
+import { getRacialSpellsForLevel } from './raceConfig';
 
 // Toast notification store
 export interface Toast {
@@ -102,7 +103,8 @@ const initialCharacter: Character = {
     spellSlots: [],
     spellSlotsByLevel: {},
     preparedSpells: ''
-  }
+  },
+  racialTraits: { uses: {} }
 };
 
 // Load from localStorage if available
@@ -145,6 +147,11 @@ function loadFromStorage(): Character {
         if (loaded.classFeatures.preparedSpells === undefined) {
           loaded.classFeatures.preparedSpells = '';
         }
+      }
+
+      // Migrate: ensure racialTraits structure exists
+      if (!loaded.racialTraits) {
+        loaded.racialTraits = { uses: {} };
       }
 
       return loaded;
@@ -261,6 +268,11 @@ export function importCharacter(file: File): Promise<Character> {
           }
         }
 
+        // Migrate: ensure racialTraits structure exists
+        if (!merged.racialTraits) {
+          merged.racialTraits = { uses: {} };
+        }
+
         resolve(merged);
       } catch {
         reject(new Error('Invalid character file'));
@@ -273,6 +285,63 @@ export function importCharacter(file: File): Promise<Character> {
 
 export function resetCharacter(): void {
   character.set(initialCharacter);
+}
+
+export function initializeRacialTraits() {
+  character.update((char) => {
+    if (!char.racialTraits) {
+      char.racialTraits = { uses: {} };
+    }
+    
+    const racialSpells = getRacialSpellsForLevel(char.race, char.level);
+    
+    // Initialize uses for spells that have limited uses
+    racialSpells.forEach((spell) => {
+      if (spell.usesPerRest !== undefined && spell.restType) {
+        const key = spell.name;
+        if (!char.racialTraits!.uses[key]) {
+          char.racialTraits!.uses[key] = {
+            currentUses: spell.usesPerRest,
+            maxUses: spell.usesPerRest,
+            restType: spell.restType
+          };
+        } else {
+          // Update max uses if it changed
+          char.racialTraits!.uses[key].maxUses = spell.usesPerRest;
+        }
+      }
+    });
+    
+    return char;
+  });
+}
+
+export function resetRacialTraitUses(restType: 'short' | 'long') {
+  character.update((char) => {
+    if (!char.racialTraits) return char;
+    
+    Object.keys(char.racialTraits.uses).forEach((key) => {
+      const traitUse = char.racialTraits!.uses[key];
+      if (traitUse.restType === restType || (restType === 'long' && traitUse.restType === 'short')) {
+        traitUse.currentUses = traitUse.maxUses;
+      }
+    });
+    
+    return char;
+  });
+}
+
+export function useRacialTrait(spellName: string) {
+  character.update((char) => {
+    if (!char.racialTraits || !char.racialTraits.uses[spellName]) return char;
+    
+    const traitUse = char.racialTraits.uses[spellName];
+    if (traitUse.currentUses > 0) {
+      traitUse.currentUses -= 1;
+    }
+    
+    return char;
+  });
 }
 
 // Global search filter
