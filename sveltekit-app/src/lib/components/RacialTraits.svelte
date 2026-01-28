@@ -8,9 +8,14 @@
   import { getRaceConfig, getRacialSpellsForLevel } from '$lib/raceConfig';
   import type { RacialSpell, RacialTrait } from '$lib/raceConfig';
 
-  // Initialize racial traits when component mounts or race/level changes
-  $: if ($character.race && $character.level) {
+  // Initialize racial traits only when race or level changes
+  let prevRace: string | undefined;
+  let prevLevel: number | undefined;
+  $: if ($character.race && $character.level &&
+    ($character.race !== prevRace || $character.level !== prevLevel)) {
     initializeRacialTraits();
+    prevRace = $character.race;
+    prevLevel = $character.level;
   }
 
   $: raceConfig = $character.race ? getRaceConfig($character.race) : null;
@@ -78,7 +83,7 @@
                       </span>
                       {#if !$isEditMode}
                         <button
-                          class="btn btn-sm btn-primary"
+                          class="btn btn-sm btn-primary use-enabled"
                           disabled={remaining === 0}
                           aria-label="Use {spell.name}"
                           on:click={() => handleUseRacialSpell(spell.name)}
