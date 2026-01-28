@@ -108,11 +108,22 @@ export interface SpellState {
   abilities?: ConditionAbility[]; // Special abilities granted by this condition
 }
 
+export interface RacialTraitUses {
+  spellName: string;
+  currentUses: number;
+  maxUses: number;
+  restType: 'short' | 'long';
+}
+
 export interface ClassFeatures {
   features: Record<string, boolean[] | number>;
   spellSlots: boolean[]; // Legacy - 1st level only
   spellSlotsByLevel?: Record<number, boolean[]>; // Slots by level 1-9
   preparedSpells: string;
+}
+
+export interface RacialTraits {
+  uses: Record<string, RacialTraitUses>; // Track uses of racial spells
 }
 
 export interface Character {
@@ -141,6 +152,7 @@ export interface Character {
   equipment: string;
   notes: string;
   classFeatures: ClassFeatures;
+  racialTraits?: RacialTraits; // Optional for backwards compatibility
   activeStates?: SpellState[];
 }
 

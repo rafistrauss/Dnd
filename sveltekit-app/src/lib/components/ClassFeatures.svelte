@@ -1,5 +1,6 @@
 <script lang="ts">
   import SlotCheckbox from './SlotCheckbox.svelte';
+  import RacialTraits from './RacialTraits.svelte';
   import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
   import { afterUpdate } from 'svelte';
   import {
@@ -399,6 +400,7 @@
           </div>
         {/each}
       </div>
+      <RacialTraits />
     {/if}
   {/if}
 </section>
