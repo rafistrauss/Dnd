@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     character,
+    isEditMode,
     initializeRacialTraits,
     useRacialTrait
   } from '$lib/stores';
@@ -75,14 +76,16 @@
                       <span class="uses-count" class:depleted={remaining === 0}>
                         {remaining}/{max} uses
                       </span>
-                      <button
-                        class="btn btn-sm btn-primary"
-                        disabled={remaining === 0}
-                        aria-label="Use {spell.name}"
-                        on:click={() => handleUseRacialSpell(spell.name)}
-                      >
-                        Use
-                      </button>
+                      {#if !$isEditMode}
+                        <button
+                          class="btn btn-sm btn-primary"
+                          disabled={remaining === 0}
+                          aria-label="Use {spell.name}"
+                          on:click={() => handleUseRacialSpell(spell.name)}
+                        >
+                          Use
+                        </button>
+                      {/if}
                     </div>
                   {:else}
                     <div class="spell-uses">
