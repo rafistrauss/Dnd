@@ -221,6 +221,7 @@
     onToggle={toggleCollapse}
   />
   {#if !$collapsedStates.classFeatures}
+    <RacialTraits />
     {#if !$character.class}
       <p class="no-features">Select a class to see available features</p>
     {:else if features.length === 0}
@@ -400,7 +401,6 @@
           </div>
         {/each}
       </div>
-      <RacialTraits />
     {/if}
   {/if}
 </section>
