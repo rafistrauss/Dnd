@@ -103,7 +103,8 @@ const initialCharacter: Character = {
     spellSlots: [],
     spellSlotsByLevel: {},
     preparedSpells: ''
-  }
+  },
+  racialTraits: { uses: {} }
 };
 
 // Load from localStorage if available
@@ -300,7 +301,6 @@ export function initializeRacialTraits() {
         const key = spell.name;
         if (!char.racialTraits!.uses[key]) {
           char.racialTraits!.uses[key] = {
-            spellName: spell.name,
             currentUses: spell.usesPerRest,
             maxUses: spell.usesPerRest,
             restType: spell.restType

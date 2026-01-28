@@ -109,7 +109,6 @@ export interface SpellState {
 }
 
 export interface RacialTraitUses {
-  spellName: string;
   currentUses: number;
   maxUses: number;
   restType: 'short' | 'long';

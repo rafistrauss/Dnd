@@ -1,13 +1,10 @@
 <script lang="ts">
   import {
     character,
-    abilityModifiers,
-    searchFilter,
     initializeRacialTraits,
     useRacialTrait
   } from '$lib/stores';
   import { getRaceConfig, getRacialSpellsForLevel } from '$lib/raceConfig';
-  import { onMount } from 'svelte';
   import type { RacialSpell, RacialTrait } from '$lib/raceConfig';
 
   // Initialize racial traits when component mounts or race/level changes
@@ -81,6 +78,7 @@
                       <button
                         class="btn btn-sm btn-primary"
                         disabled={remaining === 0}
+                        aria-label="Use {spell.name}"
                         on:click={() => handleUseRacialSpell(spell.name)}
                       >
                         Use

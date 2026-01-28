@@ -147,31 +147,20 @@
         });
       }
 
-      // Restore racial trait uses that reset on short rest
-      if (c.racialTraits && c.race) {
-        const racialSpells = getRacialSpellsForLevel(c.race, c.level);
-        let racialTraitsRestored = false;
-        
-        racialSpells.forEach((spell) => {
-          if (spell.restType === 'short' && spell.usesPerRest) {
-            const key = spell.name;
-            if (c.racialTraits!.uses[key]) {
-              const wasUsed = c.racialTraits!.uses[key].currentUses < c.racialTraits!.uses[key].maxUses;
-              c.racialTraits!.uses[key].currentUses = c.racialTraits!.uses[key].maxUses;
-              if (wasUsed) {
-                racialTraitsRestored = true;
-              }
-            }
-          }
-        });
-        
-        if (racialTraitsRestored) {
-          restoredItems.push('racial traits');
-        }
-      }
-
       return c;
     });
+
+    // Restore racial trait uses that reset on short rest (using helper function)
+    resetRacialTraitUses('short');
+    
+    // Check if any racial traits were restored for the toast message
+    const racialSpells = getRacialSpellsForLevel($character.race, $character.level);
+    const racialTraitsRestored = racialSpells.some(
+      (spell) => spell.restType === 'short' && spell.usesPerRest
+    );
+    if (racialTraitsRestored) {
+      restoredItems.push('racial traits');
+    }
 
     showRestMenu = false;
 
@@ -278,31 +267,18 @@
         }
       }
 
-      // Restore all racial trait uses (both short and long rest)
-      if (c.racialTraits && c.race) {
-        const racialSpells = getRacialSpellsForLevel(c.race, c.level);
-        let racialTraitsRestored = false;
-        
-        racialSpells.forEach((spell) => {
-          if (spell.usesPerRest) {
-            const key = spell.name;
-            if (c.racialTraits!.uses[key]) {
-              const wasUsed = c.racialTraits!.uses[key].currentUses < c.racialTraits!.uses[key].maxUses;
-              c.racialTraits!.uses[key].currentUses = c.racialTraits!.uses[key].maxUses;
-              if (wasUsed) {
-                racialTraitsRestored = true;
-              }
-            }
-          }
-        });
-        
-        if (racialTraitsRestored) {
-          restoredItems.push('racial traits');
-        }
-      }
-
       return c;
     });
+
+    // Restore all racial trait uses (using helper function)
+    resetRacialTraitUses('long');
+    
+    // Check if any racial traits were restored for the toast message
+    const racialSpells = getRacialSpellsForLevel($character.race, $character.level);
+    const racialTraitsRestored = racialSpells.some((spell) => spell.usesPerRest);
+    if (racialTraitsRestored) {
+      restoredItems.push('racial traits');
+    }
 
     showRestMenu = false;
 
