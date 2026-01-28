@@ -24,6 +24,7 @@
   import AddConditionModal from '$lib/components/AddConditionModal.svelte';
   import DamageInput from '$lib/components/DamageInput.svelte';
   import Toast from '$lib/components/Toast.svelte';
+  import ConsoleViewer from '$lib/components/ConsoleViewer.svelte';
   import type { Character, SpellState } from '$lib/types';
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
@@ -736,6 +737,8 @@
 />
 
 <Toast />
+
+<ConsoleViewer />
 
 <style>
   :global(body) {
