@@ -9,12 +9,14 @@
     toasts
   } from '$lib/stores';
   import { getClassConfig, getAvailableFeatures } from '$lib/classConfig';
+  import { resetRacialTraitUses, getAvailableRacialTraits, initializeRacialTraitUses } from '$lib/raceData';
   import CharacterInfo from '$lib/components/CharacterInfo.svelte';
   import AbilityScores from '$lib/components/AbilityScores.svelte';
   import CombatStats from '$lib/components/CombatStats.svelte';
   import Skills from '$lib/components/Skills.svelte';
   import Attacks from '$lib/components/Attacks.svelte';
   import ClassFeatures from '$lib/components/ClassFeatures.svelte';
+  import RacialTraits from '$lib/components/RacialTraits.svelte';
   import Notes from '$lib/components/Notes.svelte';
   import DiceRoller from '$lib/components/DiceRoller.svelte';
   import GistModal from '$lib/components/GistModal.svelte';
@@ -23,6 +25,68 @@
   import DamageInput from '$lib/components/DamageInput.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import type { Character, SpellState } from '$lib/types';
+
+  // Track previous race and level to detect changes
+  let previousRace = '';
+  let previousLevel = 0;
+
+  // Update racial traits when race or level changes
+  $: if ($character.race !== previousRace || $character.level !== previousLevel) {
+    const shouldUpdate = previousRace !== '' || previousLevel !== 0; // Skip first initialization
+    previousRace = $character.race;
+    previousLevel = $character.level;
+    
+    if ($character.race && $character.level) {
+      const availableTraits = getAvailableRacialTraits($character.race, $character.level);
+      const currentTraitNames = ($character.racialTraits || []).map(t => t.name).sort().join(',');
+      const availableTraitNames = availableTraits.map(t => t.name).sort().join(',');
+      const currentSpellCount = ($character.racialTraits || []).reduce((sum, t) => sum + t.spells.length, 0);
+      const availableSpellCount = availableTraits.reduce((sum, t) => sum + t.spells.length, 0);
+      
+      // Only update if something actually changed or if traits are uninitialized
+      if (!$character.racialTraits || currentTraitNames !== availableTraitNames || currentSpellCount !== availableSpellCount) {
+        character.update((c) => {
+          if (availableTraits.length > 0) {
+            // Preserve current uses if trait already exists, otherwise initialize
+            const updatedTraits = availableTraits.map(newTrait => {
+              const existingTrait = (c.racialTraits || []).find(t => t.name === newTrait.name);
+              if (existingTrait) {
+                // Preserve trait-level uses and merge spells
+                return {
+                  ...newTrait,
+                  currentUses: existingTrait.currentUses ?? newTrait.usesPerRest,
+                  spells: newTrait.spells.map(newSpell => {
+                    const existingSpell = existingTrait.spells.find(s => s.spellName === newSpell.spellName);
+                    if (existingSpell && existingSpell.currentUses !== undefined) {
+                      return { ...newSpell, currentUses: existingSpell.currentUses };
+                    }
+                    // Initialize spell uses
+                    return { 
+                      ...newSpell, 
+                      currentUses: newSpell.usesPerRest === 'at-will' ? undefined : (newSpell.usesPerRest || undefined)
+                    };
+                  })
+                };
+              }
+              // Initialize new trait
+              return {
+                ...newTrait,
+                currentUses: newTrait.usesPerRest,
+                spells: newTrait.spells.map(spell => ({
+                  ...spell,
+                  currentUses: spell.usesPerRest === 'at-will' ? undefined : (spell.usesPerRest || undefined)
+                }))
+              };
+            });
+            c.racialTraits = initializeRacialTraitUses(updatedTraits);
+          } else {
+            c.racialTraits = [];
+          }
+          return c;
+        });
+      }
+    }
+  }
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
     const result: { level: number; available: number; total: number }[] = [];
@@ -145,6 +209,16 @@
         });
       }
 
+      // Restore racial trait uses that reset on short rest
+      if (c.racialTraits && c.racialTraits.length > 0) {
+        const beforeReset = JSON.stringify(c.racialTraits);
+        c.racialTraits = resetRacialTraitUses(c.racialTraits, 'short');
+        const afterReset = JSON.stringify(c.racialTraits);
+        if (beforeReset !== afterReset) {
+          restoredItems.push('racial trait uses');
+        }
+      }
+
       return c;
     });
 
@@ -250,6 +324,18 @@
         });
         if (abilitiesRestored) {
           restoredItems.push('condition abilities');
+        }
+      }
+
+      // Restore all racial trait uses (both short and long rest)
+      if (c.racialTraits && c.racialTraits.length > 0) {
+        const beforeReset = JSON.stringify(c.racialTraits);
+        console.log('Before reset racial traits:', c.racialTraits);
+        c.racialTraits = resetRacialTraitUses(c.racialTraits, 'long');
+        console.log('After reset racial traits:', c.racialTraits);
+        const afterReset = JSON.stringify(c.racialTraits);
+        if (beforeReset !== afterReset) {
+          restoredItems.push('racial trait uses');
         }
       }
 
@@ -365,6 +451,18 @@
 
   // Apply use-mode class to body when mode changes
   onMount(() => {
+    // Initialize racial traits if character has a race
+    if ($character.race && $character.level && (!$character.racialTraits || $character.racialTraits.length === 0)) {
+      const availableTraits = getAvailableRacialTraits($character.race, $character.level);
+      if (availableTraits.length > 0) {
+        character.update((c) => {
+          c.racialTraits = initializeRacialTraitUses(availableTraits);
+          console.log('Initialized racial traits on mount:', c.racialTraits);
+          return c;
+        });
+      }
+    }
+
     // console.log('onMount - initial isEditMode:', $isEditMode);
     // console.log('onMount - body classes:', document.body.className);
 
@@ -681,6 +779,7 @@
     <DamageInput />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
     <ClassFeatures />
+    <RacialTraits />
     <Notes />
   </main>
 </div>
