@@ -108,6 +108,28 @@ export interface SpellState {
   abilities?: ConditionAbility[]; // Special abilities granted by this condition
 }
 
+export interface RacialSpellTrait {
+  spellName: string; // Canonical spell name
+  minLevel: number; // Character level when this spell is available
+  usesPerRest?: 'at-will' | number; // 'at-will' for cantrips, number for separate uses (if not using trait's shared uses)
+  restType?: 'short' | 'long'; // Type of rest needed to restore uses (for separate uses)
+  currentUses?: number; // Current remaining uses (for separate uses)
+  specialNotes?: string; // e.g., "invisible hand", "doesn't require components"
+  consumesTraitUse?: boolean; // If true, casting this spell consumes one of the trait's shared uses
+}
+
+export interface RacialTrait {
+  name: string; // e.g., "Githyanki Psionics"
+  description: string;
+  spells: RacialSpellTrait[];
+  castingAbility: AbilityName; // e.g., 'intelligence'
+  requiresComponents: boolean; // false for traits like Githyanki Psionics
+  // Shared use tracking (for traits where multiple spells share the same use pool)
+  usesPerRest?: number; // Number of uses per rest (shared across spells with consumesTraitUse: true)
+  restType?: 'short' | 'long'; // Type of rest needed to restore shared uses
+  currentUses?: number; // Current remaining shared uses
+}
+
 export interface ClassFeatures {
   features: Record<string, boolean[] | number>;
   spellSlots: boolean[]; // Legacy - 1st level only
@@ -142,6 +164,7 @@ export interface Character {
   notes: string;
   classFeatures: ClassFeatures;
   activeStates?: SpellState[];
+  racialTraits?: RacialTrait[]; // Racial traits like Githyanki Psionics
 }
 
 // Class Configuration Types

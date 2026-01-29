@@ -102,7 +102,8 @@ const initialCharacter: Character = {
     spellSlots: [],
     spellSlotsByLevel: {},
     preparedSpells: ''
-  }
+  },
+  racialTraits: []
 };
 
 // Load from localStorage if available
@@ -286,6 +287,7 @@ interface CollapsedStates {
   skills: boolean;
   attacks: boolean;
   classFeatures: boolean;
+  racialTraits: boolean;
   notes: boolean;
   damageInput: boolean;
 }
@@ -299,6 +301,7 @@ function loadCollapsedStates(): CollapsedStates {
       skills: false,
       attacks: false,
       classFeatures: false,
+      racialTraits: false,
       notes: false,
       damageInput: false
     };
@@ -308,7 +311,7 @@ function loadCollapsedStates(): CollapsedStates {
     const saved = localStorage.getItem('dndCollapsedStates');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Ensure damageInput exists in loaded state
+      // Ensure damageInput and racialTraits exist in loaded state
       return {
         characterInfo: parsed.characterInfo ?? false,
         combatStats: parsed.combatStats ?? false,
@@ -316,6 +319,7 @@ function loadCollapsedStates(): CollapsedStates {
         skills: parsed.skills ?? false,
         attacks: parsed.attacks ?? false,
         classFeatures: parsed.classFeatures ?? false,
+        racialTraits: parsed.racialTraits ?? false,
         notes: parsed.notes ?? false,
         damageInput: parsed.damageInput ?? false
       };
@@ -331,6 +335,7 @@ function loadCollapsedStates(): CollapsedStates {
     skills: false,
     attacks: false,
     classFeatures: false,
+    racialTraits: false,
     notes: false,
     damageInput: false
   };
