@@ -6,7 +6,8 @@
     searchFilter,
     collapsedStates,
     isEditMode,
-    toasts
+    toasts,
+    useRacialTrait
   } from '$lib/stores';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
   import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
@@ -154,7 +155,7 @@
   }
 
   function rollAttack(attack: Attack) {
-    // If this is a spell attack, consume a spell slot
+    // If this is a spell attack, consume a spell slot (or racial use)
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
@@ -166,11 +167,23 @@
 
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
-          const hasSlot = checkAndConsumeSpellSlot(castLevel);
-          if (!hasSlot) {
-            toasts.add(`No level ${castLevel} spell slots available!`, 'error');
-            return;
+          
+          // Check if this is a racial spell
+          let hasResource = false;
+          if (attack.source === 'racial') {
+            hasResource = checkAndConsumeRacialSpellUse(attack.name);
+            if (!hasResource) {
+              toasts.add(`No uses of ${attack.name} remaining!`, 'error');
+              return;
+            }
+          } else {
+            hasResource = checkAndConsumeSpellSlot(castLevel);
+            if (!hasResource) {
+              toasts.add(`No level ${castLevel} spell slots available!`, 'error');
+              return;
+            }
           }
+          
           // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
           const savingThrow = getSavingThrowInfo(spell);
           if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
@@ -308,11 +321,23 @@
 
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
-          const hasSlot = checkAndConsumeSpellSlot(castLevel);
-          if (!hasSlot) {
-            toasts.add(`No level ${castLevel} spell slots available!`, 'error');
-            return;
+          
+          // Check if this is a racial spell
+          let hasResource = false;
+          if (attack.source === 'racial') {
+            hasResource = checkAndConsumeRacialSpellUse(attack.name);
+            if (!hasResource) {
+              toasts.add(`No uses of ${attack.name} remaining!`, 'error');
+              return;
+            }
+          } else {
+            hasResource = checkAndConsumeSpellSlot(castLevel);
+            if (!hasResource) {
+              toasts.add(`No level ${castLevel} spell slots available!`, 'error');
+              return;
+            }
           }
+          
           // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
           const savingThrow = getSavingThrowInfo(spell);
           if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
@@ -426,6 +451,22 @@
       return c;
     });
 
+    return true;
+  }
+
+  function checkAndConsumeRacialSpellUse(spellName: string): boolean {
+    if (!$character.racialTraits || !$character.racialTraits.uses[spellName]) {
+      // Cantrip or unlimited use racial spell
+      return true;
+    }
+
+    const traitUse = $character.racialTraits.uses[spellName];
+    if (traitUse.currentUses <= 0) {
+      return false; // No uses remaining
+    }
+
+    // Consume a use
+    useRacialTrait(spellName);
     return true;
   }
 
@@ -568,14 +609,23 @@
       return;
     }
 
-    // Consume spell slot if needed
+    // Consume spell slot or racial use if needed
     const castLevel = attack.castAtLevel || spell.level;
     if (castLevel > 0) {
       // Cantrips don't use slots
-      const hasSlot = checkAndConsumeSpellSlot(castLevel);
-      if (!hasSlot) {
-        toasts.add(`No level ${castLevel} spell slots available!`, 'error');
-        return;
+      let hasResource = false;
+      if (attack.source === 'racial') {
+        hasResource = checkAndConsumeRacialSpellUse(attack.name);
+        if (!hasResource) {
+          toasts.add(`No uses of ${attack.name} remaining!`, 'error');
+          return;
+        }
+      } else {
+        hasResource = checkAndConsumeSpellSlot(castLevel);
+        if (!hasResource) {
+          toasts.add(`No level ${castLevel} spell slots available!`, 'error');
+          return;
+        }
       }
     }
 

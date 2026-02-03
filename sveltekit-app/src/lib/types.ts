@@ -57,6 +57,8 @@ export interface Attack {
   targetSucceededSave?: boolean; // for spells with saving throws
   targetIsDamaged?: boolean; // for spells like Toll of the Dead with alternate damage
   notes?: string; // for non-spell attacks
+  source?: 'racial' | 'class' | 'custom'; // source of the attack/spell
+  racialTraitName?: string; // name of the racial trait (e.g., "Githyanki Psionics")
 }
 
 export interface Spell {
