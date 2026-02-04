@@ -249,7 +249,7 @@
 
   .quick-type-btn.active {
     background-color: var(--primary-color);
-    color: white;
+    color: var(--bg-color);
     border-color: var(--primary-color);
   }
 
@@ -261,7 +261,7 @@
   }
 
   .calculation-result {
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
     border: 2px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;
@@ -288,7 +288,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px;
-    background-color: white;
+    background-color: var(--spell-background);
     border-radius: 4px;
   }
 
@@ -313,14 +313,14 @@
 
   .adjustments {
     padding: 8px;
-    background-color: #e3f2fd;
+    background-color: var(--spell-background);
     border-radius: 4px;
-    border-left: 4px solid #2196f3;
+    border-left: 4px solid ;
   }
 
   .adjustment-msg {
     font-size: 0.9rem;
-    color: #1565c0;
+    color: var(--ability-text-color);
     padding: 4px 0;
   }
 
@@ -345,16 +345,16 @@
 
   .btn-primary {
     background-color: var(--primary-color);
-    color: white;
+    color: var(--bg-color);
   }
 
   .btn-primary:hover {
-    background-color: #8b0000;
+    background-color: var(--primary-color-hover);
   }
 
   .btn-secondary {
-    background-color: #999;
-    color: white;
+    background-color: var(--secondary-color);
+    color: var(--bg-color);
   }
 
   .btn-secondary:hover {
