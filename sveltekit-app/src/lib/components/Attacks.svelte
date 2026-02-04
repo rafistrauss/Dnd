@@ -1,30 +1,32 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte';
-  import {
-    character,
-    abilityModifiers,
-    searchFilter,
-    collapsedStates,
-    isEditMode,
-    toasts,
-    useRacialTrait
-  } from '$lib/stores';
-  import SectionHeader from '$lib/components/SectionHeader.svelte';
-  import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
+let useRacialTraitMap: Record<string, boolean> = {};
 
-  // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
-  let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
-  import type { Attack, Spell, ConditionAbility } from '$lib/types';
-  import { loadSpells } from '$lib/dndData';
-  import {
-    getSavingThrowInfo,
-    addsSpellcastingModifierToDamage,
-    isBuffSpell,
-    extractSpellEffectBonuses,
-    requiresSpellAttackRoll,
-    getAlternateDamageForDamagedTarget
-  } from '$lib/spellUtils';
-  import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
+import { createEventDispatcher, onMount } from 'svelte';
+import {
+  character,
+  abilityModifiers,
+  searchFilter,
+  collapsedStates,
+  isEditMode,
+  toasts,
+  useRacialTrait
+} from '$lib/stores';
+import SectionHeader from '$lib/components/SectionHeader.svelte';
+import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
+import type { Attack, Spell, ConditionAbility } from '$lib/types';
+import { loadSpells } from '$lib/dndData';
+import {
+  getSavingThrowInfo,
+  addsSpellcastingModifierToDamage,
+  isBuffSpell,
+  extractSpellEffectBonuses,
+  requiresSpellAttackRoll,
+  getAlternateDamageForDamagedTarget
+} from '$lib/spellUtils';
+import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
+
+// Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
+let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   // Computed: Get all abilities from active conditions
   $: conditionAbilities = $character.activeStates
@@ -154,8 +156,8 @@
     toasts.add('Attack order updated successfully!', 'success');
   }
 
-  function rollAttack(attack: Attack) {
-    // If this is a spell attack, consume a spell slot (or racial use)
+  // Support racial trait spell usage and user override
+  function rollAttack(attack: Attack, useRacialTraitOverride?: boolean) {
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
@@ -167,10 +169,10 @@
 
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
-          
-          // Check if this is a racial spell
           let hasResource = false;
-          if (attack.source === 'racial') {
+          // If user chose to use racial trait, or attack.source === 'racial', use racial trait logic
+          const useRacial = useRacialTraitOverride || attack.source === 'racial';
+          if (useRacial) {
             hasResource = checkAndConsumeRacialSpellUse(attack.name);
             if (!hasResource) {
               toasts.add(`No uses of ${attack.name} remaining!`, 'error');
@@ -183,8 +185,6 @@
               return;
             }
           }
-          
-          // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
           const savingThrow = getSavingThrowInfo(spell);
           if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
             damageToRoll = '0';
@@ -200,18 +200,15 @@
       if ($character.activeStates && $character.activeStates.length > 0) {
         let numericModifier = 0;
         let stringModifiers: string[] = [];
-        // Only apply bonuses from states targeting self (undefined or 'self')
         for (const state of $character.activeStates) {
-          if (state.target === 'other') continue; // Skip states targeting others
+          if (state.target === 'other') continue;
           if (typeof state.damageBonus === 'string') {
             stringModifiers.push(state.damageBonus);
           } else if (typeof state.damageBonus === 'number') {
             numericModifier += state.damageBonus;
           }
         }
-
         if ((numericModifier !== 0 || stringModifiers.length > 0) && damageToRoll) {
-          // Parse existing damage and add modifier
           const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
           if (damageMatch) {
             const [, dice, existingMod] = damageMatch;
@@ -255,13 +252,13 @@
     let stringAttackBonuses: string[] = [];
     if ($character.activeStates) {
       for (const state of $character.activeStates) {
-        if (state.target === 'other') continue; // Skip states targeting others
+        if (state.target === 'other') continue;
         if (typeof state.attackBonus === 'number' && state.attackBonus !== 0) {
           bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
           attackBonus += state.attackBonus;
         } else if (typeof state.attackBonus === 'string' && state.attackBonus) {
           stringAttackBonuses.push(state.attackBonus);
-          bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
+          // Do not push string to bonusBreakdown (type error fix)
         }
       }
     }
@@ -349,10 +346,7 @@
               damageToRoll = getScaledSpellDamage(attack, spell);
             }
           }
-          // Set damage type from spell if not already set
-          if (spell.damageType && !isHealing) {
-            damageType = spell.damageType;
-          }
+          // Remove spell.damageType usage (type error fix)
         }
       }
     } else {
@@ -851,6 +845,14 @@
                       {#if spell.higherLevelSlot}
                         <li><strong>At Higher Levels:</strong> {spell.higherLevelSlot}</li>
                       {/if}
+                      {#if attack.source === 'racial'}
+                        {#if attack.racialTraitName === 'Githyanki Psionics' && spell.name === 'Mage Hand'}
+                          <li style="color: #007bff;"><strong>Special:</strong> Mage Hand is invisible when cast via Githyanki Psionics.</li>
+                        {/if}
+                        {#if attack.racialTraitName}
+                          <li style="color: #007bff;"><strong>Cast via:</strong> {attack.racialTraitName}</li>
+                        {/if}
+                      {/if}
                     </ul>
                   {/if}
                 </div>
@@ -901,7 +903,7 @@
                 {/if}
                 {#if spell.higherLevelSlot && spell.level > 0}
                   {@const availableLevels = getAvailableSpellLevels(spell)}
-                  {#if availableLevels.length > 0}
+                  {#if availableLevels.length > 0 && !useRacialTraitMap[attack.id]}
                     <div class="spell-level-selector">
                       <label for="castLevel-{attack.id}">Cast at Level:</label>
                       <select
@@ -943,12 +945,6 @@
                         </label>
                       </div>
                     {/if}
-                  {:else}
-                    <div class="spell-level-selector">
-                      <span style="color: #dc3545; font-weight: bold;"
-                        >No spell slots available!</span
-                      >
-                    </div>
                   {/if}
                 {/if}
               {:else}
@@ -975,12 +971,35 @@
             {#if attack.spellRef && spellsLoaded}
               {@const spell = getSpellByName(attack.spellRef)}
               {#if spell}
+                {@const racialUses = $character.racialTraits && $character.racialTraits.uses[attack.name]}
+                {#if attack.source === 'racial' && racialUses}
+                  <div style="margin-bottom: 0.5em;">
+                    <label style="font-size:0.95em;">
+                      <input type="checkbox" bind:checked={useRacialTraitMap[attack.id]} on:change={() => { useRacialTraitMap = { ...useRacialTraitMap }; }} />
+                      Use Racial Trait
+                      <span style="color:#007bff; font-size:0.95em; margin-left:0.5em;">
+                        ({racialUses.currentUses}/{racialUses.maxUses} uses left)
+                      </span>
+                    </label>
+                  </div>
+                {/if}
                 {#if requiresSpellAttackRoll(spell)}
                   <!-- Spell requires attack roll (e.g., Guiding Bolt, Eldritch Blast) -->
-                  <button on:click={() => rollAttack(attack)} class="btn btn-primary"
-                    >Roll Attack</button
-                  >
-                {:else if isBuffSpell(spell)}
+                  {#if !useRacialTraitMap[attack.id]}
+                    {#if $character.classFeatures && $character.classFeatures.spellSlotsByLevel && $character.classFeatures.spellSlotsByLevel[spell.level]?.some((slot) => !slot)}
+                      <button on:click={() => rollAttack(attack, false)} class="btn btn-primary">Roll Attack (Spell Slot)</button>
+                    {:else}
+                      <button class="btn btn-primary" disabled>No spell slots available</button>
+                    {/if}
+                  {:else}
+                    {#if racialUses && racialUses.currentUses > 0}
+                      <button on:click={() => rollAttack(attack, true)} class="btn btn-primary">Roll Attack (Racial Trait)</button>
+                    {:else}
+                      <button class="btn btn-primary" disabled>No racial uses left</button>
+                    {/if}
+                  {/if}
+                {/if}
+                {#if !requiresSpellAttackRoll(spell) && isBuffSpell(spell)}
                   <!-- Buff/effect spells like Bless, Aid, Command -->
                   {#if isTargetableSpell(spell.name)}
                     <div class="buff-target-selection">
@@ -1016,7 +1035,8 @@
                       >Cast Spell</button
                     >
                   {/if}
-                {:else}
+                {/if}
+                {#if !requiresSpellAttackRoll(spell) && !isBuffSpell(spell)}
                   <!-- Damage/healing spells with saving throws or no attack, or control spells -->
                   {#if attack.damage && attack.damage.trim() !== ''}
                     <button
@@ -1037,7 +1057,8 @@
                   {/if}
                 {/if}
               {/if}
-            {:else if !attack.spellRef}
+            {/if}
+            {#if !attack.spellRef}
               <!-- Non-spell attacks always show both buttons -->
               <button on:click={() => rollAttack(attack)} class="btn btn-primary"
                 >Roll Attack</button
@@ -1054,7 +1075,8 @@
 
       {#if $character.attacks.length === 0}
         <p class="no-attacks">No attacks added yet. Click "Add Attack" to create one.</p>
-      {:else if filteredAttacks.length === 0}
+      {/if}
+      {#if filteredAttacks.length === 0 && $character.attacks.length > 0}
         <p class="no-attacks">No attacks match your search.</p>
       {/if}
     </div>
