@@ -1,3 +1,4 @@
+import { getRaceConfig } from './raceConfig';
 import type { Character, Abilities } from './types';
 import { getClassConfig } from './classConfig';
 
@@ -273,6 +274,7 @@ export function calculateDamage(
   }
 
   // Check resistances (D&D 5e: resistance halves damage, rounded down)
+  let foundResistance = false;
   if (char.activeStates) {
     for (const state of char.activeStates) {
       if (state.resistances && state.resistances.length > 0) {
@@ -285,7 +287,26 @@ export function calculateDamage(
             `Resistant to ${damageType} (${state.name}): ${finalDamage} → ${reducedAmount}`
           );
           finalDamage = reducedAmount;
+          foundResistance = true;
           break; // Resistance only applies once
+        }
+      }
+    }
+  }
+
+  // Check racial resistances from race config if not already found
+  if (!foundResistance && char.race) {
+    const raceConfig = getRaceConfig(char.race);
+    if (raceConfig) {
+      for (const trait of raceConfig.traits) {
+        if (trait.resistances && trait.resistances.some(r => r.toLowerCase().trim() === normalizedType)) {
+          const reducedAmount = Math.floor(finalDamage / 2);
+          adjustments.push(
+            `Resistant to ${damageType} (racial trait): ${finalDamage} → ${reducedAmount}`
+          );
+          finalDamage = reducedAmount;
+          foundResistance = true;
+          break;
         }
       }
     }

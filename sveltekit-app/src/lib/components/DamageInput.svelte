@@ -9,7 +9,6 @@
 
   let damageAmount = 0;
   let damageType = '';
-  let showCalculation = false;
   let calculatedDamage = 0;
   let adjustmentMessages: string[] = [];
 
@@ -30,38 +29,46 @@
     'force'
   ];
 
-  function calculateDamageWithAdjustments() {
-    if (damageAmount < 0) {
-      toasts.add('Damage amount cannot be negative', 'error');
-      return;
-    }
+  const damageTypeEmojis: Record<string, string> = {
+    slashing: '🗡️',
+    piercing: '🏹',
+    bludgeoning: '🔨',
+    fire: '🔥',
+    cold: '❄️',
+    lightning: '⚡',
+    thunder: '💥',
+    acid: '🧪',
+    poison: '☠️',
+    necrotic: '💀',
+    radiant: '✨',
+    psychic: '🧠',
+    force: '🌪️'
+  };
 
-    if (!damageType.trim()) {
-      toasts.add('Please enter or select a damage type', 'error');
-      return;
-    }
 
+  // Dynamically calculate damage when inputs change
+  $: if (damageAmount >= 0 && damageType.trim()) {
     const result = calculateDamage(damageAmount, damageType, $character);
     calculatedDamage = result.finalDamage;
     adjustmentMessages = result.adjustments;
-    showCalculation = true;
+  } else {
+    calculatedDamage = 0;
+    adjustmentMessages = [];
   }
 
   function applyCalculatedDamage() {
     character.update((c) => applyDamage(c, calculatedDamage));
-
     toasts.add(`Applied ${calculatedDamage} damage to character (${damageType})`, 'info');
-
     // Reset form
     damageAmount = 0;
     damageType = '';
-    showCalculation = false;
     calculatedDamage = 0;
     adjustmentMessages = [];
   }
 
   function cancel() {
-    showCalculation = false;
+    damageAmount = 0;
+    damageType = '';
     calculatedDamage = 0;
     adjustmentMessages = [];
   }
@@ -122,19 +129,12 @@
             on:click={() => (damageType = type)}
             class:active={damageType === type}
           >
-            {type}
+            {damageTypeEmojis[type]} {type}
           </button>
         {/each}
       </div>
 
-      {#if !showCalculation}
-        <button
-          class="btn btn-primary calculate-btn use-enabled"
-          on:click={calculateDamageWithAdjustments}
-        >
-          Calculate Damage
-        </button>
-      {:else}
+      {#if damageAmount >= 0 && damageType.trim()}
         <div class="calculation-result">
           <div class="result-header">
             <h4>Damage Calculation</h4>
@@ -143,7 +143,7 @@
             <div class="damage-breakdown">
               <div class="damage-row">
                 <span class="label">Original Damage:</span>
-                <span class="value">{damageAmount} {damageType}</span>
+                <span class="value">{damageAmount} {damageTypeEmojis[damageType] || ''} {damageType}</span>
               </div>
               <div class="adjustments">
                 {#each adjustmentMessages as msg}
@@ -249,7 +249,7 @@
 
   .quick-type-btn.active {
     background-color: var(--primary-color);
-    color: white;
+    color: var(--bg-color);
     border-color: var(--primary-color);
   }
 
@@ -261,7 +261,7 @@
   }
 
   .calculation-result {
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
     border: 2px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;
@@ -288,7 +288,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px;
-    background-color: white;
+    background-color: var(--spell-background);
     border-radius: 4px;
   }
 
@@ -313,14 +313,14 @@
 
   .adjustments {
     padding: 8px;
-    background-color: #e3f2fd;
+    background-color: var(--spell-background);
     border-radius: 4px;
-    border-left: 4px solid #2196f3;
+    border-left: 4px solid ;
   }
 
   .adjustment-msg {
     font-size: 0.9rem;
-    color: #1565c0;
+    color: var(--ability-text-color);
     padding: 4px 0;
   }
 
@@ -345,16 +345,16 @@
 
   .btn-primary {
     background-color: var(--primary-color);
-    color: white;
+    color: var(--bg-color);
   }
 
   .btn-primary:hover {
-    background-color: #8b0000;
+    background-color: var(--primary-color-hover);
   }
 
   .btn-secondary {
-    background-color: #999;
-    color: white;
+    background-color: var(--secondary-color);
+    color: var(--bg-color);
   }
 
   .btn-secondary:hover {

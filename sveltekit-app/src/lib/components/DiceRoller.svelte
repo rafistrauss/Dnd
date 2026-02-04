@@ -764,7 +764,7 @@
   }
 
   .modal-content {
-    background-color: white;
+    background-color: var(--card-bg);
     border-radius: 8px;
     padding: 20px;
     width: 900px;
@@ -916,7 +916,7 @@
   .custom-dice-selector {
     margin: 0;
     padding: 12px;
-    background: #f9f9f9;
+    background: var(--card-bg-secondary);
     border-radius: 8px;
     flex-shrink: 0;
   }
@@ -944,7 +944,7 @@
   .dice-input-group label {
     font-weight: bold;
     margin-bottom: 3px;
-    color: #333;
+    color: var(--ability-text-color);
     font-size: 0.9rem;
   }
 
@@ -979,27 +979,27 @@
   }
 
   .roll-result.has-result {
-    background: #e8f5e9;
-    border-color: #4caf50;
+    background: var(--roll-result-background);
+    border-color: var(--roll-result-border);
   }
 
   .roll-result h3 {
     margin: 0 0 6px 0;
-    color: #2e7d32;
+    color: var(--roll-result);
     font-size: 1rem;
   }
 
   .result-total {
     font-size: 2.2rem;
     font-weight: bold;
-    color: #1b5e20;
+    color: var(--roll-result);
     margin: 6px 0;
     line-height: 1;
   }
 
   .result-details {
     margin-top: 8px;
-    color: #333;
+    color: var(--ability-text-color);
     font-size: 0.95rem;
   }
 
@@ -1009,7 +1009,7 @@
 
   .modifier-text {
     font-style: italic;
-    color: #666;
+    color: var(--ability-text-color);
     font-size: 0.9rem;
   }
 
@@ -1027,19 +1027,19 @@
     flex-direction: column;
     align-items: center;
     padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--card-bg-secondary);
     border-radius: 4px;
   }
 
   .bonus-value {
     font-size: 1.1rem;
     font-weight: bold;
-    color: #2e7d32;
-  }
+    color: var(--roll-result);
+  } 
 
   .bonus-source {
     font-size: 0.75rem;
-    color: #666;
+    color: var(--ability-text-color);
     font-style: italic;
   }
 

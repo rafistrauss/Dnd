@@ -286,8 +286,8 @@
   }
 
   .modal-content {
-    background: #f5f5f5;
-    border: 1px solid #ccc;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     max-width: 600px;
     width: 90%;
@@ -308,7 +308,7 @@
   .modal-header h3 {
     margin: 0;
     font-size: 1.25rem;
-    color: #2c1810;
+    color: var(--primary-color);
   }
 
   .btn-close {
@@ -316,7 +316,7 @@
     border: none;
     font-size: 2rem;
     line-height: 1;
-    color: #333;
+    color: var(--text-color);
     cursor: pointer;
     padding: 0;
     width: 2rem;
@@ -352,7 +352,7 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #333;
+    color: var(--ability-text-color);
     font-size: 0.9rem;
   }
 
@@ -439,9 +439,9 @@
   }
 
   .ability-form {
-    background: #fff;
+    background: var(--card-bg-secondary);
     padding: 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     margin-bottom: 1rem;
   }

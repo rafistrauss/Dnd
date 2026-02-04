@@ -1,5 +1,6 @@
 <script lang="ts">
   import SlotCheckbox from './SlotCheckbox.svelte';
+  import RacialTraits from './RacialTraits.svelte';
   import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
   import { afterUpdate } from 'svelte';
   import {
@@ -220,6 +221,7 @@
     onToggle={toggleCollapse}
   />
   {#if !$collapsedStates.classFeatures}
+    <RacialTraits />
     {#if !$character.class}
       <p class="no-features">Select a class to see available features</p>
     {:else if features.length === 0}
@@ -457,7 +459,7 @@
   }
 
   .feature-box {
-    background-color: #f9f9f9;
+    background-color: var(--card-bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;

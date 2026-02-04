@@ -57,6 +57,8 @@ export interface Attack {
   targetSucceededSave?: boolean; // for spells with saving throws
   targetIsDamaged?: boolean; // for spells like Toll of the Dead with alternate damage
   notes?: string; // for non-spell attacks
+  source?: 'racial' | 'class' | 'custom'; // source of the attack/spell
+  racialTraitName?: string; // name of the racial trait (e.g., "Githyanki Psionics")
 }
 
 export interface Spell {
@@ -108,11 +110,21 @@ export interface SpellState {
   abilities?: ConditionAbility[]; // Special abilities granted by this condition
 }
 
+export interface RacialTraitUses {
+  currentUses: number;
+  maxUses: number;
+  restType: 'short' | 'long';
+}
+
 export interface ClassFeatures {
   features: Record<string, boolean[] | number>;
   spellSlots: boolean[]; // Legacy - 1st level only
   spellSlotsByLevel?: Record<number, boolean[]>; // Slots by level 1-9
   preparedSpells: string;
+}
+
+export interface RacialTraits {
+  uses: Record<string, RacialTraitUses>; // Track uses of racial spells
 }
 
 export interface Character {
@@ -141,6 +153,7 @@ export interface Character {
   equipment: string;
   notes: string;
   classFeatures: ClassFeatures;
+  racialTraits?: RacialTraits; // Optional for backwards compatibility
   activeStates?: SpellState[];
 }
 
