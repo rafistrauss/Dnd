@@ -57,10 +57,8 @@ let character = {
     equipment: '',
     notes: '',
     classFeatures: {
-        divineSense: [false, false, false],
-        layOnHandsPool: 15,
-        spellSlots: [false, false, false, false],
-        channelDivinity: false,
+        features: {},  // Dynamic features based on class
+        spellSlots: [],
         preparedSpells: ''
     }
 };
@@ -102,6 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     updateAllModifiers();
     setupCollapsibleSections();
+    
+    // Render class features if class is set
+    if (character.class && character.level) {
+        renderClassFeatures(character.class, character.level);
+    }
+    
     // Don't initialize dice box here - wait until modal is shown
     
     // Load saved mode or default to use mode
@@ -120,23 +124,23 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeDiceBox() {
     const container = document.getElementById('diceContainer');
     if (!container || typeof DICE === 'undefined') {
-        console.log('Cannot initialize dice box - container or DICE library not found');
+        // console.log('Cannot initialize dice box - container or DICE library not found');
         return false;
     }
     
     // Make sure container has dimensions
     const rect = container.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) {
-        console.log('Cannot initialize dice box - container has no dimensions');
+        // console.log('Cannot initialize dice box - container has no dimensions');
         return false;
     }
     
     try {
         diceBox = new DICE.dice_box(container);
-        console.log('Dice box initialized successfully');
+        // console.log('Dice box initialized successfully');
         return true;
     } catch (error) {
-        console.log('Failed to initialize dice box:', error);
+        // console.log('Failed to initialize dice box:', error);
         return false;
     }
 }
@@ -173,11 +177,13 @@ function setupEventListeners() {
     
     document.getElementById('characterClass').addEventListener('change', (e) => {
         character.class = e.target.value;
+        onClassOrLevelChange();
     });
     
     document.getElementById('characterLevel').addEventListener('change', (e) => {
         character.level = parseInt(e.target.value) || 1;
         updateProficiencyBonus();
+        onClassOrLevelChange();
     });
     
     document.getElementById('characterRace').addEventListener('change', (e) => {
@@ -284,43 +290,6 @@ function setupEventListeners() {
     
     document.getElementById('notes').addEventListener('change', (e) => {
         character.notes = e.target.value;
-    });
-    
-    // Class features tracking
-    document.getElementById('layOnHandsPool').addEventListener('change', (e) => {
-        character.classFeatures.layOnHandsPool = parseInt(e.target.value) || 0;
-        saveToLocalStorage(true);
-    });
-    
-    document.getElementById('preparedSpells').addEventListener('change', (e) => {
-        character.classFeatures.preparedSpells = e.target.value;
-    });
-    
-    // Divine Sense checkboxes
-    [1, 2, 3].forEach(num => {
-        document.getElementById(`divineSense${num}`).addEventListener('change', (e) => {
-            if (!character.classFeatures) character.classFeatures = {};
-            if (!character.classFeatures.divineSense) character.classFeatures.divineSense = [false, false, false];
-            character.classFeatures.divineSense[num - 1] = e.target.checked;
-            saveToLocalStorage(true);
-        });
-    });
-    
-    // Spell slot checkboxes
-    [1, 2, 3, 4].forEach(num => {
-        document.getElementById(`spellSlot1_${num}`).addEventListener('change', (e) => {
-            if (!character.classFeatures) character.classFeatures = {};
-            if (!character.classFeatures.spellSlots) character.classFeatures.spellSlots = [false, false, false, false];
-            character.classFeatures.spellSlots[num - 1] = e.target.checked;
-            saveToLocalStorage(true);
-        });
-    });
-    
-    // Channel Divinity checkbox
-    document.getElementById('channelDivinity').addEventListener('change', (e) => {
-        if (!character.classFeatures) character.classFeatures = {};
-        character.classFeatures.channelDivinity = e.target.checked;
-        saveToLocalStorage(true);
     });
     
     // Roll buttons for ability checks
@@ -443,6 +412,27 @@ function updateProficiencyBonus() {
     const profBonus = Math.ceil(level / 4) + 1;
     character.proficiencyBonus = profBonus;
     document.getElementById('proficiencyBonus').value = profBonus;
+    updateAllModifiers();
+}
+
+// Handler for class or level changes
+function onClassOrLevelChange() {
+    if (!character.class || !character.level) return;
+    
+    // Update hit dice based on class
+    const config = getClassConfig(character.class);
+    if (config) {
+        character.hitDice.max = character.level;
+        const hitDiceMaxInput = document.getElementById('hitDiceMax');
+        if (hitDiceMaxInput) {
+            hitDiceMaxInput.value = character.level;
+        }
+    }
+    
+    // Render class features dynamically
+    renderClassFeatures(character.class, character.level);
+    
+    // Update spell save DC and other calculations
     updateAllModifiers();
 }
 
@@ -705,7 +695,7 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
         
         diceBox.start_throw(beforeRoll, afterRoll);
     } catch (error) {
-        console.log('Failed to roll dice:', error);
+        // console.log('Failed to roll dice:', error);
         // Fall back to showing result without animation
         const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
         resultDiv.innerHTML = `
@@ -1326,33 +1316,31 @@ function importCharacter(event) {
     event.target.value = '';
 }
 
-// Class feature reset functions
+// Legacy class feature reset functions (kept for backward compatibility)
+// These will be overridden by dynamic feature functions in classFeatures.js
 function resetDivineSense() {
-    if (!character.classFeatures) character.classFeatures = {};
-    character.classFeatures.divineSense = [false, false, false];
-    [1, 2, 3].forEach(num => {
-        document.getElementById(`divineSense${num}`).checked = false;
-    });
+    // Legacy function - kept for any old inline handlers
+    resetFeature('DivineSense', 3);
 }
 
 function resetLayOnHands() {
-    if (!character.classFeatures) character.classFeatures = {};
-    character.classFeatures.layOnHandsPool = 15;
-    document.getElementById('layOnHandsPool').value = 15;
-}
-
-function resetSpellSlots() {
-    if (!character.classFeatures) character.classFeatures = {};
-    character.classFeatures.spellSlots = [false, false, false, false];
-    [1, 2, 3, 4].forEach(num => {
-        document.getElementById(`spellSlot1_${num}`).checked = false;
-    });
+    // Legacy function - kept for any old inline handlers
+    const maxPool = character.level * 5;
+    resetFeaturePool('LayonHands', maxPool);
 }
 
 function resetChannelDivinity() {
-    if (!character.classFeatures) character.classFeatures = {};
-    character.classFeatures.channelDivinity = false;
-    document.getElementById('channelDivinity').checked = false;
+    // Legacy function - kept for any old inline handlers
+    const config = getClassConfig(character.class);
+    if (config) {
+        const feature = config.features.find(f => f.name === 'Channel Divinity');
+        if (feature) {
+            const maxUses = typeof feature.maxUses === 'function' 
+                ? feature.maxUses(character.level) 
+                : feature.maxUses;
+            resetFeature('ChannelDivinity', maxUses);
+        }
+    }
 }
 
 function adjustHitDiceCount(operation) {
@@ -1436,16 +1424,15 @@ function longRest() {
     character.hitDice.current = Math.min(character.hitDice.max, character.hitDice.current + restoredDice);
     document.getElementById('hitDiceCurrent').value = character.hitDice.current;
     
-    // Reset all class features
-    resetDivineSense();
-    resetLayOnHands();
-    resetSpellSlots();
-    resetChannelDivinity();
+    // Reset all class features by re-rendering
+    if (character.class && character.level) {
+        renderClassFeatures(character.class, character.level);
+    }
     
     // Auto-save
     saveToLocalStorage(true);
     
-    alert('Long rest completed! HP, 1/2 of the hit dice, and class features restored.');
+    alert('Long rest completed! HP, hit dice, and class features restored.');
 }
 
 // Dice Roller Modal Functions
