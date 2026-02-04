@@ -459,7 +459,7 @@
   }
 
   .feature-box {
-    background-color: #f9f9f9;
+    background-color: var(--card-bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;

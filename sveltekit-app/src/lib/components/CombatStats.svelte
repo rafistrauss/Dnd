@@ -405,7 +405,7 @@
   }
 
   .hp-section {
-    background-color: #f9f9f9;
+    background-color: var(--light-bg);
     padding: 15px;
     border-radius: 6px;
     margin-bottom: 15px;
@@ -487,7 +487,7 @@
   }
 
   .hit-dice-section {
-    background-color: #f9f9f9;
+    background-color: var(--light-bg);
     padding: 15px;
     border-radius: 6px;
   }
@@ -564,11 +564,9 @@
     border-color: var(--primary-color);
   }
 
-  .ac-enhanced {
-    color: #007bff;
+  :global(body input[type="text"]).ac-enhanced {
+    color: var(--ac-enhanced-color);
     font-weight: bold;
-    background: #e9f5ff;
-    border: 2px solid #b3e0ff;
   }
 
   .stat-label-with-icon {
@@ -579,7 +577,7 @@
   }
 
   .armor-config {
-    background: #f5f5f5;
+    background: var(--light-bg);
     padding: 15px;
     border-radius: 6px;
     margin-bottom: 15px;

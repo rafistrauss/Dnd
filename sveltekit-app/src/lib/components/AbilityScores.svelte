@@ -172,7 +172,7 @@
     gap: 10px;
     margin-bottom: 20px;
     padding: 10px;
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
     border-radius: 6px;
   }
 
@@ -192,7 +192,7 @@
   }
 
   .ability-card {
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
     border: 2px solid var(--border-color);
     border-radius: 8px;
     padding: 15px;

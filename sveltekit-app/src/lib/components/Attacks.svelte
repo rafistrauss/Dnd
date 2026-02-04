@@ -1231,7 +1231,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   }
 
   .attack-card {
-    background-color: #f9f9f9;
+    background-color: var(--card-bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;
@@ -1340,8 +1340,8 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
     display: flex;
     gap: 15px;
     padding: 8px 12px;
-    background-color: #f0f8ff;
-    border: 1px solid #b3d9ff;
+    background-color: var(--spell-background);
+    border: 1px solid var(--spell-border);
     border-radius: 4px;
   }
 
@@ -1388,8 +1388,8 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   .spell-info {
     margin-top: 10px;
     padding: 10px;
-    background-color: #e9f5ff;
-    border: 1px solid #b3e0ff;
+    background-color: var(--spell-background);
+    border: 1px solid var(--spell-border);
     border-radius: 4px;
   }
 
@@ -1460,8 +1460,8 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   .spell-level-selector {
     margin-top: 10px;
     padding: 10px;
-    background-color: #e7f3ff;
-    border: 1px solid #b3d9ff;
+    background-color: var(--spell-background);
+    border: 1px solid var(--spell-border);
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -1471,8 +1471,10 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   .target-condition {
     margin-top: 10px;
     padding: 10px;
-    background-color: #fff3e0;
-    border: 1px solid #ffcc80;
+    background-color: var(--target-condition-bg);
+    border: 1px solid var(--target-condition-border);
+    /* background-color: #fff3e0;
+    border: 1px solid #ffcc80; */
     border-radius: 4px;
   }
 
@@ -1536,7 +1538,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   }
 
   .state-card {
-    background-color: #fff9e6;
+    background-color: var(--card-bg-secondary);
     border: 1px solid #ffd966;
     border-radius: 6px;
     padding: 15px;
@@ -1619,8 +1621,8 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   .condition-abilities-section {
     margin-top: 30px;
     padding: 20px;
-    background-color: #f0f8ff;
-    border: 2px solid #4a90e2;
+    background-color: var(--state-condition-bg);
+    border: 2px solid var(--state-condition-border);
     border-radius: 8px;
   }
 
@@ -1638,8 +1640,8 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   }
 
   .ability-card {
-    background-color: #e6f2ff;
-    border: 2px solid #6ba3d8;
+    background-color: var(--ability-card-bg);
+    border: 2px solid var(--ability-card-border);
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 2px 4px rgba(74, 144, 226, 0.1);
@@ -1666,7 +1668,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   }
 
   .ability-description {
-    color: #333;
+    color: var(--ability-text-color);
     margin: 8px 0;
     font-size: 0.95rem;
     line-height: 1.5;

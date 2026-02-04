@@ -1,4 +1,27 @@
 <script lang="ts">
+    let isDarkMode = false;
+
+    function setDarkMode(enabled: boolean) {
+      isDarkMode = enabled;
+      if (enabled) {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
+      localStorage.setItem('dnd-dark-mode', enabled ? 'true' : 'false');
+    }
+
+    function toggleDarkMode() {
+      setDarkMode(!isDarkMode);
+    }
+
+    onMount(() => {
+      // ...existing code...
+      // Dark mode preference
+      const darkPref = localStorage.getItem('dnd-dark-mode');
+      setDarkMode(darkPref === 'true');
+      // ...existing code...
+    });
   import { onMount } from 'svelte';
   import {
     character,
@@ -24,7 +47,7 @@
   import AddConditionModal from '$lib/components/AddConditionModal.svelte';
   import DamageInput from '$lib/components/DamageInput.svelte';
   import Toast from '$lib/components/Toast.svelte';
-  import ConsoleViewer from '$lib/components/ConsoleViewer.svelte';
+  // import ConsoleViewer from '$lib/components/ConsoleViewer.svelte';
   import type { Character, SpellState } from '$lib/types';
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
@@ -652,6 +675,10 @@
                 {$isEditMode ? 'Edit Mode' : 'Use Mode'}</span
               >
             </button>
+            <button on:click={toggleDarkMode} class="btn btn-mode" title="Toggle dark mode">
+              <span class="btn-icon">{isDarkMode ? '☀️' : '🌙'}</span>
+              <span class="btn-text">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
           </div>
         </div>
         <div class="header-search">
@@ -738,13 +765,13 @@
 
 <Toast />
 
-<ConsoleViewer />
+<!-- <ConsoleViewer /> -->
 
 <style>
   :global(body) {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5dc;
-    color: #2c1810;
+    background-color: var(--bg-color);
+    color: var(--text-color);
     line-height: 1.6;
     margin: 0;
     padding: 0;
@@ -758,10 +785,75 @@
     --secondary-color: #c8a882;
     --bg-color: #f5f5dc;
     --card-bg: #ffffff;
+    --card-bg-secondary: #f9f9f9;
     --text-color: #2c1810;
     --border-color: #8b7355;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    --spell-background: #e9f5ff;
+    --spell-border: #a3c9ff;
+    --target-condition-bg: #fff4e5;
+    --target-condition-border: #ffcc80;
+    --state-condition-bg: #f0f8ff;
+    --state-condition-border: #4a90e2;
+    --ability-card-bg: #e6f2ff;
+    --ability-card-border: #6ba3d8;
+    --ability-text-color: #333;
+
+    --ac-enhanced-color: #007bff;
+    --ac-enhanced-bg: #e9f5ff;
+    --ac-enhanced-border: #b3e0ff;
+    
+    --roll-result: #2e7d32;
+    --roll-result-border: #4caf50;
+    --roll-result-background: #e8f5e9;
+  }
+
+  :global(body.dark-mode) {
+    --primary-color: #dc5757; /* coral red accent */
+    --primary-color-hover: #c94545;
+    --primary-color--disabled: #5a3030;
+    --secondary-color: #3d4a5c; /* slate blue-gray */
+    --bg-color: #0a0a0a; /* pure dark background */
+    --card-bg: #161616; /* very dark cards */
+    --card-bg-secondary: #1f1f1f; /* slightly lighter dark cards */
+    --text-color: #e8e8e8; /* bright light text */
+    --border-color: #2a2a2a; /* dark borders */
+    --shadow: 0 2px 8px rgba(0,0,0,0.95);
+    --hover-shadow: 0 4px 16px rgba(0,0,0,1);
+    --spell-background: #1a2a3a; /* dark blue-gray */
+    --spell-border: #3a5a7a; /* medium blue-gray */
+    --target-condition-bg: #4a3a1a; /* dark amber */
+    --target-condition-border: #7a5a30; /* medium amber */
+    --state-condition-bg: #2a3a4a; /* dark slate blue */
+    --state-condition-border: #506070; /* medium slate blue */
+    --ability-card-bg: #24303a; /* dark steel blue */
+    --ability-card-border: #506070; /* medium steel blue */
+    --ability-text-color: #e0e0e0; /* light gray text */
+
+    --roll-result: #81c784; /* light green */
+    --roll-result-border: #4caf50; /* medium green */
+    --roll-result-background: #1b2a1b; /* dark green background */
+
+
+  }
+
+  :global(body.dark-mode input[type="text"]),
+  :global(body.dark-mode input[type="number"]),
+  :global(body.dark-mode textarea),
+  :global(body.dark-mode select) {
+    background-color: #1e1e1e;
+    color: #e8e8e8;
+    border-color: #2a2a2a;
+  }
+
+  :global(body.dark-mode input[type="text"]:focus),
+  :global(body.dark-mode input[type="number"]:focus),
+  :global(body.dark-mode textarea:focus),
+  :global(body.dark-mode select:focus) {
+    background-color: #242424;
+    border-color: #dc5757;
   }
 
   .container {
@@ -863,7 +955,7 @@
     width: 100%;
     padding: 10px 15px;
     border: none;
-    background: white;
+    background: var(--bg-color);
     text-align: left;
     cursor: pointer;
     color: var(--text-color);
@@ -872,7 +964,7 @@
   }
 
   .rest-option:hover {
-    background-color: var(--bg-color);
+    background-color: var(--secondary-color);
   }
 
   .search-input {
