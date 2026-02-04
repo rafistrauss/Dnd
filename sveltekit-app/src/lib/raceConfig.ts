@@ -15,6 +15,7 @@ export interface RacialTrait {
   spells?: RacialSpell[];
   spellcastingAbility?: AbilityName;
   componentsRequired?: boolean; // Default false for racial spells
+  resistances?: string[];
 }
 
 export interface RaceConfig {
@@ -26,6 +27,16 @@ export const RACE_CONFIG: Record<string, RaceConfig> = {
   githyanki: {
     name: 'Githyanki',
     traits: [
+      {
+        name: 'Astral Knowledge',
+        description:
+          'Whenever you finish a long rest, you gain proficiency in one skill of your choice and with one weapon or tool of your choice, selected from the Player’s Handbook, as you momentarily project your consciousness into the Astral Plane. These proficiencies last until the end of your next long rest.'
+      },
+      {
+        name: 'Psychic Resilience',
+        description: 'You have resistance to psychic damage.',
+        resistances: ['psychic']
+      },
       {
         name: 'Githyanki Psionics',
         description:
