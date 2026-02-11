@@ -76,7 +76,8 @@
   let diceDamageNotation = '';
   let diceAttackName = '';
   let diceApplyHalfDamage = false;
-  let diceBonusBreakdown: Array<{ value: number; source: string }> = [];
+  let diceBonusBreakdown: Array<{ value: number | string; source: string }> = [];
+  let diceDamageBreakdown: Array<{ value: number | string; source: string }> = [];
   let diceRollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
@@ -342,6 +343,7 @@
     diceAttackName = '';
     diceApplyHalfDamage = false;
     diceBonusBreakdown = [];
+    diceDamageBreakdown = [];
     diceRollType = 'other';
     isHitDiceRoll = false;
 
@@ -354,6 +356,7 @@
       diceAttackName = detail.attackName || '';
       diceApplyHalfDamage = !!detail.applyHalfDamage;
       diceBonusBreakdown = detail.bonusBreakdown || [];
+      diceDamageBreakdown = detail.damageBreakdown || [];
       diceRollType = detail.rollType || 'other';
     }
     showDiceRoller = true;
@@ -744,6 +747,7 @@
   attackName={diceAttackName}
   applyHalfDamage={diceApplyHalfDamage}
   bonusBreakdown={diceBonusBreakdown}
+  damageBreakdown={diceDamageBreakdown}
   rollType={diceRollType}
   visible={showDiceRoller}
   on:close={handleDiceRollerClose}

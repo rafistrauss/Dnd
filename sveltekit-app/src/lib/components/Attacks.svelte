@@ -161,6 +161,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
+    const damageBreakdown: Array<{ value: number | string; source: string }> = []; // Track damage bonuses separately
 
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
@@ -196,32 +197,42 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
         }
       }
     } else {
-      // For non-spell attacks, apply active state bonuses to damage notation
-      if ($character.activeStates && $character.activeStates.length > 0) {
-        let numericModifier = 0;
-        let stringModifiers: string[] = [];
-        for (const state of $character.activeStates) {
-          if (state.target === 'other') continue;
-          if (typeof state.damageBonus === 'string') {
-            stringModifiers.push(state.damageBonus);
-          } else if (typeof state.damageBonus === 'number') {
-            numericModifier += state.damageBonus;
+      // For non-spell attacks, parse base damage and build breakdown
+      if (damageToRoll) {
+        const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]?\d+)?/);
+        if (damageMatch) {
+          const [, dice, existingMod] = damageMatch;
+          const baseModifier = existingMod ? parseInt(existingMod) : 0;
+          if (baseModifier !== 0) {
+            damageBreakdown.push({ value: baseModifier, source: 'base' });
           }
-        }
-        if ((numericModifier !== 0 || stringModifiers.length > 0) && damageToRoll) {
-          const damageMatch = damageToRoll.match(/(\d+d\d+)([+-]\d+)?/);
-          if (damageMatch) {
-            const [, dice, existingMod] = damageMatch;
-            const baseModifier = existingMod ? parseInt(existingMod) : 0;
-            const totalModifier = baseModifier + numericModifier;
-            let newDamage = `${dice}`;
-            if (totalModifier !== 0) {
-              newDamage += `${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+
+          // Apply active state bonuses to damage notation and track in breakdown
+          if ($character.activeStates && $character.activeStates.length > 0) {
+            let numericModifier = 0;
+            let stringModifiers: string[] = [];
+            for (const state of $character.activeStates) {
+              if (state.target === 'other') continue;
+              if (typeof state.damageBonus === 'string') {
+                stringModifiers.push(state.damageBonus);
+                damageBreakdown.push({ value: state.damageBonus, source: state.name });
+              } else if (typeof state.damageBonus === 'number' && state.damageBonus !== 0) {
+                numericModifier += state.damageBonus;
+                damageBreakdown.push({ value: state.damageBonus, source: state.name });
+              }
             }
-            if (stringModifiers.length > 0) {
-              newDamage += ' + ' + stringModifiers.join(' + ');
+            
+            if (numericModifier !== 0 || stringModifiers.length > 0) {
+              const totalModifier = baseModifier + numericModifier;
+              let newDamage = `${dice}`;
+              if (totalModifier !== 0) {
+                newDamage += `${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+              }
+              if (stringModifiers.length > 0) {
+                newDamage += ' + ' + stringModifiers.join(' + ');
+              }
+              damageToRoll = newDamage;
             }
-            damageToRoll = newDamage;
           }
         }
       }
@@ -254,11 +265,11 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
       for (const state of $character.activeStates) {
         if (state.target === 'other') continue;
         if (typeof state.attackBonus === 'number' && state.attackBonus !== 0) {
-          bonusBreakdown.push({ value: state.attackBonus, source: state.name.toLowerCase() });
+          bonusBreakdown.push({ value: state.attackBonus, source: state.name });
           attackBonus += state.attackBonus;
         } else if (typeof state.attackBonus === 'string' && state.attackBonus) {
           stringAttackBonuses.push(state.attackBonus);
-          // Do not push string to bonusBreakdown (type error fix)
+          bonusBreakdown.push({ value: state.attackBonus, source: state.name });
         }
       }
     }
@@ -279,6 +290,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
       attackName: attack.name,
       applyHalfDamage,
       bonusBreakdown,
+      damageBreakdown,
       rollType: 'attack'
     });
   }
@@ -291,7 +303,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
-    const bonusBreakdown: Array<{ value: number; source: string }> = [];
+    const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
     let damageType = attack.damageType || '';
 
     // If this is a spell, handle slot consumption and scaling
@@ -365,11 +377,12 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
           let numericModifier = 0;
           let stringModifiers: string[] = [];
           for (const state of $character.activeStates) {
-            if (state.target === 'other') continue; // Skip states targeting others
+            if (state.target === 'other') continue;
             if (typeof state.damageBonus === 'string') {
               stringModifiers.push(state.damageBonus);
+              bonusBreakdown.push({ value: state.damageBonus, source: state.name });
             } else if (typeof state.damageBonus === 'number' && state.damageBonus !== 0) {
-              bonusBreakdown.push({ value: state.damageBonus, source: state.name.toLowerCase() });
+              bonusBreakdown.push({ value: state.damageBonus, source: state.name });
               numericModifier += state.damageBonus;
             }
           }

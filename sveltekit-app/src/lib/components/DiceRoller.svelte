@@ -15,12 +15,14 @@
   export let applyHalfDamage = false; // If true, halve the result after rolling
   export let bonusBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown of bonuses by source
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
+  export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
 
   let diceBox: any = null;
   let diceContainer: HTMLDivElement | undefined = undefined;
   let isInitialized = false;
   let lastRolledNotation = '';
   let rollResult: any = null;
+  let currentRollNotation = ''; // Track the notation actually used for the current roll
 
   // Export function to get last roll total
   export function getLastRollTotal(): number | null {
@@ -38,11 +40,12 @@
     if (!result || !result.result) return parts;
 
     // Parse the notation to identify dice rolls
-    // Example: "1d20+6+1d4" -> we need to identify the dice positions
+    // Example: "1d8+3+1d4+1d4" -> we need to identify the dice positions and their sources
     const notationParts = notation.match(/([+-]?\d*d\d+|[+-]?\d+)/g) || [];
 
     let resultIndex = 0; // Track position in result.result array
     const usedBreakdown = new Set<number>();
+    let isFirstDiceRoll = true; // Track if this is the first dice roll (base weapon damage)
 
     for (const part of notationParts) {
       const trimmed = part.trim();
@@ -52,9 +55,9 @@
       const diceMatch = trimmed.match(/([+-]?)(\d*)d(\d+)/);
       if (diceMatch) {
         const count = parseInt(diceMatch[2] || '1');
-
-        // Check if this dice roll matches a string bonus from breakdown (like Bless's "1d4")
         const diceNotation = `${count}d${diceMatch[3]}`;
+
+        // Try to find matching breakdown entry
         const matchingIndex = breakdown.findIndex(
           (b, idx) =>
             !usedBreakdown.has(idx) && typeof b.value === 'string' && b.value === diceNotation
@@ -66,21 +69,32 @@
           diceValues.push(result.result[resultIndex++]);
         }
 
-        const source = matchingIndex >= 0 ? breakdown[matchingIndex].source : 'base die';
-        if (matchingIndex >= 0) usedBreakdown.add(matchingIndex);
+        // Determine source: if we found a matching breakdown entry, use it; otherwise it's base damage
+        let source: string;
+        if (matchingIndex >= 0) {
+          source = breakdown[matchingIndex].source;
+          usedBreakdown.add(matchingIndex);
+        } else if (isFirstDiceRoll) {
+          source = 'base';
+        } else {
+          // Additional dice without explicit source (shouldn't happen with proper breakdown)
+          source = 'base';
+        }
 
-        // Show each die result separately
+        // Show each die result separately with its source
         for (const value of diceValues) {
           parts.push({
             display: `${value}`,
             source: source
           });
         }
+
+        isFirstDiceRoll = false;
       }
     }
 
     // Now add all numeric bonuses from the breakdown (not from parsing notation)
-    // This ensures we show each bonus component separately (e.g., +5 attack, +1 magic weapon)
+    // This ensures we show each bonus component separately (e.g., +3 STR, +1 magic weapon)
     for (let i = 0; i < breakdown.length; i++) {
       if (!usedBreakdown.has(i) && typeof breakdown[i].value === 'number') {
         const numValue = breakdown[i].value;
@@ -104,7 +118,7 @@
   let modifier = 0;
 
   // Follow-up actions for multi-step rolls
-  let followUpActions: Array<{ label: string; notation: string }> = [];
+  let followUpActions: Array<{ label: string; notation: string; breakdown?: Array<{ value: number | string; source: string }> }> = [];
   let isCriticalSuccess = false;
   let isCriticalFail = false;
   let guidedStrikeUsed = false;
@@ -272,21 +286,20 @@
       return;
     }
 
-    // console.log('Rolling dice:', notation, 'type:', type);
-
     // Clear previous roll result and state when starting a new roll
     rollResult = null;
     followUpActions = [];
     isCriticalSuccess = false;
     isCriticalFail = false;
 
-    // Clear bonus breakdown when rolling damage (we don't want attack bonuses showing for damage rolls)
-    if (type === 'damage') {
-      bonusBreakdown = [];
-    }
+    // DON'T clear bonus breakdown - it should be set by the caller before calling this function
+    // (either from rollAttack/rollDamage in Attacks.svelte or from follow-up action click)
 
     rollType = type;
     guidedStrikeUsed = false; // Reset Guided Strike usage for new rolls
+
+    // Store the notation being used for this roll
+    currentRollNotation = notation;
 
     // Set the dice notation before throwing
     diceBox.diceToRoll = notation;
@@ -313,9 +326,6 @@
         resultString
       };
 
-      console.log('Final roll result:', rollResult);
-      console.log({ type });
-
       // Detect critical hits/fails on d20 rolls (check first die roll)
       if (type === 'attack') {
         if (notationObj.result && notationObj.result.length > 0) {
@@ -329,35 +339,32 @@
 
       // Set up follow-up actions based on roll type
       followUpActions = [];
-      console.log(
-        'Setting up follow-up actions. Type:',
-        type,
-        'damageNotation:',
-        damageNotation,
-        'isCriticalSuccess:',
-        isCriticalSuccess,
-        'isCriticalFail:',
-        isCriticalFail
-      );
       if (type === 'attack') {
         // If damage notation is provided, offer to roll damage
         if (damageNotation) {
           if (isCriticalSuccess) {
             // Double dice for critical hits (5e rules)
             const critDamage = doubleDiceNotation(damageNotation);
-            // console.log('Creating critical damage button:', critDamage);
+            // For critical hits, we need to double the dice in the breakdown too
+            const critBreakdown = damageBreakdown.map(b => {
+              if (typeof b.value === 'string' && b.value.match(/^\d+d\d+$/)) {
+                const doubled = doubleDiceNotation(b.value);
+                return { ...b, value: doubled };
+              }
+              return b;
+            });
             followUpActions.push({
               label: `Roll Critical Damage (${critDamage})`,
-              notation: critDamage
+              notation: critDamage,
+              breakdown: critBreakdown
             });
           } else if (isCriticalFail) {
             // No damage on critical fail
-            // console.log('No damage roll on critical fail');
           } else {
-            // console.log('Creating normal damage button:', damageNotation);
             followUpActions.push({
               label: `Roll Damage (${damageNotation})`,
-              notation: damageNotation
+              notation: damageNotation,
+              breakdown: damageBreakdown
             });
           }
           // console.log('Follow-up actions after setup:', followUpActions);
@@ -441,12 +448,15 @@
   function useGuidedStrike() {
     if (!rollResult || channelDivinityRemaining <= 0 || guidedStrikeUsed) return;
 
-    // Add 10 to the result
+    // Add 10 to the result and breakdown
     rollResult = {
       ...rollResult,
       resultTotal: rollResult.resultTotal + 10,
       resultString: rollResult.resultString + ' + 10 (Guided Strike)'
     };
+
+    // Add to bonusBreakdown so it shows in the display
+    bonusBreakdown = [...bonusBreakdown, { value: 10, source: 'Guided Strike' }];
 
     // Consume Channel Divinity
     character.update((c) => {
@@ -470,16 +480,6 @@
     isCriticalSuccess = false;
     isCriticalFail = false;
     guidedStrikeUsed = false;
-    console.log(
-      'Auto-roll triggered. notation:',
-      notation,
-      'damageNotation:',
-      damageNotation,
-      'attackName:',
-      attackName,
-      'rollType:',
-      rollType
-    );
     setTimeout(() => rollDice(notation, rollType), 200);
   }
 
@@ -690,7 +690,7 @@
           {#if rollResult.constant || bonusBreakdown.length > 0}
             {#if bonusBreakdown.length > 0}
               <div class="bonus-breakdown">
-                {#each breakdownRollResult(rollResult, notation, bonusBreakdown) as part}
+                {#each breakdownRollResult(rollResult, currentRollNotation, bonusBreakdown) as part}
                   <div class="bonus-item">
                     <span class="bonus-value">{part.display}</span>
                     <span class="bonus-source">({part.source})</span>
@@ -714,7 +714,10 @@
             {#each followUpActions as action}
               <button
                 class="btn btn-follow-up"
-                on:click={() => rollDice(action.notation, 'damage')}
+                on:click={() => {
+                  bonusBreakdown = action.breakdown || [];
+                  rollDice(action.notation, 'damage');
+                }}
               >
                 {action.label}
               </button>
