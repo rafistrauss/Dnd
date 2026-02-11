@@ -282,7 +282,10 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
       {
         name: 'Channel Divinity',
         type: 'pool',
-        maxPool: (level) => (level >= 18 ? 3 : level >= 6 ? 2 : 1),
+        // These are the 2014 rules
+        // maxPool: (level) => (level >= 18 ? 3 : level >= 6 ? 2 : 1),
+        // These are the 2024 rules: 
+        maxPool: (level) => (level >= 18 ? 4 : level >= 6 ? 3 : 2),
         resetOn: 'short',
         description: 'Turn Undead or domain-specific ability',
         minLevel: 2

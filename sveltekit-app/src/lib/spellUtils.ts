@@ -22,7 +22,8 @@ export function getSavingThrowInfo(
   const ability = match[1].toLowerCase();
 
   // Check if the spell does half damage on a successful save
-  const halfDamagePattern = /half\s+(?:as\s+much\s+)?damage\s+on\s+a\s+successful(?:\s+save)?/i;
+  // Match both "half damage on a successful save" and "on a successful save, ... half damage"
+  const halfDamagePattern = /half\s+(?:as\s+much\s+)?damage\s+on\s+a\s+successful(?:\s+save)?|on\s+a\s+successful(?:\s+save)?[^.]*half\s+(?:as\s+much\s+)?damage/i;
   const halfDamageOnSave = halfDamagePattern.test(description);
 
   // Check if the spell does no damage on a successful save (pattern: "or take damage")
@@ -69,7 +70,7 @@ export function isBuffSpell(spell: Spell): boolean {
   const description = spell.description.toLowerCase();
 
   // Specific spells that are always buff/utility spells
-  const buffSpellNames = ['Divine Favor', 'Bless', 'Aid', 'Command'];
+  const buffSpellNames = ['Divine Favor', 'Bless', 'Aid', 'Command', 'Crusader\'s Mantle'];
   if (buffSpellNames.includes(spell.name)) {
     return true;
   }
@@ -180,6 +181,11 @@ export function extractSpellEffectBonuses(spell: Spell): SpellState | null {
   if (spell.name === 'Haste') {
     effectDescription = '+2 AC, doubled speed, extra action';
     acBonus = 2;
+  }
+
+  if (spell.name === "Crusader's Mantle") {
+    effectDescription = 'Your weapon attacks deal an extra 1d4 radiant damage on a hit.';
+    damageBonus = '1d4';
   }
 
   // If we found any effect, return it

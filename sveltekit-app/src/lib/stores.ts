@@ -292,9 +292,14 @@ export function initializeRacialTraits() {
     if (!char.racialTraits) {
       char.racialTraits = { uses: {} };
     }
-    
+    // Ensure uses is always an object
+    if (!char.racialTraits) {
+      char.racialTraits = { uses: {} };
+    }
+    if (!char.racialTraits!.uses) {
+      char.racialTraits!.uses = {};
+    }
     const racialSpells = getRacialSpellsForLevel(char.race, char.level);
-    
     // Initialize uses for spells that have limited uses
     racialSpells.forEach((spell) => {
       if (spell.usesPerRest !== undefined && spell.restType) {
@@ -311,7 +316,6 @@ export function initializeRacialTraits() {
         }
       }
     });
-    
     return char;
   });
 }
