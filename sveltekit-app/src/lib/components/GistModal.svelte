@@ -55,8 +55,13 @@
   }
 
   function selectGist(gist: GistInfo) {
-    selectedGist = gist;
-    gistId = gist.id;
+    if (selectedGist?.id === gist.id) {
+      selectedGist = null;
+      gistId = '';
+    } else {
+      selectedGist = gist;
+      gistId = gist.id;
+    }
   }
 
   function toggleEntryMode() {
