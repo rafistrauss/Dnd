@@ -163,15 +163,17 @@ export type ResetType = 'short' | 'long';
 export type FeatureType = 'uses' | 'pool' | 'spellSlot' | 'info' | 'channelDivinity';
 
 export interface ClassFeature {
-  name: string;
+  name: string | ((level: number, abilityMod?: number) => string);
+  subName?: string | ((level: number) => string | null);
   type: FeatureType;
   maxUses?: number | ((level: number, abilityMod?: number) => number);
   maxPool?: number | ((level: number) => number);
   resetOn?: ResetType;
-  description: string | ((level: number) => string);
+  description: string | ((level: number, abilityMod?: number) => string);
   minLevel?: number;
   rollable?: boolean;
-  rollFormula?: string | ((level: number) => string);
+  rollFormula?: string | ((level: number, abilityMod?: number) => string);
+  subFeatures?: ClassFeature[];
 }
 
 export interface SubclassConfig {

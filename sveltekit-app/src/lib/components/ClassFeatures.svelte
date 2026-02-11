@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import SlotCheckbox from './SlotCheckbox.svelte';
   import RacialTraits from './RacialTraits.svelte';
-  import { character, abilityModifiers, searchFilter, collapsedStates } from '$lib/stores';
+  import { character, abilityModifiers, searchFilter, collapsedStates, toasts } from '$lib/stores';
   import { afterUpdate } from 'svelte';
   import {
     getClassConfig,
@@ -10,8 +11,11 @@
     getPreparedSpellsCount,
     getSpellSaveDC
   } from '$lib/classConfig';
+  import { rollDice } from '$lib/diceUtils';
   import SectionHeader from './SectionHeader.svelte';
   ``;
+
+  const dispatch = createEventDispatcher();
 
   $: classConfig = $character.class ? getClassConfig($character.class) : null;
   $: features = $character.class
@@ -148,7 +152,8 @@
       let changed = false;
       filteredFeatures.forEach((feature) => {
         if (feature.type === 'uses') {
-          const featureKey = feature.name.replace(/\s+/g, '');
+          const featureName = getFeatureName(feature);
+          const featureKey = featureName.replace(/\s+/g, '');
           const maxUses = getMaxUses(feature);
           const arr = $character.classFeatures.features[featureKey];
           if (!Array.isArray(arr) || arr.length !== maxUses) {
@@ -169,20 +174,82 @@
 
   function getDescription(feature: any): string {
     if (typeof feature.description === 'function') {
+      // For features that need ability modifier (like Turn Undead)
+      if (classConfig?.spellcastingAbility) {
+        const abilityMod = $abilityModifiers[classConfig.spellcastingAbility];
+        return feature.description($character.level, abilityMod);
+      }
       return feature.description($character.level);
     }
     return feature.description;
   }
 
-  function useChannelDivinity() {
-    const channelDivinityKey = 'ChannelDivinity';
-    character.update((c) => {
-      const current = c.classFeatures.features[channelDivinityKey];
-      if (typeof current === 'number' && current > 0) {
-        c.classFeatures.features[channelDivinityKey] = current - 1;
+  function getFeatureName(feature: any): string {
+    if (typeof feature.name === 'function') {
+      // For features with dynamic names (like Turn Undead -> Sear Undead)
+      if (classConfig?.spellcastingAbility) {
+        const abilityMod = $abilityModifiers[classConfig.spellcastingAbility];
+        return feature.name($character.level, abilityMod);
       }
-      return c;
-    });
+      return feature.name($character.level);
+    }
+    return feature.name;
+  }
+
+  function getFeatureSubName(feature: any): string | null {
+    if (typeof feature.subName === 'function') {
+      // For features with dynamic sub-names
+      if (classConfig?.spellcastingAbility) {
+        const abilityMod = $abilityModifiers[classConfig.spellcastingAbility];
+        return feature.subName($character.level, abilityMod);
+      }
+      return feature.subName($character.level);
+    }
+    return feature.subName || null;
+  }
+
+  function getRollFormula(feature: any): string {
+    if (typeof feature.rollFormula === 'function') {
+      // For features that need ability modifier (like Turn Undead)
+      if (classConfig?.spellcastingAbility) {
+        const abilityMod = $abilityModifiers[classConfig.spellcastingAbility];
+        return feature.rollFormula($character.level, abilityMod);
+      }
+      return feature.rollFormula($character.level);
+    }
+    return feature.rollFormula || '';
+  }
+
+  function useChannelDivinityWithRoll(feature: any) {
+    const channelDivinityKey = 'ChannelDivinity';
+    const current = $character.classFeatures.features[channelDivinityKey];
+    
+    if (typeof current === 'number' && current > 0) {
+      // Consume Channel Divinity
+      character.update((c) => {
+        c.classFeatures.features[channelDivinityKey] = current - 1;
+        return c;
+      });
+      
+      const featureName = getFeatureName(feature);
+      
+      // If the feature is rollable, open the dice roller
+      if (feature.rollable && feature.rollFormula) {
+        const formula = getRollFormula(feature);
+        if (formula) {
+          // Dispatch roll event to open DiceRoller
+          dispatch('roll', {
+            notation: formula,
+            attackName: featureName,
+            rollType: 'other'
+          });
+        } else {
+          toasts.add(`Used ${featureName}`, 'info');
+        }
+      } else {
+        toasts.add(`Used ${featureName}`, 'info');
+      }
+    }
   }
 
   // Reactive variable to track Channel Divinity availability
@@ -199,9 +266,40 @@
   $: filteredFeatures = features.filter((feature) => {
     if (!$searchFilter) return true;
     const filter = $searchFilter.toLowerCase();
+    const featureName = getFeatureName(feature);
     return (
-      feature.name.toLowerCase().includes(filter) ||
+      featureName.toLowerCase().includes(filter) ||
       getDescription(feature).toLowerCase().includes(filter)
+    );
+  });
+
+  // Consolidate all Channel Divinity features into one
+  $: channelDivinityPoolFeature = filteredFeatures.find((f) => f.type === 'pool' && getFeatureName(f) === 'Channel Divinity');
+  
+  $: allChannelDivinitySubFeatures = filteredFeatures.flatMap((feature) => {
+    const subFeats: any[] = [];
+    // Get subFeatures from any feature that has them
+    if (feature.subFeatures) {
+      subFeats.push(...feature.subFeatures);
+    }
+    // Include standalone channelDivinity features (not the pool itself)
+    if (feature.type === 'channelDivinity') {
+      subFeats.push(feature);
+    }
+    return subFeats;
+  });
+
+  // Filter out Channel Divinity related features from the main list
+  $: nonChannelDivinityFeatures = filteredFeatures.filter((feature) => {
+    const featureName = getFeatureName(feature);
+    // Keep features that are NOT:
+    // - The Channel Divinity pool
+    // - A channelDivinity type feature
+    // - A feature with the name "Channel Divinity" (like the info box)
+    return !(
+      (feature.type === 'pool' && featureName === 'Channel Divinity') ||
+      feature.type === 'channelDivinity' ||
+      (featureName === 'Channel Divinity' && feature.subFeatures)
     );
   });
 
@@ -227,6 +325,75 @@
     {:else if features.length === 0}
       <p class="no-features">No class features available at this level</p>
     {:else}
+      <!-- Consolidated Channel Divinity Box - Full Width -->
+      {#if channelDivinityPoolFeature}
+        {@const featureName = getFeatureName(channelDivinityPoolFeature)}
+        {@const featureKey = featureName.replace(/\s+/g, '')}
+        {@const featureData = $character.classFeatures.features[featureKey]}
+        {@const isNumericData = typeof featureData === 'number'}
+        {@const maxPool = getMaxPool(channelDivinityPoolFeature)}
+        
+        <div class="feature-box channel-divinity-main">
+          <h3>{featureName}</h3>
+          <p class="feature-description">{@html getDescription(channelDivinityPoolFeature)}</p>
+
+          <div class="pool-tracker">
+            <input
+              type="number"
+              value={isNumericData && featureData !== undefined ? featureData : maxPool}
+              on:input={(e) => {
+                character.update((c) => {
+                  c.classFeatures.features[featureKey] = parseInt(e.currentTarget.value) || 0;
+                  return c;
+                });
+              }}
+              min="0"
+              max={maxPool}
+              class="pool-input"
+            />
+            <span>/ {maxPool}</span>
+            <button on:click={() => resetPool(featureKey, maxPool)} class="btn-small">
+              {channelDivinityPoolFeature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}
+            </button>
+          </div>
+
+          <!-- All Channel Divinity Sub-Features -->
+          {#if allChannelDivinitySubFeatures.length > 0}
+            <div class="sub-features-grid">
+              {#each allChannelDivinitySubFeatures as subFeature}
+                {@const subFeatureName = getFeatureName(subFeature)}
+                <div class="sub-feature-box">
+                  <h4>{subFeatureName}</h4>
+                  {#if subFeature.subName}
+                    <h5>{getFeatureSubName(subFeature)}</h5>
+                  {/if}
+                  <p class="feature-description">{@html getDescription(subFeature)}</p>
+
+                  {#if subFeature.type === 'channelDivinity'}
+                    <div class="channel-divinity-option">
+                      <button
+                        on:click={() => useChannelDivinityWithRoll(subFeature)}
+                        disabled={channelDivinityRemaining <= 0}
+                        class="btn btn-primary use-enabled"
+                      >
+                        {#if subFeature.rollable && getRollFormula(subFeature)}
+                          Roll {subFeatureName}
+                        {:else}
+                          Use {subFeatureName}
+                        {/if}
+                      </button>
+                      {#if channelDivinityRemaining <= 0}
+                        <p class="no-uses">No Channel Divinity uses remaining</p>
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+
       <div class="features-grid">
         {#if classConfig?.spellcaster}
           <div class="feature-box spellcasting">
@@ -289,8 +456,9 @@
           </div>
         {/if}
 
-        {#each filteredFeatures as feature}
-          {@const featureKey = feature.name.replace(/\s+/g, '')}
+        {#each nonChannelDivinityFeatures as feature}
+          {@const featureName = getFeatureName(feature)}
+          {@const featureKey = featureName.replace(/\s+/g, '')}
           {@const featureData = $character.classFeatures.features[featureKey]}
           {@const isArrayData = Array.isArray(featureData)}
           {@const isNumericData = typeof featureData === 'number'}
@@ -299,7 +467,7 @@
               {#if feature.type === 'channelDivinity'}
                 Channel Divinity:
               {/if}
-              {feature.name}
+              {featureName}
             </h3>
             <p class="feature-description">{getDescription(feature)}</p>
 
@@ -348,7 +516,7 @@
                       disabled={usesArr.filter((u) => !u).length <= 0}
                       class="btn btn-primary use-enabled"
                     >
-                      Use {feature.name}
+                      Use {featureName}
                     </button>
                   </div>
                   <div class="uses-info">
@@ -378,24 +546,6 @@
                 <button on:click={() => resetPool(featureKey, maxPool)} class="btn-small">
                   {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}
                 </button>
-              </div>
-            {:else if feature.type === 'channelDivinity'}
-              <div class="channel-divinity-option">
-                <button
-                  on:click={useChannelDivinity}
-                  disabled={channelDivinityRemaining <= 0}
-                  class="btn btn-primary use-enabled"
-                >
-                  Use Channel Divinity
-                </button>
-                <div class="uses-info">
-                  <span class="reset-info"
-                    >Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span
-                  >
-                </div>
-                {#if channelDivinityRemaining <= 0}
-                  <p class="no-uses">No Channel Divinity uses remaining</p>
-                {/if}
               </div>
             {/if}
           </div>
@@ -473,7 +623,7 @@
 
   .feature-description {
     font-size: 0.9rem;
-    color: #555;
+    color: var(--text-color);
     margin-bottom: 10px;
   }
 
@@ -637,5 +787,69 @@
     color: #666;
     font-size: 0.85rem;
     font-style: italic;
+  }
+
+  .sub-features {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .sub-feature-box {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  .sub-feature-box:last-child {
+    margin-bottom: 0;
+  }
+
+  .sub-feature-box h4 {
+    margin: 0 0 8px 0;
+    color: var(--primary-color);
+    font-size: 1rem;
+  }
+
+  .sub-feature-box h5 {
+    margin: 0 0 8px 0;
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  .sub-feature-box .feature-description {
+    margin-bottom: 10px;
+  }
+
+  .sub-feature-box .channel-divinity-option {
+    margin-top: 10px;
+  }
+
+  .channel-divinity-main {
+    border: 2px solid var(--primary-color);
+    background: linear-gradient(to bottom, var(--card-bg-secondary), var(--card-bg));
+    margin-bottom: 20px;
+  }
+
+  .channel-divinity-main h3 {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+  }
+
+  .full-width {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .sub-features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
   }
 </style>

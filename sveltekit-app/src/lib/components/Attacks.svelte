@@ -1165,9 +1165,10 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
                   <label for="state-attack-bonus-{index}">Attack Bonus</label>
                   <input
                     id="state-attack-bonus-{index}"
-                    type="number"
+                    type="text"
                     bind:value={state.attackBonus}
                     class="state-bonus"
+                    placeholder="0 or 1d4"
                   />
                 </div>
                 <div class="state-field">

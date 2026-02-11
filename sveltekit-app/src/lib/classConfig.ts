@@ -291,13 +291,32 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         minLevel: 2
       },
       {
-        name: 'Destroy Undead',
-        type: 'info',
-        description: (level) => {
-          const cr = level >= 17 ? 4 : level >= 14 ? 3 : level >= 11 ? 2 : level >= 8 ? 1 : 0.5;
-          return `Channel Divinity destroys undead of CR ${cr} or lower`;
+        name: (level) => {
+          if (level >= 5) return 'Sear Undead';
+          return 'Turn Undead';
         },
-        minLevel: 5
+        subName: (level) => (level >= 5 ? 'Improved Turn Undead' : null),
+        type: 'channelDivinity',
+        description: (level, wisMod = 1) => {
+          let description = 'As a Magic action, you present your Holy Symbol and censure Undead creatures. Each Undead of your choice within 30 feet of you must make a Wisdom saving throw. If the creature fails its save, it has the Frightened and Incapacitated conditions for 1 minute. For that duration, it tries to move as far from you as it can on its turns. This effect ends early on the creature if it takes any damage, if you have the Incapacitated condition, or if you die.';
+
+          if (level >= 5) {
+            const diceCount = Math.max(1, wisMod);
+            description += ` <br /><br />
+            
+          With Sear Undead, roll ${diceCount}d8 radiant damage to turned undead.`;
+          }
+          return description;
+        },
+        minLevel: 2,
+        rollable: true,
+        rollFormula: (level, wisMod = 1) => {
+          if (level >= 5) {
+            const diceCount = Math.max(1, wisMod);
+            return `${diceCount}d8`;
+          }
+          return '';
+        }
       },
       {
         name: 'Divine Intervention',
@@ -321,20 +340,27 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
             minLevel: 1
           },
           {
-            name: 'Guided Strike',
-            type: 'channelDivinity',
-            description:
-              'Use your Channel Divinity to gain +10 to an attack roll. Make this choice after you see the roll, but before the DM says whether the attack hits or misses.',
+            name: 'Channel Divinity',
+            type: 'info',
+            description: 'Additional Channel Divinity options from War Domain',
             minLevel: 2,
-            resetOn: 'short'
-          },
-          {
-            name: "War God's Blessing",
-            type: 'channelDivinity',
-            description:
-              "Use reaction to grant +10 to an ally's attack roll within 30 feet. Consumes one use of Channel Divinity.",
-            minLevel: 6,
-            resetOn: 'short'
+            subFeatures: [
+              {
+                name: 'Guided Strike',
+                type: 'channelDivinity',
+                description:
+                  'Use your Channel Divinity to gain +10 to an attack roll. Make this choice after you see the roll, but before the DM says whether the attack hits or misses.',
+                minLevel: 2
+              },
+              {
+                name: "War God's Blessing",
+                type: 'channelDivinity',
+                description:
+                  "Use reaction to grant +10 to an ally's attack roll within 30 feet. Consumes one use of Channel Divinity.",
+                minLevel: 6,
+                resetOn: 'short'
+              }
+            ]
           },
           {
             name: 'Divine Strike',

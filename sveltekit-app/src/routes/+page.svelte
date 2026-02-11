@@ -136,19 +136,20 @@
 
         availableFeatures.forEach((feature) => {
           if (feature.resetOn === 'short') {
-            const featureKey = feature.name.replace(/\s+/g, '');
+            const featureName = typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
+            const featureKey = featureName.replace(/\s+/g, '');
 
             if (feature.type === 'uses') {
               const maxUses =
                 typeof feature.maxUses === 'function' ? feature.maxUses(c.level) : feature.maxUses;
               c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
-              restoredItems.push(feature.name);
+              restoredItems.push(featureName);
             } else if (feature.type === 'pool') {
               const maxPool =
                 typeof feature.maxPool === 'function' ? feature.maxPool(c.level) : feature.maxPool;
               if (maxPool !== undefined) {
                 c.classFeatures.features[featureKey] = maxPool;
-                restoredItems.push(feature.name);
+                restoredItems.push(featureName);
               }
             }
           }
@@ -243,7 +244,8 @@
 
         let featuresRestored = false;
         availableFeatures.forEach((feature) => {
-          const featureKey = feature.name.replace(/\s+/g, '');
+          const featureName = typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
+          const featureKey = featureName.replace(/\s+/g, '');
 
           // Skip info and channelDivinity types - they don't store state
           // 'info' features are passive, 'channelDivinity' features consume from the Channel Divinity pool
@@ -334,6 +336,7 @@
           attackName?: string;
           applyHalfDamage?: boolean;
           bonusBreakdown?: Array<{ value: number | string; source: string }>;
+          damageBreakdown?: Array<{ value: number | string; source: string }>;
           rollType?: 'attack' | 'damage' | 'check' | 'save' | 'other';
         }
   ) {
@@ -735,7 +738,7 @@
     <CombatStats on:rollHitDice={handleHitDiceRoll} />
     <DamageInput />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
-    <ClassFeatures />
+    <ClassFeatures on:roll={(e) => openDiceRoller(e.detail)} />
     <Notes />
   </main>
 </div>
@@ -818,7 +821,7 @@
     --primary-color: #dc5757; /* coral red accent */
     --primary-color-hover: #c94545;
     --primary-color--disabled: #5a3030;
-    --secondary-color: #3d4a5c; /* slate blue-gray */
+    --secondary-color: #7798c5; /* slate blue-gray */
     --bg-color: #0a0a0a; /* pure dark background */
     --card-bg: #161616; /* very dark cards */
     --card-bg-secondary: #1f1f1f; /* slightly lighter dark cards */
