@@ -818,9 +818,9 @@
   }
 
   :global(body.dark-mode) {
-    --primary-color: #dc5757; /* coral red accent */
-    --primary-color-hover: #c94545;
-    --primary-color--disabled: #5a3030;
+    --primary-color: #25a7d4; /* vibrant blue */
+    --primary-color-hover: #3ab0e5; /* lighter vibrant blue */
+    --primary-color--disabled: #1a6f8c; /* muted blue */
     --secondary-color: #7798c5; /* slate blue-gray */
     --bg-color: #0a0a0a; /* pure dark background */
     --card-bg: #161616; /* very dark cards */

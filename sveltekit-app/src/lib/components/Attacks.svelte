@@ -1539,7 +1539,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   .section-description {
     margin: 0 0 15px 0;
-    color: #666;
+    color: var(--secondary-color);
     font-size: 0.9rem;
     font-style: italic;
   }
@@ -1642,7 +1642,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   .abilities-header {
     margin: 0 0 10px 0;
-    color: #2c5aa0;
+    color: var(--secondary-color);
     font-size: 1.3rem;
   }
 
@@ -1669,14 +1669,14 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   }
 
   .ability-name {
-    color: #2c5aa0;
+    color: var(--secondary-color);
     margin: 0;
     font-size: 1.1rem;
     font-weight: bold;
   }
 
   .ability-source {
-    color: #5a7ba8;
+    color: var(--secondary-color);
     font-size: 0.85rem;
     font-style: italic;
   }
