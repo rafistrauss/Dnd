@@ -153,12 +153,19 @@ function setupEventListeners() {
     // Export button
     document.getElementById('exportBtn').addEventListener('click', exportCharacter);
     
-    // Import button
-    document.getElementById('importBtn').addEventListener('click', () => {
-        document.getElementById('fileInput').click();
-    });
+    // Import button - now opens the JSON paste modal
+    document.getElementById('importBtn').addEventListener('click', openImportJsonModal);
     
     document.getElementById('fileInput').addEventListener('change', importCharacter);
+    
+    // Import JSON modal buttons
+    document.getElementById('importFileLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('fileInput').click();
+    });
+    document.getElementById('importJsonConfirm').addEventListener('click', importFromPastedJson);
+    document.getElementById('cancelImport').addEventListener('click', closeImportJsonModal);
+    document.querySelector('.close-import').addEventListener('click', closeImportJsonModal);
     
     // Gist buttons
     document.getElementById('saveToGistBtn').addEventListener('click', openGistModal.bind(null, 'save'));
@@ -345,6 +352,9 @@ function setupEventListeners() {
         if (e.target === document.getElementById('diceRollerModal')) {
             closeDiceRollerModal();
         }
+        if (e.target === document.getElementById('importJsonModal')) {
+            closeImportJsonModal();
+        }
     });
     
     // Close modals with Escape key
@@ -353,6 +363,7 @@ function setupEventListeners() {
             const rollModal = document.getElementById('rollModal');
             const gistModal = document.getElementById('gistModal');
             const diceRollerModal = document.getElementById('diceRollerModal');
+            const importJsonModal = document.getElementById('importJsonModal');
             
             if (rollModal.style.display === 'block') {
                 closeModal();
@@ -362,6 +373,9 @@ function setupEventListeners() {
             }
             if (diceRollerModal.style.display === 'block') {
                 closeDiceRollerModal();
+            }
+            if (importJsonModal.style.display === 'block') {
+                closeImportJsonModal();
             }
         }
     });
@@ -1247,25 +1261,41 @@ function populateForm() {
     
     // Class features
     if (character.classFeatures) {
-        document.getElementById('layOnHandsPool').value = character.classFeatures.layOnHandsPool || 15;
-        document.getElementById('preparedSpells').value = character.classFeatures.preparedSpells || '';
+        const layOnHandsPool = document.getElementById('layOnHandsPool');
+        if (layOnHandsPool) {
+            layOnHandsPool.value = character.classFeatures.layOnHandsPool || 15;
+        }
+        
+        const preparedSpells = document.getElementById('preparedSpells');
+        if (preparedSpells) {
+            preparedSpells.value = character.classFeatures.preparedSpells || '';
+        }
         
         // Divine Sense
         if (character.classFeatures.divineSense) {
             [1, 2, 3].forEach((num, idx) => {
-                document.getElementById(`divineSense${num}`).checked = character.classFeatures.divineSense[idx] || false;
+                const elem = document.getElementById(`divineSense${num}`);
+                if (elem) {
+                    elem.checked = character.classFeatures.divineSense[idx] || false;
+                }
             });
         }
         
         // Spell Slots
         if (character.classFeatures.spellSlots) {
             [1, 2, 3, 4].forEach((num, idx) => {
-                document.getElementById(`spellSlot1_${num}`).checked = character.classFeatures.spellSlots[idx] || false;
+                const elem = document.getElementById(`spellSlot1_${num}`);
+                if (elem) {
+                    elem.checked = character.classFeatures.spellSlots[idx] || false;
+                }
             });
         }
         
         // Channel Divinity
-        document.getElementById('channelDivinity').checked = character.classFeatures.channelDivinity || false;
+        const channelDivinity = document.getElementById('channelDivinity');
+        if (channelDivinity) {
+            channelDivinity.checked = character.classFeatures.channelDivinity || false;
+        }
     }
     
     // Update spell save DC
@@ -1290,6 +1320,9 @@ function exportCharacter() {
 function importCharacter(event) {
     const file = event.target.files[0];
     if (!file) return;
+    
+    // Close the import modal if it's open
+    closeImportJsonModal();
     
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1446,6 +1479,44 @@ function closeDiceRollerModal() {
     document.getElementById('diceRollerModal').style.display = 'none';
 }
 
+// Import JSON Modal functions
+function openImportJsonModal() {
+    const modal = document.getElementById('importJsonModal');
+    document.getElementById('jsonPasteArea').value = '';
+    modal.style.display = 'block';
+}
+
+function closeImportJsonModal() {
+    document.getElementById('importJsonModal').style.display = 'none';
+}
+
+function importFromPastedJson() {
+    const jsonText = document.getElementById('jsonPasteArea').value.trim();
+    
+    if (!jsonText) {
+        alert('Please paste JSON data or select a file.');
+        return;
+    }
+    
+    try {
+        const loadedCharacter = JSON.parse(jsonText);
+        // Merge with defaults to ensure classFeatures exists
+        character = {
+            ...character,
+            ...loadedCharacter,
+            classFeatures: {
+                ...character.classFeatures,
+                ...(loadedCharacter.classFeatures || {})
+            }
+        };
+        populateForm();
+        closeImportJsonModal();
+        alert('Character imported successfully!');
+    } catch (error) {
+        alert('Error importing character: ' + error.message + '\n\nPlease ensure the JSON is valid.');
+    }
+}
+
 function setupDiceRollerControls() {
     // Up/down buttons for each die type
     document.querySelectorAll('.dice-btn-up').forEach(btn => {
@@ -1560,12 +1631,22 @@ function updateSpellSaveDC() {
     const profBonus = character.proficiencyBonus;
     const spellSaveDC = 8 + chaMod + profBonus;
     
-    document.getElementById('spellSaveDC').textContent = spellSaveDC;
-    document.getElementById('spellSaveDC2').textContent = spellSaveDC;
+    const spellSaveDCElem = document.getElementById('spellSaveDC');
+    if (spellSaveDCElem) {
+        spellSaveDCElem.textContent = spellSaveDC;
+    }
+    
+    const spellSaveDC2Elem = document.getElementById('spellSaveDC2');
+    if (spellSaveDC2Elem) {
+        spellSaveDC2Elem.textContent = spellSaveDC;
+    }
     
     // Update prepared spells count
     const preparedCount = chaMod + 1;
-    document.getElementById('preparedSpellsCount').textContent = Math.max(1, preparedCount);
+    const preparedSpellsCountElem = document.getElementById('preparedSpellsCount');
+    if (preparedSpellsCountElem) {
+        preparedSpellsCountElem.textContent = Math.max(1, preparedCount);
+    }
 }
 
 // Mode toggle functionality
