@@ -110,6 +110,22 @@
     dispatch('rollHitDice', { notation, hitDie, count: actualCount, bonusBreakdown });
   }
 
+  function rollInitiative() {
+    const initiativeMod = $character.initiative;
+    const modString = initiativeMod >= 0 ? `+${initiativeMod}` : `${initiativeMod}`;
+    const notation = `1d20${modString}`;
+
+    // Build bonus breakdown
+    const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
+    bonusBreakdown.push({ value: '1d20', source: 'base' });
+    if (initiativeMod !== 0) {
+      bonusBreakdown.push({ value: initiativeMod, source: 'initiative' });
+    }
+
+    // Dispatch event to open dice roller
+    dispatch('rollInitiative', { notation, bonusBreakdown });
+  }
+
   function toggleCollapse() {
     collapsedStates.update((s: any) => ({ ...s, combatStats: !s.combatStats }));
   }
@@ -212,13 +228,18 @@
           <label for="initiative">Initiative</label>
           <TooltipInfo tooltipContent={initiativeTooltip} ariaLabel="Show Initiative breakdown" />
         </div>
-        <input
-          type="text"
-          id="initiative"
-          value={$character.initiative}
-          class="stat-input"
-          readonly
-        />
+        <div class="initiative-container">
+          <input
+            type="text"
+            id="initiative"
+            value={$character.initiative}
+            class="stat-input initiative-input"
+            readonly
+          />
+          <button on:click={rollInitiative} class="btn btn-primary roll-initiative-btn use-enabled" title="Roll Initiative">
+            🎲
+          </button>
+        </div>
       </div>
       <div class="stat-box">
         <label for="speed">Speed</label>
@@ -629,5 +650,21 @@
     width: 18px;
     height: 18px;
     cursor: pointer;
+  }
+
+  .initiative-container {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .initiative-input {
+    flex: 1;
+  }
+
+  .roll-initiative-btn {
+    padding: 6px 10px;
+    font-size: 1rem;
+    min-width: auto;
   }
 </style>

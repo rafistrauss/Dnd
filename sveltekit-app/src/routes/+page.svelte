@@ -382,6 +382,21 @@
     showDiceRoller = true;
   }
 
+  function handleInitiativeRoll(event: CustomEvent) {
+    const { notation, bonusBreakdown } = event.detail;
+    diceNotation = '';
+
+    setTimeout(() => {
+      diceNotation = notation;
+      diceDamageNotation = '';
+      diceAttackName = 'Initiative';
+      diceBonusBreakdown = bonusBreakdown || [];
+      diceRollType = 'check';
+    }, 0);
+
+    showDiceRoller = true;
+  }
+
   function handleDiceRollerClose() {
     showDiceRoller = false;
 
@@ -735,7 +750,7 @@
     <CharacterInfo />
     <AbilityScores on:roll={(e) => openDiceRoller(e.detail)} />
     <Skills on:roll={(e) => openDiceRoller(e.detail)} />
-    <CombatStats on:rollHitDice={handleHitDiceRoll} />
+    <CombatStats on:rollHitDice={handleHitDiceRoll} on:rollInitiative={handleInitiativeRoll} />
     <DamageInput />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
     <ClassFeatures on:roll={(e) => openDiceRoller(e.detail)} />
