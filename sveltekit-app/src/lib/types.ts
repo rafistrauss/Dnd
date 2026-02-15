@@ -1,0 +1,226 @@
+// D&D Character Types
+
+export interface RollHistoryEntry {
+  id: number;
+  timestamp: number;
+  purpose: string;
+  notation: string;
+  result: number;
+  breakdown?: string;
+}
+
+export interface Abilities {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+}
+
+export type AbilityName = keyof Abilities;
+
+export interface SaveProficiencies {
+  strength: boolean;
+  dexterity: boolean;
+  constitution: boolean;
+  intelligence: boolean;
+  wisdom: boolean;
+  charisma: boolean;
+}
+
+export interface SkillProficiencies {
+  acrobatics: boolean;
+  animalHandling: boolean;
+  arcana: boolean;
+  athletics: boolean;
+  deception: boolean;
+  history: boolean;
+  insight: boolean;
+  intimidation: boolean;
+  investigation: boolean;
+  medicine: boolean;
+  nature: boolean;
+  perception: boolean;
+  performance: boolean;
+  persuasion: boolean;
+  religion: boolean;
+  sleightOfHand: boolean;
+  stealth: boolean;
+  survival: boolean;
+}
+
+export type SkillName = keyof SkillProficiencies;
+
+export interface Attack {
+  id: string;
+  name: string;
+  bonus: number;
+  damage: string;
+  damageType: string;
+  spellRef?: string; // canonical spell name
+  infoNotes?: string; // Range, Duration, Components, etc.
+  generalNotes?: string; // summary/effects
+  castAtLevel?: number; // for spells that can be cast at higher levels
+  targetIsFiendOrUndead?: boolean; // for conditional damage like Divine Smite
+  targetSucceededSave?: boolean; // for spells with saving throws
+  targetIsDamaged?: boolean; // for spells like Toll of the Dead with alternate damage
+  notes?: string; // for non-spell attacks
+  source?: 'racial' | 'class' | 'custom'; // source of the attack/spell
+  racialTraitName?: string; // name of the racial trait (e.g., "Githyanki Psionics")
+}
+
+export interface Spell {
+  name: string;
+  level: number;
+  school: string;
+  classes: string[];
+  actionType: string;
+  concentration: boolean;
+  ritual: boolean;
+  range: string;
+  components: string[];
+  duration: string;
+  description: string;
+  cantripUpgrade?: string;
+  material?: string;
+  castingTime?: string;
+  higherLevelSlot?: string;
+  castingTrigger?: string;
+}
+
+export interface HitDice {
+  current: number;
+  max: number;
+}
+
+export interface ConditionAbility {
+  name: string;
+  description: string;
+  usesPerRest?: number; // Number of uses per rest (optional)
+  restType?: 'short' | 'long'; // Type of rest needed to restore uses
+  currentUses?: number; // Current remaining uses
+  requiresReaction?: boolean; // Whether this ability requires a reaction
+}
+
+export interface SpellState {
+  name: string;
+  attackBonus: number | string;
+  damageBonus: number | string;
+  description: string;
+  acBonus?: number; // Optional AC bonus from spell effect
+  target?: 'self' | 'other'; // Who the effect is targeting (undefined = self for backwards compatibility)
+  hpBonus?: number; // HP increase (affects both current and max HP)
+  // New fields for arbitrary effects
+  darkvision?: number; // Darkvision range in feet (e.g., 60), or bonus to existing darkvision (if hasExistingDarkvision is true)
+  resistances?: string[]; // Damage resistances (e.g., ['cold', 'fire'])
+  immunities?: string[]; // Damage immunities
+  conditions?: string[]; // Conditions applied (e.g., ['blinded', 'restrained'])
+  abilities?: ConditionAbility[]; // Special abilities granted by this condition
+}
+
+export interface RacialTraitUses {
+  currentUses: number;
+  maxUses: number;
+  restType: 'short' | 'long';
+}
+
+export interface ClassFeatures {
+  features: Record<string, boolean[] | number>;
+  spellSlots: boolean[]; // Legacy - 1st level only
+  spellSlotsByLevel?: Record<number, boolean[]>; // Slots by level 1-9
+  preparedSpells: string;
+}
+
+export interface RacialTraits {
+  uses: Record<string, RacialTraitUses>; // Track uses of racial spells
+}
+
+export interface Character {
+  name: string;
+  class: string;
+  subclass?: string;
+  level: number;
+  race: string;
+  background: string;
+  alignment: string;
+  armorClass: number;
+  armorName?: string; // Specific armor name like "Chain Mail", "Leather", etc.
+  shieldEquipped?: boolean;
+  initiative: number;
+  speed: string;
+  currentHP: number;
+  maxHP: number;
+  tempHP: number;
+  hitDice: HitDice;
+  abilities: Abilities;
+  proficiencyBonus: number;
+  saveProficiencies: SaveProficiencies;
+  skillProficiencies: SkillProficiencies;
+  attacks: Attack[];
+  features: string;
+  equipment: string;
+  notes: string;
+  classFeatures: ClassFeatures;
+  racialTraits?: RacialTraits; // Optional for backwards compatibility
+  activeStates?: SpellState[];
+}
+
+// Class Configuration Types
+
+export type ResetType = 'short' | 'long';
+export type FeatureType = 'uses' | 'pool' | 'spellSlot' | 'info' | 'channelDivinity';
+
+export interface ClassFeature {
+  name: string | ((level: number, abilityMod?: number) => string);
+  subName?: string | ((level: number) => string | null);
+  type: FeatureType;
+  maxUses?: number | ((level: number, abilityMod?: number) => number);
+  maxPool?: number | ((level: number) => number);
+  resetOn?: ResetType;
+  description: string | ((level: number, abilityMod?: number) => string);
+  minLevel?: number;
+  rollable?: boolean;
+  rollFormula?: string | ((level: number, abilityMod?: number) => string);
+  subFeatures?: ClassFeature[];
+}
+
+export interface SubclassConfig {
+  name: string;
+  features: ClassFeature[];
+}
+
+export interface ClassConfig {
+  name: string;
+  hitDice: string;
+  spellcaster: boolean;
+  spellcastingAbility?: AbilityName;
+  spellSlotsByLevel?: Record<number, number>; // Legacy: character level -> 1st level slots
+  spellSlotProgression?: Record<number, number[]>; // character level -> [slots for spell level 1-9]
+  features: ClassFeature[];
+  subclasses?: Record<string, SubclassConfig>;
+}
+
+export type ClassName = 'paladin' | 'fighter' | 'rogue' | 'wizard' | 'cleric' | 'barbarian';
+
+// Skill to ability mapping
+export const SKILL_ABILITIES: Record<SkillName, AbilityName> = {
+  acrobatics: 'dexterity',
+  animalHandling: 'wisdom',
+  arcana: 'intelligence',
+  athletics: 'strength',
+  deception: 'charisma',
+  history: 'intelligence',
+  insight: 'wisdom',
+  intimidation: 'charisma',
+  investigation: 'intelligence',
+  medicine: 'wisdom',
+  nature: 'intelligence',
+  perception: 'wisdom',
+  performance: 'charisma',
+  persuasion: 'charisma',
+  religion: 'intelligence',
+  sleightOfHand: 'dexterity',
+  stealth: 'dexterity',
+  survival: 'wisdom'
+};

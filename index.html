@@ -43,7 +43,15 @@
                     </div>
                     <div class="form-group">
                         <label>Class</label>
-                        <input type="text" id="characterClass" placeholder="e.g., Fighter">
+                        <select id="characterClass">
+                            <option value="">Select Class</option>
+                            <option value="barbarian">Barbarian</option>
+                            <option value="cleric">Cleric</option>
+                            <option value="fighter">Fighter</option>
+                            <option value="paladin">Paladin</option>
+                            <option value="rogue">Rogue</option>
+                            <option value="wizard">Wizard</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Level</label>
@@ -367,87 +375,12 @@
 
             <!-- Class Features Section -->
             <section class="class-features-section">
-                <h2>Class Features</h2>
-                
-                <!-- Fighting Style -->
-                <div class="feature-tracker">
-                    <h3>Fighting Style: Protection</h3>
-                    <p class="feature-description">When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.</p>
-                </div>
-                
-                <!-- Divine Sense -->
-                <div class="feature-tracker">
-                    <h3>Divine Sense (3/day)</h3>
-                    <p class="feature-description">Detect celestials, fiends, undead within 60 ft.</p>
-                    <div class="use-tracker">
-                        <input type="checkbox" id="divineSense1" class="use-checkbox">
-                        <input type="checkbox" id="divineSense2" class="use-checkbox">
-                        <input type="checkbox" id="divineSense3" class="use-checkbox">
-                    </div>
-                </div>
-
-                <!-- Divine Health -->
-                <div class="feature-tracker">
-                    <h3>Divine Health</h3>
-                    <p class="feature-description">You are immune to disease.</p>
-                </div>
-
-                <!-- Lay on Hands -->
-                <div class="feature-tracker">
-                    <h3>Lay on Hands (15 HP Pool)</h3>
-                    <p class="feature-description">Heal or cure disease/poison (5 HP to cure)</p>
-                    <div class="hp-pool-tracker">
-                        <label>Remaining HP:</label>
-                        <input type="number" id="layOnHandsPool" value="15" min="0" max="15" class="pool-input">
-                    </div>
-                </div>
-
-                <!-- Spellcasting -->
-                <div class="feature-tracker">
-                    <h3>Spellcasting (CHA + Prof)</h3>
-                    <p class="feature-description">Prepared Spells: <span id="preparedSpellsCount">3</span> (CHA mod + 1)</p>
-                    <div class="spell-slots">
-                        <div class="spell-slot-level">
-                            <label>1st Level Slots (4 total):</label>
-                            <div class="use-tracker">
-                                <input type="checkbox" id="spellSlot1_1" class="use-checkbox">
-                                <input type="checkbox" id="spellSlot1_2" class="use-checkbox">
-                                <input type="checkbox" id="spellSlot1_3" class="use-checkbox">
-                                <input type="checkbox" id="spellSlot1_4" class="use-checkbox">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="prepared-spells">
-                        <label>Prepared Spells:</label>
-                        <textarea id="preparedSpells" placeholder="List your prepared spells...
-e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
-                    </div>
-                </div>
-
-                <!-- Sacred Oath -->
-                <div class="feature-tracker">
-                    <h3>Sacred Oath: Oath of Vengeance</h3>
-                    <p class="feature-description">Channel Divinity (1/short rest)</p>
-                    <div class="oath-features">
-                        <div class="channel-divinity">
-                            <input type="checkbox" id="channelDivinity" class="use-checkbox">
-                            <label for="channelDivinity">Channel Divinity Available</label>
-                            <button class="btn-small btn-secondary" onclick="resetChannelDivinity()">Short Rest</button>
-                        </div>
-                        <div class="channel-options">
-                            <div class="channel-option">
-                                <strong>Abjure Enemy:</strong>
-                                <p>As an action, choose one creature within 60 feet that you can see. That creature must make a Wisdom saving throw (DC <span id="spellSaveDC">13</span>), unless it is immune to being frightened. Fiends and undead have disadvantage on this saving throw.</p>
-                                <p>On a failed save, the creature is frightened for 1 minute or until it takes any damage. While frightened, the creature's speed is 0, and it can't benefit from any bonus to its speed.</p>
-                                <p>On a successful save, the creature's speed is halved for 1 minute or until the creature takes any damage.</p>
-                            </div>
-                            <div class="channel-option">
-                                <strong>Vow of Enmity:</strong>
-                                <p>As a bonus action, you can utter a vow of enmity against a creature you can see within 10 feet of you. You gain advantage on attack rolls against the creature for 1 minute or until it drops to 0 hit points or falls unconscious.</p>
-                                <p style="display:none;">Spell Save DC: <span id="spellSaveDC2">13</span></p>
-                            </div>
-                        </div>
-                    </div>
+                <h2 class="collapsible-header" data-target="classFeaturesContent">
+                    Class Features
+                    <span class="collapse-icon toggle-icon">▼</span>
+                </h2>
+                <div id="classFeaturesContent" class="collapsible-content">
+                    <p class="no-features">Select a class to see available features</p>
                 </div>
             </section>
 
@@ -576,6 +509,8 @@ e.g., Bless, Cure Wounds, Shield of Faith"></textarea>
     <script src="libs/cannon.min.js"></script>
     <script src="libs/teal.js"></script>
     <script src="dice.js"></script>
+    <script src="classConfig.js"></script>
+    <script src="classFeatures.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
