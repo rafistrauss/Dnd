@@ -12,6 +12,10 @@
   let calculatedDamage = 0;
   let adjustmentMessages: string[] = [];
 
+  // Uncanny Dodge state
+  let uncannyDodge = false;
+  $: hasUncannyDodge = $character?.features?.toLowerCase?.().includes('uncanny dodge');
+
   // Common damage types for quick selection
   const commonDamageTypes = [
     'slashing',
@@ -48,9 +52,15 @@
 
   // Dynamically calculate damage when inputs change
   $: if (damageAmount >= 0 && damageType.trim()) {
-    const result = calculateDamage(damageAmount, damageType, $character);
-    calculatedDamage = result.finalDamage;
-    adjustmentMessages = result.adjustments;
+      const result = calculateDamage(damageAmount, damageType, $character);
+      let final = result.finalDamage;
+      let adjustments = [...result.adjustments];
+      if (uncannyDodge) {
+        final = Math.floor(final / 2);
+        adjustments.push('Uncanny Dodge: Halved final damage');
+      }
+      calculatedDamage = final;
+      adjustmentMessages = adjustments;
   } else {
     calculatedDamage = 0;
     adjustmentMessages = [];
@@ -133,6 +143,15 @@
           </button>
         {/each}
       </div>
+
+        {#if hasUncannyDodge}
+        <div class="input-field">
+          <label>
+            <input type="checkbox" bind:checked={uncannyDodge} />
+            Uncanny Dodge (When an attacker that you can see hits you with an attack roll, you can take a Reaction to halve the attack’s damage against you.)
+          </label>
+        </div>
+        {/if}
 
       {#if damageAmount >= 0 && damageType.trim()}
         <div class="calculation-result">

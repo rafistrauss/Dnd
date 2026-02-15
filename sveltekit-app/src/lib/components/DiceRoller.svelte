@@ -371,6 +371,18 @@
         } else {
           // console.log('No damageNotation provided for attack roll');
         }
+        
+        // Sneak Attack follow-up for rogues with the feature
+        if (attackName && damageNotation && $character.class?.toLowerCase() === 'rogue' && $character.features?.toLowerCase?.().includes('sneak attack')) {
+          // TODO: Level scaling for sneak attack dice (3d6 for level 5)
+          const sneakAttackNotation = `${damageNotation}+3d6`;
+          const sneakAttackBreakdown = [...damageBreakdown, { value: '3d6', source: 'Sneak Attack' }];
+          followUpActions.push({
+            label: `Roll Damage + Sneak Attack (${sneakAttackNotation})`,
+            notation: sneakAttackNotation,
+            breakdown: sneakAttackBreakdown
+          });
+        }
       }
       // console.log('Final followUpActions:', followUpActions);
     };

@@ -13,7 +13,6 @@
   } from '$lib/classConfig';
   import { rollDice } from '$lib/diceUtils';
   import SectionHeader from './SectionHeader.svelte';
-  ``;
 
   const dispatch = createEventDispatcher();
 
