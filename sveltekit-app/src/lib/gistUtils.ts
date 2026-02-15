@@ -1,4 +1,4 @@
-import type { Character } from './types';
+import type { Character, RollHistoryEntry } from './types';
 
 const GIST_API = 'https://api.github.com/gists';
 
@@ -11,7 +11,8 @@ export interface GistConfig {
 export async function saveToGist(
   character: Character,
   token: string,
-  description?: string
+  description?: string,
+  rollHistory?: RollHistoryEntry[]
 ): Promise<string> {
   if (!token) {
     throw new Error('GitHub token is required');
@@ -20,14 +21,24 @@ export async function saveToGist(
   const content = JSON.stringify(character, null, 2);
   const filename = `${character.name || 'character'}_dnd.json`;
 
+  const files: Record<string, { content: string }> = {
+    [filename]: {
+      content
+    }
+  };
+
+  // Add roll history if provided
+  if (rollHistory && rollHistory.length > 0) {
+    const historyFilename = `${character.name || 'character'}_roll_history.json`;
+    files[historyFilename] = {
+      content: JSON.stringify(rollHistory, null, 2)
+    };
+  }
+
   const gistData = {
     description: description || `D&D Character: ${character.name}`,
     public: false,
-    files: {
-      [filename]: {
-        content
-      }
-    }
+    files
   };
 
   const response = await fetch(GIST_API, {
@@ -51,7 +62,8 @@ export async function saveToGist(
 export async function updateGist(
   character: Character,
   token: string,
-  gistId: string
+  gistId: string,
+  rollHistory?: RollHistoryEntry[]
 ): Promise<void> {
   if (!token || !gistId) {
     throw new Error('GitHub token and Gist ID are required');
@@ -60,12 +72,22 @@ export async function updateGist(
   const content = JSON.stringify(character, null, 2);
   const filename = `${character.name || 'character'}_dnd.json`;
 
-  const gistData = {
-    files: {
-      [filename]: {
-        content
-      }
+  const files: Record<string, { content: string }> = {
+    [filename]: {
+      content
     }
+  };
+
+  // Add roll history if provided
+  if (rollHistory && rollHistory.length > 0) {
+    const historyFilename = `${character.name || 'character'}_roll_history.json`;
+    files[historyFilename] = {
+      content: JSON.stringify(rollHistory, null, 2)
+    };
+  }
+
+  const gistData = {
+    files
   };
 
   const response = await fetch(`${GIST_API}/${gistId}`, {
@@ -83,7 +105,10 @@ export async function updateGist(
 }
 
 // Load character from GitHub Gist
-export async function loadFromGist(gistId: string, token?: string): Promise<Character> {
+export async function loadFromGist(
+  gistId: string,
+  token?: string
+): Promise<{ character: Character; rollHistory?: RollHistoryEntry[] }> {
   if (!gistId) {
     throw new Error('Gist ID is required');
   }
@@ -107,17 +132,30 @@ export async function loadFromGist(gistId: string, token?: string): Promise<Char
 
   const data = await response.json();
 
-  // Get the first file from the gist
-  const files = Object.values(data.files);
-  if (files.length === 0) {
+  // Get character file and optional roll history file
+  const fileEntries = Object.entries(data.files);
+  if (fileEntries.length === 0) {
     throw new Error('No files found in gist');
   }
 
-  const file: any = files[0];
-  const content = file.content;
+  let characterContent: string | null = null;
+  let rollHistoryContent: string | null = null;
+
+  for (const [filename, fileData] of fileEntries) {
+    const file: any = fileData;
+    if (filename.includes('roll_history')) {
+      rollHistoryContent = file.content;
+    } else {
+      characterContent = file.content;
+    }
+  }
+
+  if (!characterContent) {
+    throw new Error('No character file found in gist');
+  }
 
   try {
-    const character = JSON.parse(content);
+    const character = JSON.parse(characterContent);
 
     // Migrate: ensure all attacks have IDs
     if (character.attacks && Array.isArray(character.attacks)) {
@@ -146,7 +184,16 @@ export async function loadFromGist(gistId: string, token?: string): Promise<Char
       }
     }
 
-    return character;
+    let rollHistory: RollHistoryEntry[] | undefined = undefined;
+    if (rollHistoryContent) {
+      try {
+        rollHistory = JSON.parse(rollHistoryContent);
+      } catch (e) {
+        console.error('Failed to parse roll history from gist:', e);
+      }
+    }
+
+    return { character, rollHistory };
   } catch {
     throw new Error('Invalid character data in gist');
   }

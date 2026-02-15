@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { createEventDispatcher } from 'svelte';
   import { base } from '$app/paths';
-  import { character } from '$lib/stores';
+  import { character, rollHistory } from '$lib/stores';
   import { getAvailableFeatures } from '$lib/classConfig';
 
   const dispatch = createEventDispatcher();
@@ -325,6 +325,15 @@
         resultTotal,
         resultString
       };
+
+      // Add to roll history
+      let purpose = attackName || 'Roll';
+      if (type === 'attack') purpose = `${attackName || 'Attack'} Roll`;
+      else if (type === 'damage') purpose = `${attackName || 'Damage'} Roll`;
+      else if (type === 'check') purpose = `${attackName || 'Check'} Roll`;
+      else if (type === 'save') purpose = `${attackName || 'Save'} Roll`;
+      
+      rollHistory.addRoll(purpose, currentRollNotation, resultTotal, resultString);
 
       // Detect critical hits/fails on d20 rolls (check first die roll)
       if (type === 'attack') {

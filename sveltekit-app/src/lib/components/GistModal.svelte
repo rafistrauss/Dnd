@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { character, toasts } from '$lib/stores';
+  import { character, toasts, rollHistory } from '$lib/stores';
   import {
     saveToGist,
     updateGist,
@@ -85,12 +85,13 @@
     error = '';
 
     try {
+      const history = rollHistory.export();
       if (targetGistId) {
-        await updateGist($character, token, targetGistId);
+        await updateGist($character, token, targetGistId, history);
         gistId = targetGistId;
         toasts.add('Character updated in Gist successfully!', 'success');
       } else {
-        const newGistId = await saveToGist($character, token, description);
+        const newGistId = await saveToGist($character, token, description, history);
         gistId = newGistId;
         toasts.add(`Character saved to Gist! ID: ${newGistId}`, 'success');
       }
@@ -117,12 +118,22 @@
     error = '';
 
     try {
-      const loaded = await loadFromGist(targetGistId, token || undefined);
-      character.set(loaded);
+      const { character: loadedCharacter, rollHistory: loadedHistory } = await loadFromGist(
+        targetGistId,
+        token || undefined
+      );
+      character.set(loadedCharacter);
+      
+      if (loadedHistory) {
+        rollHistory.import(loadedHistory);
+        toasts.add('Character and roll history loaded from Gist successfully!', 'success');
+      } else {
+        toasts.add('Character loaded from Gist successfully!', 'success');
+      }
+      
       gistId = targetGistId;
 
       saveGistConfig({ token, gistId });
-      toasts.add('Character loaded from Gist successfully!', 'success');
       dispatch('close');
     } catch (e: any) {
       error = e.message || 'Failed to load from Gist';

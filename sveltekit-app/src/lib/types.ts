@@ -1,5 +1,14 @@
 // D&D Character Types
 
+export interface RollHistoryEntry {
+  id: number;
+  timestamp: number;
+  purpose: string;
+  notation: string;
+  result: number;
+  breakdown?: string;
+}
+
 export interface Abilities {
   strength: number;
   dexterity: number;

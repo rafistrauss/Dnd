@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store';
-import type { Character, RacialTraitUses } from './types';
+import type { Character, RacialTraitUses, RollHistoryEntry } from './types';
 import { browser } from '$app/environment';
 import { getRacialSpellsForLevel, getRaceConfig } from './raceConfig';
 
@@ -40,6 +40,82 @@ function createToastStore() {
 }
 
 export const toasts = createToastStore();
+
+// Roll history store
+function createRollHistoryStore() {
+  // Load from localStorage if available
+  const loadFromStorage = (): RollHistoryEntry[] => {
+    if (browser) {
+      const saved = localStorage.getItem('dnd_roll_history');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse roll history from localStorage:', e);
+        }
+      }
+    }
+    return [];
+  };
+
+  const { subscribe, update, set } = writable<RollHistoryEntry[]>(loadFromStorage());
+
+  let nextId = 0;
+  // Set nextId based on existing entries
+  const existing = loadFromStorage();
+  if (existing.length > 0) {
+    nextId = Math.max(...existing.map(e => e.id)) + 1;
+  }
+
+  const saveToStorage = (history: RollHistoryEntry[]) => {
+    if (browser) {
+      localStorage.setItem('dnd_roll_history', JSON.stringify(history));
+    }
+  };
+
+  return {
+    subscribe,
+    addRoll: (purpose: string, notation: string, result: number, breakdown?: string) => {
+      const id = nextId++;
+      const entry: RollHistoryEntry = {
+        id,
+        timestamp: Date.now(),
+        purpose,
+        notation,
+        result,
+        breakdown
+      };
+
+      update((history) => {
+        const newHistory = [entry, ...history].slice(0, 50); // Keep last 50 rolls
+        saveToStorage(newHistory);
+        return newHistory;
+      });
+    },
+    clear: () => {
+      set([]);
+      saveToStorage([]);
+    },
+    import: (history: RollHistoryEntry[]) => {
+      // Reset nextId based on imported entries
+      if (history.length > 0) {
+        nextId = Math.max(...history.map(e => e.id)) + 1;
+      }
+      set(history);
+      saveToStorage(history);
+    },
+    export: (): RollHistoryEntry[] => {
+      let currentHistory: RollHistoryEntry[] = [];
+      const unsubscribe = subscribe(value => {
+        currentHistory = value;
+      });
+      unsubscribe();
+      return currentHistory;
+    }
+  };
+}
+
+export const rollHistory = createRollHistoryStore();
 
 // Initial character state
 const initialCharacter: Character = {
@@ -419,6 +495,7 @@ interface CollapsedStates {
   classFeatures: boolean;
   notes: boolean;
   damageInput: boolean;
+  rollHistory: boolean;
 }
 
 function loadCollapsedStates(): CollapsedStates {
