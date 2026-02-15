@@ -73,10 +73,10 @@
   }
 </script>
 
-<div class="modal" on:click={handleBackdropClick} on:keydown={(e) => e.key === 'Escape' && handleClose()}>
+<div class="modal" on:click={handleBackdropClick} on:keydown={(e) => e.key === 'Escape' && handleClose()} role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
   <div class="modal-content">
     <button class="close" on:click={handleClose}>&times;</button>
-    <h3>Import Character JSON</h3>
+    <h3 id="importModalTitle">Import Character JSON</h3>
     <p>
       Paste your character JSON data below or
       <button class="link-button" on:click={handleFileClick}>select a file</button>:
@@ -87,6 +87,7 @@
       placeholder="Paste JSON here..."
       rows="15"
       class="json-textarea"
+      aria-label="Character JSON data"
     />
 
     {#if error}

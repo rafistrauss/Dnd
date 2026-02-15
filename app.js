@@ -1513,7 +1513,7 @@ function importFromPastedJson() {
         closeImportJsonModal();
         alert('Character imported successfully!');
     } catch (error) {
-        alert('Error importing character: ' + error.message + '\n\nPlease ensure the JSON is valid.');
+        alert('Error importing character. Please ensure the JSON is valid.');
     }
 }
 

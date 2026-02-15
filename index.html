@@ -506,12 +506,12 @@
 
         <!-- Import JSON Modal -->
         <div id="importJsonModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
                 <span class="close-import">&times;</span>
-                <h3>Import Character JSON</h3>
+                <h3 id="importModalTitle">Import Character JSON</h3>
                 <p>Paste your character JSON data below or <a href="#" id="importFileLink">select a file</a>:</p>
                 <div class="form-group">
-                    <textarea id="jsonPasteArea" placeholder="Paste JSON here..." rows="15"></textarea>
+                    <textarea id="jsonPasteArea" placeholder="Paste JSON here..." rows="15" aria-label="Character JSON data"></textarea>
                 </div>
                 <div class="import-actions">
                     <button id="importJsonConfirm" class="btn btn-primary">Import</button>
