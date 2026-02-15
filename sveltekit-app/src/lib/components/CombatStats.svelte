@@ -400,7 +400,7 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 15px;
     margin-bottom: 20px;
   }
@@ -654,17 +654,23 @@
 
   .initiative-container {
     display: flex;
-    gap: 5px;
-    align-items: center;
+    gap: 2px;
+    align-items: stretch;
   }
 
   .initiative-input {
     flex: 1;
+    min-width: 0;
   }
 
   .roll-initiative-btn {
-    padding: 6px 10px;
-    font-size: 1rem;
-    min-width: auto;
+    padding: 6px 4px;
+    font-size: 0.9rem;
+    width: 30px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 </style>
