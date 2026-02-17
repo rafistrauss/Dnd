@@ -741,7 +741,8 @@ body:not(.use-mode) .hp-controls {
 
 .close,
 .close-gist,
-.close-dice {
+.close-dice,
+.close-import {
     color: #aaa;
     float: right;
     font-size: 28px;
@@ -761,7 +762,9 @@ body:not(.use-mode) .hp-controls {
 .close-gist:hover,
 .close-gist:focus,
 .close-dice:hover,
-.close-dice:focus {
+.close-dice:focus,
+.close-import:hover,
+.close-import:focus {
     color: var(--primary-color);
 }
 
@@ -1511,6 +1514,35 @@ body:not(.use-mode) .hp-controls {
 }
 
 .dice-roll-actions .btn {
+    flex: 1;
+}
+
+/* Import JSON Modal Styles */
+#jsonPasteArea {
+    width: 100%;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    resize: vertical;
+    min-height: 300px;
+}
+
+#jsonPasteArea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.import-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.import-actions .btn {
     flex: 1;
 }
 
