@@ -32,7 +32,7 @@
     toasts,
     resetRacialTraitUses
   } from '$lib/stores';
-  import { getClassConfig, getAvailableFeatures } from '$lib/classConfig';
+  import { getClassConfig, getAvailableFeatures, getSpellSlotProgression } from '$lib/classConfig';
   import { getRacialSpellsForLevel } from '$lib/raceConfig';
   import CharacterInfo from '$lib/components/CharacterInfo.svelte';
   import AbilityScores from '$lib/components/AbilityScores.svelte';
@@ -52,17 +52,19 @@
   import type { Character, SpellState } from '$lib/types';
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
+    if (!$character.class) return [];
+    const progression = getSpellSlotProgression($character.class, $character.level);
+    const storedSlots = $character.classFeatures.spellSlotsByLevel || {};
     const result: { level: number; available: number; total: number }[] = [];
-    const spellSlots = $character.classFeatures.spellSlotsByLevel || {};
 
-    for (let level = 1; level <= 9; level++) {
-      const slots = spellSlots[level];
-      if (slots && slots.length > 0) {
-        const total = slots.length;
+    progression.forEach((total, idx) => {
+      if (total > 0) {
+        const level = idx + 1;
+        const slots = storedSlots[level] ?? [];
         const used = slots.filter((s) => s).length;
         result.push({ level, available: total - used, total });
       }
-    }
+    });
 
     return result;
   }
@@ -220,13 +222,16 @@
 
       // Reset all spell slots
       let spellSlotsRestored = 0;
-      if (c.classFeatures.spellSlotsByLevel) {
-        Object.keys(c.classFeatures.spellSlotsByLevel).forEach((level) => {
-          const slots = c.classFeatures.spellSlotsByLevel![parseInt(level)];
-          if (slots) {
+      if (c.class) {
+        const progression = getSpellSlotProgression(c.class, c.level);
+        progression.forEach((total, idx) => {
+          if (total > 0) {
+            const level = idx + 1;
+            const slots = c.classFeatures.spellSlotsByLevel?.[level] ?? [];
             const usedSlots = slots.filter((s) => s).length;
             spellSlotsRestored += usedSlots;
-            c.classFeatures.spellSlotsByLevel![parseInt(level)] = Array(slots.length).fill(false);
+            if (!c.classFeatures.spellSlotsByLevel) c.classFeatures.spellSlotsByLevel = {};
+            c.classFeatures.spellSlotsByLevel[level] = [];
           }
         });
       }

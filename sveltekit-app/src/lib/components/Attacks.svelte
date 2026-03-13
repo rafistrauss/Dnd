@@ -24,6 +24,7 @@ import {
   getAlternateDamageForDamagedTarget
 } from '$lib/spellUtils';
 import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
+import { getSpellSlotProgression } from '$lib/classConfig';
 
 // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
 let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
@@ -559,15 +560,16 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   }
 
   function getAvailableSpellLevels(spell: Spell): number[] {
+    if (!$character.class) return [spell.level];
+    const progression = getSpellSlotProgression($character.class, $character.level);
     const levels: number[] = [];
-    const maxLevel = 9;
 
-    for (let level = spell.level; level <= maxLevel; level++) {
-      const slots = $character.classFeatures.spellSlotsByLevel?.[level];
-      if (slots && slots.length > 0) {
-        levels.push(level);
+    progression.forEach((total, idx) => {
+      const slotLevel = idx + 1;
+      if (total > 0 && slotLevel >= spell.level) {
+        levels.push(slotLevel);
       }
-    }
+    });
 
     return levels;
   }
@@ -701,8 +703,22 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
     );
   }
 
+  $: maxAvailableSpellLevel = (() => {
+    if (!$character.class) return 0;
+    const progression = getSpellSlotProgression($character.class, $character.level);
+    for (let i = progression.length - 1; i >= 0; i--) {
+      if (progression[i] > 0) return i + 1;
+    }
+    return 0;
+  })();
+
   $: filteredAttacks = $character.attacks
     .filter((attack) => {
+      // Filter out spells that require a higher slot level than the character has
+      if (attack.spellRef) {
+        const spell = getSpellByName(attack.spellRef);
+        if (spell && spell.level > 0 && spell.level > maxAvailableSpellLevel) return false;
+      }
       if (!$searchFilter) return true;
       const filter = $searchFilter.toLowerCase();
       return (

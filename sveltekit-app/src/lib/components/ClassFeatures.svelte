@@ -7,7 +7,7 @@
   import {
     getClassConfig,
     getAvailableFeatures,
-    getSpellSlots,
+    getSpellSlotProgression,
     getPreparedSpellsCount,
     getSpellSaveDC
   } from '$lib/classConfig';
@@ -20,32 +20,13 @@
   $: features = $character.class
     ? getAvailableFeatures($character.class, $character.level, $character.subclass)
     : [];
-  $: spellSlots = $character.class ? getSpellSlots($character.class, $character.level) : 0;
-
-  // Get all spell slot levels available to this character
-  // For now, show levels 1-3 with slots based on character level
+  // Derive available spell levels and their max slot counts from class config
   $: availableSpellLevels = (() => {
-    if (!classConfig?.spellcaster) return [];
-    const charLevel = $character.level;
-    const levels: Array<{ level: number; slots: number }> = [];
-
-    // Simple progression: more slots at higher character levels
-    if (charLevel >= 1)
-      levels.push({ level: 1, slots: Math.min(4, 2 + Math.floor(charLevel / 3)) });
-    if (charLevel >= 3)
-      levels.push({ level: 2, slots: Math.min(3, 2 + Math.floor((charLevel - 3) / 4)) });
-    if (charLevel >= 5)
-      levels.push({ level: 3, slots: Math.min(3, 2 + Math.floor((charLevel - 5) / 5)) });
-    if (charLevel >= 7)
-      levels.push({ level: 4, slots: Math.min(3, 1 + Math.floor((charLevel - 7) / 6)) });
-    if (charLevel >= 9)
-      levels.push({ level: 5, slots: Math.min(2, 1 + Math.floor((charLevel - 9) / 8)) });
-    if (charLevel >= 11) levels.push({ level: 6, slots: 1 });
-    if (charLevel >= 13) levels.push({ level: 7, slots: 1 });
-    if (charLevel >= 15) levels.push({ level: 8, slots: 1 });
-    if (charLevel >= 17) levels.push({ level: 9, slots: 1 });
-
-    return levels;
+    if (!classConfig?.spellcaster || !$character.class) return [];
+    const progression = getSpellSlotProgression($character.class, $character.level);
+    return progression
+      .map((slots, idx) => ({ level: idx + 1, slots }))
+      .filter(({ slots }) => slots > 0);
   })();
 
   let spellSaveDC = 0;
@@ -74,41 +55,6 @@
     });
   }
 
-  function resetSpellSlots() {
-    character.update((c) => {
-      c.classFeatures.spellSlots = Array(spellSlots).fill(false);
-      return c;
-    });
-  }
-
-  function resetSpellSlotLevel(level: number, slotCount: number) {
-    character.update((c) => {
-      if (!c.classFeatures.spellSlotsByLevel) {
-        c.classFeatures.spellSlotsByLevel = {};
-      }
-      c.classFeatures.spellSlotsByLevel[level] = Array(slotCount).fill(false);
-      return c;
-    });
-  }
-
-  function initializeSpellSlots() {
-    character.update((c) => {
-      if (!c.classFeatures.spellSlotsByLevel) {
-        c.classFeatures.spellSlotsByLevel = {};
-      }
-      availableSpellLevels.forEach(({ level, slots }) => {
-        if (!c.classFeatures.spellSlotsByLevel![level]) {
-          c.classFeatures.spellSlotsByLevel![level] = Array(slots).fill(false);
-        }
-      });
-      return c;
-    });
-  }
-
-  // Initialize spell slots when component mounts or class/level changes
-  $: if ($character.class && classConfig?.spellcaster && availableSpellLevels.length > 0) {
-    initializeSpellSlots();
-  }
 
   function getMaxUses(feature: any): number {
     if (typeof feature.maxUses === 'function') {
@@ -410,8 +356,7 @@
             {#if availableSpellLevels.length > 0}
               <div class="all-spell-slots">
                 {#each availableSpellLevels as { level, slots }}
-                  {@const levelSlots =
-                    $character.classFeatures.spellSlotsByLevel?.[level] || Array(slots).fill(false)}
+                  {@const storedSlots = $character.classFeatures.spellSlotsByLevel?.[level] ?? []}
                   <div class="spell-slots">
                     <label>
                       {level === 1
@@ -423,16 +368,16 @@
                             : `${level}th`} Level Spell Slots
                     </label>
                     <div class="slots-tracker">
-                      {#each levelSlots as _, i}
+                      {#each { length: slots } as _, i}
                         <SlotCheckbox
-                          checked={levelSlots[i] || false}
+                          checked={storedSlots[i] ?? false}
                           on:change={(e) => {
                             character.update((c) => {
                               if (!c.classFeatures.spellSlotsByLevel) {
                                 c.classFeatures.spellSlotsByLevel = {};
                               }
                               if (!c.classFeatures.spellSlotsByLevel[level]) {
-                                c.classFeatures.spellSlotsByLevel[level] = Array(slots).fill(false);
+                                c.classFeatures.spellSlotsByLevel[level] = [];
                               }
                               c.classFeatures.spellSlotsByLevel[level][i] = e.detail.checked;
                               return c;

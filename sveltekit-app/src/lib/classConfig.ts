@@ -6,27 +6,28 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     hitDice: 'd10',
     spellcaster: true,
     spellcastingAbility: 'charisma',
-    spellSlotsByLevel: {
-      1: 0,
-      2: 2,
-      3: 3,
-      4: 3,
-      5: 4,
-      6: 4,
-      7: 4,
-      8: 4,
-      9: 4,
-      10: 4,
-      11: 4,
-      12: 4,
-      13: 4,
-      14: 4,
-      15: 4,
-      16: 4,
-      17: 4,
-      18: 4,
-      19: 4,
-      20: 4
+    // Half-caster: slots per spell level [1st, 2nd, 3rd, 4th, 5th] by character level
+    spellSlotProgression: {
+      1:  [0, 0, 0, 0, 0],
+      2:  [2, 0, 0, 0, 0],
+      3:  [3, 0, 0, 0, 0],
+      4:  [3, 0, 0, 0, 0],
+      5:  [4, 2, 0, 0, 0],
+      6:  [4, 2, 0, 0, 0],
+      7:  [4, 3, 0, 0, 0],
+      8:  [4, 3, 0, 0, 0],
+      9:  [4, 3, 2, 0, 0],
+      10: [4, 3, 2, 0, 0],
+      11: [4, 3, 3, 0, 0],
+      12: [4, 3, 3, 0, 0],
+      13: [4, 3, 3, 1, 0],
+      14: [4, 3, 3, 1, 0],
+      15: [4, 3, 3, 2, 0],
+      16: [4, 3, 3, 2, 0],
+      17: [4, 3, 3, 3, 1],
+      18: [4, 3, 3, 3, 1],
+      19: [4, 3, 3, 3, 2],
+      20: [4, 3, 3, 3, 2]
     },
     features: [
       {
@@ -210,27 +211,28 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     hitDice: 'd6',
     spellcaster: true,
     spellcastingAbility: 'intelligence',
-    spellSlotsByLevel: {
-      1: 2,
-      2: 3,
-      3: 4,
-      4: 4,
-      5: 4,
-      6: 4,
-      7: 4,
-      8: 4,
-      9: 4,
-      10: 4,
-      11: 4,
-      12: 4,
-      13: 4,
-      14: 4,
-      15: 4,
-      16: 4,
-      17: 4,
-      18: 4,
-      19: 4,
-      20: 4
+    // Full-caster: slots per spell level [1st–9th] by character level
+    spellSlotProgression: {
+      1:  [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      2:  [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      3:  [4, 2, 0, 0, 0, 0, 0, 0, 0],
+      4:  [4, 3, 0, 0, 0, 0, 0, 0, 0],
+      5:  [4, 3, 2, 0, 0, 0, 0, 0, 0],
+      6:  [4, 3, 3, 0, 0, 0, 0, 0, 0],
+      7:  [4, 3, 3, 1, 0, 0, 0, 0, 0],
+      8:  [4, 3, 3, 2, 0, 0, 0, 0, 0],
+      9:  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+      10: [4, 3, 3, 3, 2, 0, 0, 0, 0],
+      11: [4, 3, 3, 3, 2, 1, 0, 0, 0],
+      12: [4, 3, 3, 3, 2, 1, 0, 0, 0],
+      13: [4, 3, 3, 3, 2, 1, 1, 0, 0],
+      14: [4, 3, 3, 3, 2, 1, 1, 0, 0],
+      15: [4, 3, 3, 3, 2, 1, 1, 1, 0],
+      16: [4, 3, 3, 3, 2, 1, 1, 1, 0],
+      17: [4, 3, 3, 3, 2, 1, 1, 1, 1],
+      18: [4, 3, 3, 3, 3, 1, 1, 1, 1],
+      19: [4, 3, 3, 3, 3, 2, 1, 1, 1],
+      20: [4, 3, 3, 3, 3, 2, 2, 1, 1]
     },
     features: [
       {
@@ -256,27 +258,28 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     hitDice: 'd8',
     spellcaster: true,
     spellcastingAbility: 'wisdom',
-    spellSlotsByLevel: {
-      1: 2,
-      2: 3,
-      3: 4,
-      4: 4,
-      5: 4,
-      6: 4,
-      7: 4,
-      8: 4,
-      9: 4,
-      10: 4,
-      11: 4,
-      12: 4,
-      13: 4,
-      14: 4,
-      15: 4,
-      16: 4,
-      17: 4,
-      18: 4,
-      19: 4,
-      20: 4
+    // Full-caster: slots per spell level [1st–9th] by character level
+    spellSlotProgression: {
+      1:  [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      2:  [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      3:  [4, 2, 0, 0, 0, 0, 0, 0, 0],
+      4:  [4, 3, 0, 0, 0, 0, 0, 0, 0],
+      5:  [4, 3, 2, 0, 0, 0, 0, 0, 0],
+      6:  [4, 3, 3, 0, 0, 0, 0, 0, 0],
+      7:  [4, 3, 3, 1, 0, 0, 0, 0, 0],
+      8:  [4, 3, 3, 2, 0, 0, 0, 0, 0],
+      9:  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+      10: [4, 3, 3, 3, 2, 0, 0, 0, 0],
+      11: [4, 3, 3, 3, 2, 1, 0, 0, 0],
+      12: [4, 3, 3, 3, 2, 1, 0, 0, 0],
+      13: [4, 3, 3, 3, 2, 1, 1, 0, 0],
+      14: [4, 3, 3, 3, 2, 1, 1, 0, 0],
+      15: [4, 3, 3, 3, 2, 1, 1, 1, 0],
+      16: [4, 3, 3, 3, 2, 1, 1, 1, 0],
+      17: [4, 3, 3, 3, 2, 1, 1, 1, 1],
+      18: [4, 3, 3, 3, 3, 1, 1, 1, 1],
+      19: [4, 3, 3, 3, 3, 2, 1, 1, 1],
+      20: [4, 3, 3, 3, 3, 2, 2, 1, 1]
     },
     features: [
       {
@@ -540,6 +543,16 @@ export function getSpellSlots(className: string, level: number): number {
   if (!config || !config.spellcaster || !config.spellSlotsByLevel) return 0;
 
   return config.spellSlotsByLevel[level] || 0;
+}
+
+/**
+ * Returns the number of spell slots for each spell level (indices 0–8 = spell levels 1–9)
+ * at the given character level, or an empty array if the class has no spell slot progression.
+ */
+export function getSpellSlotProgression(className: string, charLevel: number): number[] {
+  const config = getClassConfig(className);
+  if (!config || !config.spellcaster || !config.spellSlotProgression) return [];
+  return config.spellSlotProgression[charLevel] ?? [];
 }
 
 export function getPreparedSpellsCount(
