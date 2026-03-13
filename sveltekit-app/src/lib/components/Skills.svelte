@@ -131,34 +131,6 @@
     box-shadow: var(--shadow);
   }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-  }
-
-  h2 {
-    margin: 0;
-    color: var(--primary-color);
-  }
-
-  .collapse-btn {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--primary-color);
-    padding: 5px 10px;
-    transition: transform 0.2s ease;
-  }
-
-  .collapse-btn:hover {
-    transform: scale(1.1);
-  }
-
   .hidden {
     display: none;
   }
@@ -174,7 +146,7 @@
     align-items: center;
     gap: 10px;
     padding: 8px;
-    background-color: #f9f9f9;
+    background-color: var(--card-bg);
     border-radius: 4px;
     transition: background-color 0.2s;
   }
@@ -217,17 +189,6 @@
 
   input[type='checkbox'] {
     cursor: pointer;
-  }
-
-  .roll-notification {
-    background: #4caf50;
-    color: white;
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    font-weight: bold;
-    text-align: center;
-    animation: slideIn 0.3s ease-out;
   }
 
   @keyframes slideIn {
