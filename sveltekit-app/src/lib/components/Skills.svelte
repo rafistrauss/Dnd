@@ -152,7 +152,7 @@
   }
 
   .skill-row:hover {
-    background-color: #f0f0f0;
+    background-color: var(--bg-color);
   }
 
   .skill-row label {
