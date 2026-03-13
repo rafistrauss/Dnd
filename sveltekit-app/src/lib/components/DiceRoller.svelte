@@ -149,7 +149,9 @@
   $: hasGuidedStrike = (() => {
     if (!$character.class) return false;
     const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
-    return features.some((f) => f.name === 'Guided Strike');
+    return features.some(
+      (f) => f.name === 'Guided Strike' || f.subFeatures?.some((sf) => sf.name === 'Guided Strike')
+    );
   })();
 
   $: channelDivinityRemaining = (() => {
