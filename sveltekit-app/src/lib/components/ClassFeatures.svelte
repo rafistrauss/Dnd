@@ -277,9 +277,9 @@
   
   $: allChannelDivinitySubFeatures = filteredFeatures.flatMap((feature) => {
     const subFeats: any[] = [];
-    // Get subFeatures from any feature that has them
+    // Get subFeatures from any feature that has them, filtered by level
     if (feature.subFeatures) {
-      subFeats.push(...feature.subFeatures);
+      subFeats.push(...feature.subFeatures.filter((sf: any) => !sf.minLevel || sf.minLevel <= $character.level));
     }
     // Include standalone channelDivinity features (not the pool itself)
     if (feature.type === 'channelDivinity') {
