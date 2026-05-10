@@ -528,15 +528,27 @@
     guidedStrikeUsed = true;
   }
 
+  function getOrdinal(n: number): string {
+    if (n === 1) return '1st';
+    if (n === 2) return '2nd';
+    if (n === 3) return '3rd';
+    return `${n}th`;
+  }
+
   function rollDivineSmite() {
-    // Consume one spell slot of the chosen level
     const levelToUse = smiteLevel;
     character.update((c) => {
       if (!c.classFeatures.spellSlotsByLevel) return c;
       const slots = c.classFeatures.spellSlotsByLevel[levelToUse] as boolean[] | undefined;
       if (slots) {
         const idx = slots.findIndex((s) => !s);
-        if (idx !== -1) slots[idx] = true;
+        if (idx !== -1) {
+          c.classFeatures.spellSlotsByLevel[levelToUse] = [
+            ...slots.slice(0, idx),
+            true,
+            ...slots.slice(idx + 1)
+          ];
+        }
       }
       return c;
     });
@@ -826,7 +838,7 @@
                   {#each availableSmiteSlots as level}
                     {@const diceFaces = 1 + level + (smiteVsUndeadOrFiend ? 1 : 0)}
                     <option value={level}>
-                      {level === 1 ? '1st' : level === 2 ? '2nd' : level === 3 ? '3rd' : `${level}th`} Level ({diceFaces}d8 radiant)
+                      {getOrdinal(level)} Level ({diceFaces}d8 radiant)
                     </option>
                   {/each}
                 </select>
