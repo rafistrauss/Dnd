@@ -408,7 +408,9 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
       attackName: attack.name,
       applyHalfDamage,
       bonusBreakdown,
-      damageType
+      damageType,
+      rollType: 'damage',
+      isWeaponAttack: !attack.spellRef
     });
   }
 
