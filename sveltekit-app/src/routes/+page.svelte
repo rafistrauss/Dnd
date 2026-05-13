@@ -61,8 +61,8 @@
       if (total > 0) {
         const level = idx + 1;
         const slots = storedSlots[level] ?? [];
-        const used = slots.filter((s) => s).length;
-        result.push({ level, available: total - used, total });
+        const used = Math.min(total, slots.filter((s) => s).length);
+        result.push({ level, available: Math.max(0, total - used), total });
       }
     });
 
@@ -228,7 +228,7 @@
           if (total > 0) {
             const level = idx + 1;
             const slots = c.classFeatures.spellSlotsByLevel?.[level] ?? [];
-            const usedSlots = slots.filter((s) => s).length;
+            const usedSlots = Math.min(total, slots.filter((s) => s).length);
             spellSlotsRestored += usedSlots;
             if (!c.classFeatures.spellSlotsByLevel) c.classFeatures.spellSlotsByLevel = {};
             c.classFeatures.spellSlotsByLevel[level] = [];

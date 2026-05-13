@@ -428,33 +428,35 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   }
 
   function checkAndConsumeSpellSlot(level: number): boolean {
-    // Initialize spell slots structure if needed
-    if (!$character.classFeatures.spellSlotsByLevel) {
-      $character.classFeatures.spellSlotsByLevel = {};
+    if (!$character.class) return false;
+
+    const progression = getSpellSlotProgression($character.class, $character.level);
+    const totalSlotsForLevel = progression[level - 1] || 0;
+    if (totalSlotsForLevel <= 0) {
+      return false;
     }
 
-    // Get or initialize slots for this level
-    if (!$character.classFeatures.spellSlotsByLevel[level]) {
-      // Default to 2 slots for any level if not configured
-      $character.classFeatures.spellSlotsByLevel[level] = Array(2).fill(false);
-    }
+    const storedSlots = $character.classFeatures.spellSlotsByLevel?.[level] ?? [];
+    let availableIndex = -1;
 
-    const slots = $character.classFeatures.spellSlotsByLevel[level];
-    // Find first unused slot
-    const availableIndex = slots.findIndex((used) => !used);
+    // Availability is based on class progression, not persisted array length.
+    for (let i = 0; i < totalSlotsForLevel; i++) {
+      if (!storedSlots[i]) {
+        availableIndex = i;
+        break;
+      }
+    }
 
     if (availableIndex === -1) {
-      return false; // No slots available
+      return false;
     }
 
-    // Mark slot as used
     character.update((c) => {
       if (!c.classFeatures.spellSlotsByLevel) {
         c.classFeatures.spellSlotsByLevel = {};
       }
-      if (!c.classFeatures.spellSlotsByLevel[level]) {
-        c.classFeatures.spellSlotsByLevel[level] = Array(2).fill(false);
-      }
+      const existing = c.classFeatures.spellSlotsByLevel[level] ?? [];
+      c.classFeatures.spellSlotsByLevel[level] = existing.slice(0, totalSlotsForLevel);
       c.classFeatures.spellSlotsByLevel[level][availableIndex] = true;
       return c;
     });
