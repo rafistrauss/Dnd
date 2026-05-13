@@ -141,6 +141,8 @@ export interface Character {
   class: string;
   subclass?: string;
   level: number;
+  hpByLevel?: Record<number, number>;
+  hpRolls?: number[];
   race: string;
   background: string;
   alignment: string;

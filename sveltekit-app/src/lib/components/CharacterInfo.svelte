@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { character, updateProficiencyBonus, collapsedStates } from '$lib/stores';
+  import { character, setCharacterLevel, levelDownCharacter, collapsedStates, toasts } from '$lib/stores';
   import { getAvailableClasses, getAvailableSubclasses } from '$lib/classConfig';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   const classes = getAvailableClasses();
+
+  export let onShowLevelUpModal: () => void = () => {};
 
   $: subclasses = $character.class ? getAvailableSubclasses($character.class) : [];
 
@@ -26,11 +28,16 @@
 
   function handleLevelChange(event: Event) {
     const target = event.target as HTMLInputElement;
-    character.update((c) => {
-      c.level = parseInt(target.value) || 1;
-      return c;
-    });
-    updateProficiencyBonus();
+    setCharacterLevel(parseInt(target.value) || 1);
+  }
+
+  function handleLevelUp() {
+    onShowLevelUpModal();
+  }
+
+  function handleLevelDown() {
+    levelDownCharacter();
+    toasts.add(`Leveled down to ${$character.level}!`, 'info');
   }
 
   function toggleCollapse() {
@@ -45,6 +52,9 @@
     ariaLabel={$collapsedStates.characterInfo ? 'Expand' : 'Collapse'}
     onToggle={() => collapsedStates.update((s) => ({ ...s, characterInfo: !s.characterInfo }))}
   />
+  <div class="header-hp-display" aria-label="Current hit points for testing">
+    HP {$character.currentHP} / {$character.maxHP}
+  </div>
   {#if !$collapsedStates.characterInfo}
     <div class="info-grid">
       <div class="form-group">
@@ -82,14 +92,32 @@
       {/if}
       <div class="form-group">
         <label for="characterLevel">Level</label>
-        <input
-          type="number"
-          id="characterLevel"
-          value={$character.level}
-          on:change={handleLevelChange}
-          min="1"
-          max="20"
-        />
+        <div class="level-controls">
+          <input
+            type="number"
+            id="characterLevel"
+            value={$character.level}
+            on:change={handleLevelChange}
+            min="1"
+            max="20"
+          />
+          <button
+            type="button"
+            class="level-up-btn"
+            on:click={handleLevelUp}
+            disabled={!$character.class || $character.level >= 20}
+          >
+            Level Up
+          </button>
+                  <button
+                    type="button"
+                    class="level-down-btn"
+                    on:click={handleLevelDown}
+                    disabled={$character.level <= 1}
+                  >
+                    Level Down
+                  </button>
+        </div>
       </div>
       <div class="form-group">
         <label for="characterRace">Race</label>
@@ -130,32 +158,17 @@
     box-shadow: var(--shadow);
   }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-  }
-
-  h2 {
-    margin: 0;
-    color: var(--primary-color);
-  }
-
-  .collapse-btn {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--primary-color);
-    padding: 5px 10px;
-    transition: transform 0.2s ease;
-  }
-
-  .collapse-btn:hover {
-    transform: scale(1.1);
+  .header-hp-display {
+    margin-top: 10px;
+    margin-bottom: 14px;
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1f3e65;
+    background: #e8f1ff;
+    border: 1px solid #c8dcf6;
   }
 
   .info-grid {
@@ -167,6 +180,48 @@
   .form-group {
     display: flex;
     flex-direction: column;
+  }
+
+  .level-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .level-controls input {
+    flex: 1;
+  }
+
+  .level-up-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .level-down-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    background: #8b7355;
+    color: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .level-up-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .level-down-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
   label {
