@@ -47,6 +47,7 @@
   import WikidotImport from '$lib/components/WikidotImport.svelte';
   import AddConditionModal from '$lib/components/AddConditionModal.svelte';
   import DamageInput from '$lib/components/DamageInput.svelte';
+  import LevelUpModal from '$lib/components/LevelUpModal.svelte';
   import Toast from '$lib/components/Toast.svelte';
   // import ConsoleViewer from '$lib/components/ConsoleViewer.svelte';
   import type { Character, SpellState } from '$lib/types';
@@ -73,6 +74,7 @@
   let showGistModal = false;
   let showWikidotImport = false;
   let showAddConditionModal = false;
+  let showLevelUpModal = false;
   let gistMode: 'save' | 'load' = 'save';
   let fileInput: HTMLInputElement | undefined = undefined;
   let diceNotation = '';
@@ -330,7 +332,10 @@
 
     const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
     // The key is stored without spaces, so we need to match it
-    return features.find((f) => f.name.replace(/\s+/g, '') === key);
+    return features.find((f) => {
+      const featureName = typeof f.name === 'function' ? f.name($character.level) : f.name;
+      return featureName.replace(/\s+/g, '') === key;
+    });
   }
 
   function openDiceRoller(
@@ -753,7 +758,7 @@
   </header>
 
   <main>
-    <CharacterInfo />
+    <CharacterInfo onShowLevelUpModal={() => (showLevelUpModal = true)} />
     <AbilityScores on:roll={(e) => openDiceRoller(e.detail)} />
     <Skills on:roll={(e) => openDiceRoller(e.detail)} />
     <CombatStats on:rollHitDice={handleHitDiceRoll} on:rollInitiative={handleInitiativeRoll} />
@@ -790,6 +795,11 @@
   show={showAddConditionModal}
   onSave={handleAddCondition}
   onCancel={handleCancelAddCondition}
+/>
+
+<LevelUpModal
+  isOpen={showLevelUpModal}
+  onClose={() => (showLevelUpModal = false)}
 />
 
 <Toast />

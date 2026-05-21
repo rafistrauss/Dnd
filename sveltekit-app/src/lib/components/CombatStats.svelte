@@ -5,7 +5,8 @@
     searchFilter,
     collapsedStates,
     abilityModifiers,
-    isEditMode
+    isEditMode,
+    syncCurrentLevelHP
   } from '$lib/stores';
   import { getClassConfig } from '$lib/classConfig';
   import {
@@ -271,7 +272,13 @@
             max={$character.maxHP}
           />
           <span class="hp-separator">/</span>
-          <input type="number" bind:value={$character.maxHP} class="hp-max" min="0" />
+          <input
+            type="number"
+            bind:value={$character.maxHP}
+            class="hp-max"
+            min="0"
+            on:change={syncCurrentLevelHP}
+          />
         </div>
         <div class="hp-controls">
           <button class="hp-btn" on:click={() => adjustHP(-1)}>−</button>
