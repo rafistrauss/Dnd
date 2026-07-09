@@ -4,6 +4,7 @@
   import { calculateDamage, applyDamage } from '$lib/combatUtils';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
   import { collapsedStates, searchFilter } from '$lib/stores';
+  import { turnTracker } from '$lib/stores';
 
   const dispatch = createEventDispatcher();
 
@@ -69,11 +70,17 @@
   function applyCalculatedDamage() {
     character.update((c) => applyDamage(c, calculatedDamage));
     toasts.add(`Applied ${calculatedDamage} damage to character (${damageType})`, 'info');
+    // If Uncanny Dodge was used, mark the reaction as spent this round
+    if (uncannyDodge) {
+      turnTracker.update((t) => ({ ...t, reaction: true }));
+      toasts.add('Reaction used (Uncanny Dodge)', 'info');
+    }
     // Reset form
     damageAmount = 0;
     damageType = '';
     calculatedDamage = 0;
     adjustmentMessages = [];
+    uncannyDodge = false;
   }
 
   function cancel() {

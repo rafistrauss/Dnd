@@ -9,7 +9,8 @@ import {
   collapsedStates,
   isEditMode,
   toasts,
-  useRacialTrait
+  useRacialTrait,
+  turnTracker
 } from '$lib/stores';
 import SectionHeader from '$lib/components/SectionHeader.svelte';
 import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
@@ -157,6 +158,21 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
     toasts.add('Attack order updated successfully!', 'success');
   }
 
+  // Mark the appropriate action-economy slot as used on the turn tracker.
+  // Weapon attacks use your Action; spells use their casting time (action/bonusAction/reaction).
+  function consumeActionEconomy(attack: Attack) {
+    let slot: 'action' | 'bonusAction' | 'reaction' = 'action';
+    if (attack.spellRef) {
+      const spell = getSpellByName(attack.spellRef);
+      const actionType = (spell?.actionType || '').toLowerCase();
+      if (actionType.includes('bonus')) slot = 'bonusAction';
+      else if (actionType.includes('reaction')) slot = 'reaction';
+      else if (actionType.includes('action')) slot = 'action';
+      else return; // long casting times (minutes/hours) don't consume a combat action
+    }
+    turnTracker.update((t) => (t[slot] ? t : { ...t, [slot]: true }));
+  }
+
   // Support racial trait spell usage and user override
   function rollAttack(attack: Attack, useRacialTraitOverride?: boolean) {
     let damageToRoll = attack.damage;
@@ -285,6 +301,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
     } else if (debugForceD20Mode === 'd1') {
       notation += `@1`;
     }
+    consumeActionEconomy(attack);
     dispatch('roll', {
       notation,
       damageNotation: damageToRoll,
@@ -403,6 +420,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
       }
     }
 
+    consumeActionEconomy(attack);
     dispatch('roll', {
       notation: damageToRoll,
       attackName: attack.name,
@@ -639,6 +657,8 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
         }
       }
     }
+
+    consumeActionEconomy(attack);
 
     // Extract bonuses from the spell
     const bonuses = extractSpellEffectBonuses(spell);

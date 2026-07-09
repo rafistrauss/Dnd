@@ -300,6 +300,51 @@ if (browser) {
   });
 }
 
+// Turn / action-economy tracker (transient combat state, persisted to localStorage)
+export interface TurnState {
+  round: number;
+  action: boolean;
+  bonusAction: boolean;
+  reaction: boolean;
+}
+
+function loadTurnState(): TurnState {
+  const defaults: TurnState = {
+    round: 1,
+    action: false,
+    bonusAction: false,
+    reaction: false
+  };
+  if (!browser) return defaults;
+  try {
+    const saved = localStorage.getItem('dndTurnState');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        round: typeof parsed.round === 'number' ? parsed.round : 1,
+        action: !!parsed.action,
+        bonusAction: !!parsed.bonusAction,
+        reaction: !!parsed.reaction
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load turn state:', e);
+  }
+  return defaults;
+}
+
+export const turnTracker = writable<TurnState>(loadTurnState());
+
+if (browser) {
+  turnTracker.subscribe((value) => {
+    try {
+      localStorage.setItem('dndTurnState', JSON.stringify(value));
+    } catch (e) {
+      console.error('Failed to save turn state:', e);
+    }
+  });
+}
+
 // Derived stores for commonly used calculations
 export const abilityModifiers = derived(character, ($char) => {
   const calculateModifier = (score: number) => Math.floor((score - 10) / 2);
@@ -535,6 +580,7 @@ interface CollapsedStates {
   damageInput: boolean;
   rollHistory: boolean;
   money: boolean;
+  turnTracker: boolean;
 }
 
 function loadCollapsedStates(): CollapsedStates {
@@ -548,7 +594,8 @@ function loadCollapsedStates(): CollapsedStates {
       classFeatures: false,
       notes: false,
       damageInput: false,
-      money: false
+      money: false,
+      turnTracker: false
     };
   }
 
@@ -565,7 +612,8 @@ function loadCollapsedStates(): CollapsedStates {
         classFeatures: parsed.classFeatures ?? false,
         notes: parsed.notes ?? false,
         damageInput: parsed.damageInput ?? false,
-        money: parsed.money ?? false
+        money: parsed.money ?? false,
+        turnTracker: parsed.turnTracker ?? false
       };
     }
   } catch (e) {
@@ -581,7 +629,8 @@ function loadCollapsedStates(): CollapsedStates {
     classFeatures: false,
     notes: false,
     damageInput: false,
-    money: false
+    money: false,
+    turnTracker: false
   };
 }
 
