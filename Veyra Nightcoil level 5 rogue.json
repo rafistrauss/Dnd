@@ -1,0 +1,114 @@
+{
+   "name": "Veyra Nightcoil",
+   "class": "rogue",
+   "subclass": "swashbuckler",
+   "level": 5,
+   "race": "Half-Elf",
+   "background": "Sailor",
+   "alignment": "Neutral Good",
+   "armorClass": 15,
+   "initiative": 6,
+   "speed": "30 ft",
+   "currentHP": 38,
+   "maxHP": 38,
+   "tempHP": 0,
+   "hitDice": {
+      "current": 5,
+      "max": 5
+   },
+   "abilities": {
+      "strength": 10,
+      "dexterity": 18,
+      "constitution": 14,
+      "intelligence": 12,
+      "wisdom": 12,
+      "charisma": 16
+   },
+   "proficiencyBonus": 3,
+   "saveProficiencies": {
+      "strength": false,
+      "dexterity": true,
+      "constitution": false,
+      "intelligence": true,
+      "wisdom": false,
+      "charisma": false
+   },
+   "skillProficiencies": {
+      "athletics": false,
+      "intimidation": false,
+      "religion": false,
+      "perception": true,
+      "acrobatics": true,
+      "animalHandling": false,
+      "arcana": false,
+      "deception": true,
+      "history": false,
+      "insight": false,
+      "investigation": true,
+      "medicine": false,
+      "nature": false,
+      "performance": true,
+      "persuasion": true,
+      "sleightOfHand": true,
+      "stealth": true,
+      "survival": false
+   },
+   "attacks": [
+      {
+         "id": "atk-rapier",
+         "name": "Rapier",
+         "bonus": 7,
+         "damage": "1d8+4",
+         "damageType": "Piercing",
+         "notes": "Finesse | Rakish Audacity | Sneak Attack eligible"
+      },
+      {
+         "id": "atk-dagger",
+         "name": "Dagger",
+         "bonus": 7,
+         "damage": "1d4+4",
+         "damageType": "Piercing",
+         "notes": "Light | Thrown (20/60) | Finesse"
+      },
+      {
+         "id": "atk-shortbow",
+         "name": "Shortbow",
+         "bonus": 7,
+         "damage": "1d6+4",
+         "damageType": "Piercing",
+         "notes": "Range 80/320 | Sneak Attack eligible"
+      },
+      {
+         "id": "sneak-attack",
+         "name": "Sneak Attack",
+         "bonus": 0,
+         "damage": "3d6",
+         "damageType": "Precision",
+         "notes": "Once per turn; Rakish Audacity allows 1v1 Sneak Attack"
+      }
+   ],
+   "features": "Sneak Attack (3d6)\nCunning Action (Dash, Disengage, Hide as Bonus Action)\nFancy Footwork (No opportunity attacks from creatures you attack)\nRakish Audacity (CHA to initiative; 1v1 Sneak Attack)\nUncanny Dodge (Reaction: halve damage)\nExpertise (Stealth, Persuasion)",
+   "equipment": "Studded Leather Armor, Rapier, Dagger x2, Shortbow, Thieves' Tools, Navigator’s Tools, Burglar’s Pack",
+   "notes": "Agile frontline duelist. Fights openly, controls space, isolates targets, and dictates movement. Charisma-forward rogue — confident, mobile, hard to pin down. More blade dancer than shadow lurker.",
+   "classFeatures": {
+      "features": {
+         "SneakAttackDice": "3d6",
+         "CunningAction": true,
+         "FancyFootwork": true,
+         "RakishAudacity": true,
+         "UncannyDodge": true,
+         "Expertise": [
+            "Stealth",
+            "Persuasion"
+         ]
+      }
+   },
+   "racialTraits": {
+      "darkvision": "60 ft",
+      "feyAncestry": true,
+      "skillVersatility": true
+   },
+   "activeStates": [],
+   "shieldEquipped": false,
+   "armorName": "Studded Leather"
+}

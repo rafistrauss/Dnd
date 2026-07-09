@@ -2,6 +2,30 @@ import { writable, derived } from 'svelte/store';
 import type { Character, RacialTraitUses, RollHistoryEntry } from './types';
 import { browser } from '$app/environment';
 import { getRacialSpellsForLevel, getRaceConfig } from './raceConfig';
+import { getSpellSlotProgression } from './classConfig';
+
+function normalizeSpellSlotUsage(char: Character): Character {
+  if (!char.classFeatures) return char;
+
+  if (!char.classFeatures.spellSlotsByLevel) {
+    char.classFeatures.spellSlotsByLevel = {};
+    return char;
+  }
+
+  const progression = char.class ? getSpellSlotProgression(char.class, char.level) : [];
+  const normalized: Record<number, boolean[]> = {};
+
+  progression.forEach((total, idx) => {
+    if (total <= 0) return;
+    const level = idx + 1;
+    const rawSlots = char.classFeatures.spellSlotsByLevel?.[level] ?? [];
+    const slots = Array.isArray(rawSlots) ? rawSlots : [];
+    normalized[level] = slots.slice(0, total).map((used) => !!used);
+  });
+
+  char.classFeatures.spellSlotsByLevel = normalized;
+  return char;
+}
 
 // Toast notification store
 export interface Toast {
@@ -180,7 +204,8 @@ const initialCharacter: Character = {
     spellSlotsByLevel: {},
     preparedSpells: ''
   },
-  racialTraits: { uses: {} }
+  racialTraits: { uses: {} },
+  money: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 }
 };
 
 // Load from localStorage if available
@@ -229,6 +254,13 @@ function loadFromStorage(): Character {
       if (!loaded.racialTraits) {
         loaded.racialTraits = { uses: {} };
       }
+
+      // Migrate: ensure money structure exists
+      if (!loaded.money) {
+        loaded.money = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+      }
+
+      normalizeSpellSlotUsage(loaded);
 
       return loaded;
     }
@@ -348,6 +380,8 @@ export function importCharacter(file: File): Promise<Character> {
         if (!merged.racialTraits) {
           merged.racialTraits = { uses: {} };
         }
+
+        normalizeSpellSlotUsage(merged);
 
         resolve(merged);
       } catch {
@@ -496,6 +530,7 @@ interface CollapsedStates {
   notes: boolean;
   damageInput: boolean;
   rollHistory: boolean;
+  money: boolean;
 }
 
 function loadCollapsedStates(): CollapsedStates {
@@ -508,7 +543,8 @@ function loadCollapsedStates(): CollapsedStates {
       attacks: false,
       classFeatures: false,
       notes: false,
-      damageInput: false
+      damageInput: false,
+      money: false
     };
   }
 
@@ -516,7 +552,6 @@ function loadCollapsedStates(): CollapsedStates {
     const saved = localStorage.getItem('dndCollapsedStates');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Ensure damageInput exists in loaded state
       return {
         characterInfo: parsed.characterInfo ?? false,
         combatStats: parsed.combatStats ?? false,
@@ -525,7 +560,8 @@ function loadCollapsedStates(): CollapsedStates {
         attacks: parsed.attacks ?? false,
         classFeatures: parsed.classFeatures ?? false,
         notes: parsed.notes ?? false,
-        damageInput: parsed.damageInput ?? false
+        damageInput: parsed.damageInput ?? false,
+        money: parsed.money ?? false
       };
     }
   } catch (e) {
@@ -540,7 +576,8 @@ function loadCollapsedStates(): CollapsedStates {
     attacks: false,
     classFeatures: false,
     notes: false,
-    damageInput: false
+    damageInput: false,
+    money: false
   };
 }
 

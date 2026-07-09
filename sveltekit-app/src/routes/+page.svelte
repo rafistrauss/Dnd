@@ -41,6 +41,7 @@
   import Attacks from '$lib/components/Attacks.svelte';
   import ClassFeatures from '$lib/components/ClassFeatures.svelte';
   import Notes from '$lib/components/Notes.svelte';
+  import Money from '$lib/components/Money.svelte';
   import RollHistory from '$lib/components/RollHistory.svelte';
   import DiceRoller from '$lib/components/DiceRoller.svelte';
   import GistModal from '$lib/components/GistModal.svelte';
@@ -760,6 +761,7 @@
     <DamageInput />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
     <ClassFeatures on:roll={(e) => openDiceRoller(e.detail)} />
+    <Money />
     <Notes />
     <RollHistory />
   </main>

@@ -136,6 +136,14 @@ export interface RacialTraits {
   uses: Record<string, RacialTraitUses>; // Track uses of racial spells
 }
 
+export interface Money {
+  cp: number; // copper pieces
+  sp: number; // silver pieces
+  ep: number; // electrum pieces
+  gp: number; // gold pieces
+  pp: number; // platinum pieces
+}
+
 export interface Character {
   name: string;
   class: string;
@@ -164,6 +172,7 @@ export interface Character {
   classFeatures: ClassFeatures;
   racialTraits?: RacialTraits; // Optional for backwards compatibility
   activeStates?: SpellState[];
+  money?: Money; // Optional for backwards compatibility
 }
 
 // Class Configuration Types

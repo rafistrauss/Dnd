@@ -1,10 +1,34 @@
 import type { Character, RollHistoryEntry } from './types';
+import { getSpellSlotProgression } from './classConfig';
 
 const GIST_API = 'https://api.github.com/gists';
 
 export interface GistConfig {
   token?: string;
   gistId?: string;
+}
+
+function normalizeSpellSlotUsage(character: Character): Character {
+  if (!character.classFeatures) return character;
+
+  if (!character.classFeatures.spellSlotsByLevel) {
+    character.classFeatures.spellSlotsByLevel = {};
+    return character;
+  }
+
+  const progression = character.class ? getSpellSlotProgression(character.class, character.level) : [];
+  const normalized: Record<number, boolean[]> = {};
+
+  progression.forEach((total, idx) => {
+    if (total <= 0) return;
+    const level = idx + 1;
+    const rawSlots = character.classFeatures.spellSlotsByLevel?.[level] ?? [];
+    const slots = Array.isArray(rawSlots) ? rawSlots : [];
+    normalized[level] = slots.slice(0, total).map((used) => !!used);
+  });
+
+  character.classFeatures.spellSlotsByLevel = normalized;
+  return character;
 }
 
 // Save character to GitHub Gist
@@ -170,6 +194,7 @@ export async function loadFromGist(
       character.classFeatures = {
         features: {},
         spellSlots: [],
+        spellSlotsByLevel: {},
         preparedSpells: ''
       };
     } else {
@@ -179,10 +204,15 @@ export async function loadFromGist(
       if (!character.classFeatures.spellSlots) {
         character.classFeatures.spellSlots = [];
       }
+      if (!character.classFeatures.spellSlotsByLevel) {
+        character.classFeatures.spellSlotsByLevel = {};
+      }
       if (character.classFeatures.preparedSpells === undefined) {
         character.classFeatures.preparedSpells = '';
       }
     }
+
+    normalizeSpellSlotUsage(character as Character);
 
     let rollHistory: RollHistoryEntry[] | undefined = undefined;
     if (rollHistoryContent) {
