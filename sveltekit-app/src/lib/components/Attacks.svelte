@@ -430,7 +430,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   function checkAndConsumeSpellSlot(level: number): boolean {
     if (!$character.class) return false;
 
-    const progression = getSpellSlotProgression($character.class, $character.level);
+    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
     const totalSlotsForLevel = progression[level - 1] || 0;
     if (totalSlotsForLevel <= 0) {
       return false;
@@ -563,7 +563,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   function getAvailableSpellLevels(spell: Spell): number[] {
     if (!$character.class) return [spell.level];
-    const progression = getSpellSlotProgression($character.class, $character.level);
+    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
     const levels: number[] = [];
 
     progression.forEach((total, idx) => {
@@ -707,7 +707,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   $: maxAvailableSpellLevel = (() => {
     if (!$character.class) return 0;
-    const progression = getSpellSlotProgression($character.class, $character.level);
+    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
     for (let i = progression.length - 1; i >= 0; i--) {
       if (progression[i] > 0) return i + 1;
     }

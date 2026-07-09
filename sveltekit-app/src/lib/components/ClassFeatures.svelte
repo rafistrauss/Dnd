@@ -9,7 +9,9 @@
     getAvailableFeatures,
     getSpellSlotProgression,
     getPreparedSpellsCount,
-    getSpellSaveDC
+    getSpellSaveDC,
+    isSpellcaster,
+    getSpellcastingAbility
   } from '$lib/classConfig';
   import { rollDice } from '$lib/diceUtils';
   import SectionHeader from './SectionHeader.svelte';
@@ -17,13 +19,17 @@
   const dispatch = createEventDispatcher();
 
   $: classConfig = $character.class ? getClassConfig($character.class) : null;
+  $: isCaster = $character.class ? isSpellcaster($character.class, $character.subclass) : false;
+  $: spellAbility = $character.class
+    ? getSpellcastingAbility($character.class, $character.subclass)
+    : null;
   $: features = $character.class
     ? getAvailableFeatures($character.class, $character.level, $character.subclass)
     : [];
   // Derive available spell levels and their max slot counts from class config
   $: availableSpellLevels = (() => {
-    if (!classConfig?.spellcaster || !$character.class) return [];
-    const progression = getSpellSlotProgression($character.class, $character.level);
+    if (!isCaster || !$character.class) return [];
+    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
     return progression
       .map((slots, idx) => ({ level: idx + 1, slots }))
       .filter(({ slots }) => slots > 0);
@@ -32,10 +38,17 @@
   let spellSaveDC = 0;
   let preparedCount = 0;
 
-  $: if (classConfig?.spellcaster && classConfig.spellcastingAbility) {
-    const abilityMod = $abilityModifiers[classConfig.spellcastingAbility];
-    spellSaveDC = getSpellSaveDC($character.class, abilityMod, $character.proficiencyBonus) || 0;
-    preparedCount = getPreparedSpellsCount($character.class, $character.level, abilityMod);
+  $: if (isCaster && spellAbility) {
+    const abilityMod = $abilityModifiers[spellAbility];
+    spellSaveDC =
+      getSpellSaveDC($character.class, abilityMod, $character.proficiencyBonus, $character.subclass) ||
+      0;
+    preparedCount = getPreparedSpellsCount(
+      $character.class,
+      $character.level,
+      abilityMod,
+      $character.subclass
+    );
   }
 
   function resetFeature(featureKey: string, maxUses: number) {
@@ -163,6 +176,16 @@
       return feature.rollFormula($character.level);
     }
     return feature.rollFormula || '';
+  }
+
+  function rollFeature(feature: any) {
+    const formula = getRollFormula(feature);
+    if (!formula) return;
+    dispatch('roll', {
+      notation: formula,
+      attackName: getFeatureName(feature),
+      rollType: 'other'
+    });
   }
 
   function useChannelDivinityWithRoll(feature: any) {
@@ -340,9 +363,9 @@
       {/if}
 
       <div class="features-grid">
-        {#if classConfig?.spellcaster}
+        {#if isCaster}
           <div class="feature-box spellcasting">
-            <h3>Spellcasting ({classConfig.spellcastingAbility?.toUpperCase()})</h3>
+            <h3>Spellcasting ({spellAbility?.toUpperCase()})</h3>
             <div class="spell-stats">
               <div class="spell-stat">
                 <label>Spell Save DC</label>
@@ -489,6 +512,14 @@
                 <span>/ {maxPool}</span>
                 <button on:click={() => resetPool(featureKey, maxPool)} class="btn-small">
                   {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}
+                </button>
+              </div>
+            {/if}
+
+            {#if feature.rollable && getRollFormula(feature)}
+              <div class="feature-roll">
+                <button class="btn btn-primary use-enabled" on:click={() => rollFeature(feature)}>
+                  Roll {featureName} ({getRollFormula(feature)})
                 </button>
               </div>
             {/if}

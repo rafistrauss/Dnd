@@ -12,7 +12,7 @@ function normalizeSpellSlotUsage(char: Character): Character {
     return char;
   }
 
-  const progression = char.class ? getSpellSlotProgression(char.class, char.level) : [];
+  const progression = char.class ? getSpellSlotProgression(char.class, char.level, char.subclass) : [];
   const normalized: Record<number, boolean[]> = {};
 
   progression.forEach((total, idx) => {
@@ -247,6 +247,10 @@ function loadFromStorage(): Character {
         }
         if (loaded.classFeatures.preparedSpells === undefined) {
           loaded.classFeatures.preparedSpells = '';
+        }
+        // Migrate: preparedSpells stored as array -> newline-separated string
+        if (Array.isArray(loaded.classFeatures.preparedSpells)) {
+          loaded.classFeatures.preparedSpells = loaded.classFeatures.preparedSpells.join('\n');
         }
       }
 

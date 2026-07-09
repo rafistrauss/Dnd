@@ -1,6 +1,6 @@
 import { getRaceConfig } from './raceConfig';
 import type { Character, Abilities } from './types';
-import { getClassConfig } from './classConfig';
+import { getClassConfig, isSpellcaster, getSpellcastingAbility } from './classConfig';
 
 /**
  * Calculate ability modifier from ability score
@@ -125,9 +125,9 @@ export function rollHPForLevel(hitDice: string): number {
  */
 export function getSpellSaveDC(char: Character, abilities: Abilities): number | null {
   if (!char.class) return null;
-  const classConfig = getClassConfig(char.class);
-  if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return null;
-  const spellcastingMod = calculateModifier(abilities[classConfig.spellcastingAbility]);
+  const ability = getSpellcastingAbility(char.class, char.subclass);
+  if (!ability) return null;
+  const spellcastingMod = calculateModifier(abilities[ability]);
   return 8 + char.proficiencyBonus + spellcastingMod;
 }
 
@@ -136,9 +136,9 @@ export function getSpellSaveDC(char: Character, abilities: Abilities): number | 
  */
 export function getSpellcastingModifier(char: Character, abilities: Abilities): number {
   if (!char.class) return 0;
-  const classConfig = getClassConfig(char.class);
-  if (!classConfig || !classConfig.spellcaster || !classConfig.spellcastingAbility) return 0;
-  return calculateModifier(abilities[classConfig.spellcastingAbility]);
+  const ability = getSpellcastingAbility(char.class, char.subclass);
+  if (!ability) return 0;
+  return calculateModifier(abilities[ability]);
 }
 
 import { getArmorByName } from './armorData';

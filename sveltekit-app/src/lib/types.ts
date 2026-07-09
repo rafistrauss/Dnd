@@ -197,6 +197,9 @@ export interface ClassFeature {
 export interface SubclassConfig {
   name: string;
   features: ClassFeature[];
+  spellcaster?: boolean; // Subclass grants spellcasting (e.g. Arcane Trickster, Eldritch Knight)
+  spellcastingAbility?: AbilityName;
+  spellSlotProgression?: Record<number, number[]>; // character level -> [slots for spell level 1-9]
 }
 
 export interface ClassConfig {

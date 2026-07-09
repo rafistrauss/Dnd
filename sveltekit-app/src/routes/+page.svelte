@@ -54,7 +54,7 @@
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
     if (!$character.class) return [];
-    const progression = getSpellSlotProgression($character.class, $character.level);
+    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
     const storedSlots = $character.classFeatures.spellSlotsByLevel || {};
     const result: { level: number; available: number; total: number }[] = [];
 
@@ -224,7 +224,7 @@
       // Reset all spell slots
       let spellSlotsRestored = 0;
       if (c.class) {
-        const progression = getSpellSlotProgression(c.class, c.level);
+        const progression = getSpellSlotProgression(c.class, c.level, c.subclass);
         progression.forEach((total, idx) => {
           if (total > 0) {
             const level = idx + 1;

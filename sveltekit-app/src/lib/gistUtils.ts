@@ -16,7 +16,7 @@ function normalizeSpellSlotUsage(character: Character): Character {
     return character;
   }
 
-  const progression = character.class ? getSpellSlotProgression(character.class, character.level) : [];
+  const progression = character.class ? getSpellSlotProgression(character.class, character.level, character.subclass) : [];
   const normalized: Record<number, boolean[]> = {};
 
   progression.forEach((total, idx) => {
@@ -209,6 +209,12 @@ export async function loadFromGist(
       }
       if (character.classFeatures.preparedSpells === undefined) {
         character.classFeatures.preparedSpells = '';
+      }
+      // Migrate: preparedSpells stored as array -> newline-separated string
+      if (Array.isArray(character.classFeatures.preparedSpells)) {
+        character.classFeatures.preparedSpells = (
+          character.classFeatures.preparedSpells as string[]
+        ).join('\n');
       }
     }
 
