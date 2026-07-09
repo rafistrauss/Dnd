@@ -5,6 +5,7 @@
   import SectionHeader from '$lib/components/SectionHeader.svelte';
   import { collapsedStates, searchFilter } from '$lib/stores';
   import { turnTracker } from '$lib/stores';
+  import TooltipInfo from '$lib/components/TooltipInfo.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -16,6 +17,10 @@
   // Uncanny Dodge state
   let uncannyDodge = false;
   $: hasUncannyDodge = $character?.features?.toLowerCase?.().includes('uncanny dodge');
+  // Can't use Uncanny Dodge if the reaction is already spent this turn
+  $: if ($turnTracker.reaction && uncannyDodge) {
+    uncannyDodge = false;
+  }
 
   // Common damage types for quick selection
   const commonDamageTypes = [
@@ -153,10 +158,17 @@
 
         {#if hasUncannyDodge}
         <div class="input-field">
-          <label>
-            <input type="checkbox" bind:checked={uncannyDodge} />
-            Uncanny Dodge (When an attacker that you can see hits you with an attack roll, you can take a Reaction to halve the attack’s damage against you.)
+          <label class:disabled={$turnTracker.reaction}>
+            <input type="checkbox" bind:checked={uncannyDodge} disabled={$turnTracker.reaction} />
+            Uncanny Dodge
+            <TooltipInfo
+              tooltipContent="When an attacker that you can see hits you with an attack roll, you can take a Reaction to halve the attack’s damage against you."
+              ariaLabel="Uncanny Dodge details"
+            />
           </label>
+          {#if $turnTracker.reaction}
+            <span class="reaction-used-note">Reaction already used this turn</span>
+          {/if}
         </div>
         {/if}
 
@@ -230,6 +242,18 @@
     font-weight: bold;
     font-size: 0.9rem;
     color: var(--text-color);
+  }
+
+  label.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .reaction-used-note {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: #c83c3c;
+    font-style: italic;
   }
 
   .damage-input-field {
