@@ -85,6 +85,7 @@
   let diceBonusBreakdown: Array<{ value: number | string; source: string }> = [];
   let diceDamageBreakdown: Array<{ value: number | string; source: string }> = [];
   let diceRollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
+  let diceIsWeaponAttack = false;
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
   let hitDiceCountToDecrement = 1;
@@ -357,6 +358,7 @@
     diceBonusBreakdown = [];
     diceDamageBreakdown = [];
     diceRollType = 'other';
+    diceIsWeaponAttack = false;
     isHitDiceRoll = false;
 
     // Set all values together to ensure they update simultaneously
@@ -370,6 +372,7 @@
       diceBonusBreakdown = detail.bonusBreakdown || [];
       diceDamageBreakdown = detail.damageBreakdown || [];
       diceRollType = detail.rollType || 'other';
+      diceIsWeaponAttack = (detail as any).isWeaponAttack ?? false;
     }
     showDiceRoller = true;
   }
@@ -780,6 +783,7 @@
   bonusBreakdown={diceBonusBreakdown}
   damageBreakdown={diceDamageBreakdown}
   rollType={diceRollType}
+  isWeaponAttack={diceIsWeaponAttack}
   visible={showDiceRoller}
   on:close={handleDiceRollerClose}
 />

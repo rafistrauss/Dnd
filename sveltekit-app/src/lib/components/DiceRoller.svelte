@@ -3,7 +3,7 @@
   import { createEventDispatcher } from 'svelte';
   import { base } from '$app/paths';
   import { character, rollHistory } from '$lib/stores';
-  import { getAvailableFeatures } from '$lib/classConfig';
+  import { getAvailableFeatures, getSpellSlotProgression } from '$lib/classConfig';
 
   const dispatch = createEventDispatcher();
 
@@ -16,6 +16,7 @@
   export let bonusBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown of bonuses by source
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
   export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
+  export let isWeaponAttack = false; // true when the roll comes from a weapon (not a spell), enabling Divine Smite
 
   let diceBox: any = null;
   let diceContainer: HTMLDivElement | undefined = undefined;
@@ -123,6 +124,12 @@
   let isCriticalFail = false;
   let guidedStrikeUsed = false;
 
+  // Divine Smite state
+  let showDivineSmite = false;
+  let smiteLevel = 1;
+  let smiteVsUndeadOrFiend = false;
+  let smiteUsed = false;
+
   // Dice color customization
   let diceColor = '#051e0a';
   let labelColor = '#ffffff';
@@ -158,6 +165,23 @@
     const channelDivinityKey = 'ChannelDivinity';
     const current = $character.classFeatures.features[channelDivinityKey];
     return typeof current === 'number' ? current : 0;
+  })();
+
+  // Divine Smite eligibility
+  $: isPaladin = $character.class?.toLowerCase() === 'paladin';
+  $: availableSmiteSlots = (() => {
+    if (!isPaladin || !$character.class) return [] as number[];
+    const progression = getSpellSlotProgression($character.class, $character.level);
+    const slots = $character.classFeatures?.spellSlotsByLevel || {};
+    const available: number[] = [];
+    progression.forEach((total, idx) => {
+      const level = idx + 1;
+      if (total > 0) {
+        const used = ((slots[level] as boolean[]) || []).filter(Boolean).length;
+        if (used < total) available.push(level);
+      }
+    });
+    return available;
   })();
 
   // Reactive notation that updates when any dice count changes
@@ -350,6 +374,7 @@
 
       // Set up follow-up actions based on roll type
       followUpActions = [];
+      showDivineSmite = false;
       if (type === 'attack') {
         // If damage notation is provided, offer to roll damage
         if (damageNotation) {
@@ -393,6 +418,12 @@
             notation: sneakAttackNotation,
             breakdown: sneakAttackBreakdown
           });
+        }
+      } else if (type === 'damage' && isPaladin && isWeaponAttack && !smiteUsed && availableSmiteSlots.length > 0) {
+        // Show Divine Smite section after weapon damage roll for paladins with spell slots
+        showDivineSmite = true;
+        if (!availableSmiteSlots.includes(smiteLevel)) {
+          smiteLevel = availableSmiteSlots[0];
         }
       }
       // console.log('Final followUpActions:', followUpActions);
@@ -445,6 +476,9 @@
     isCriticalFail = false;
     rollType = 'other';
     guidedStrikeUsed = false;
+    showDivineSmite = false;
+    smiteVsUndeadOrFiend = false;
+    smiteUsed = false;
   }
 
   function updateDiceColors() {
@@ -494,6 +528,39 @@
     guidedStrikeUsed = true;
   }
 
+  function getOrdinal(n: number): string {
+    if (n === 1) return '1st';
+    if (n === 2) return '2nd';
+    if (n === 3) return '3rd';
+    return `${n}th`;
+  }
+
+  function rollDivineSmite() {
+    const levelToUse = smiteLevel;
+    character.update((c) => {
+      if (!c.classFeatures.spellSlotsByLevel) return c;
+      const slots = c.classFeatures.spellSlotsByLevel[levelToUse] as boolean[] | undefined;
+      if (slots) {
+        const idx = slots.findIndex((s) => !s);
+        if (idx !== -1) {
+          c.classFeatures.spellSlotsByLevel[levelToUse] = [
+            ...slots.slice(0, idx),
+            true,
+            ...slots.slice(idx + 1)
+          ];
+        }
+      }
+      return c;
+    });
+
+    // Smite damage: (1 + slot level) d8, +1d8 if vs undead or fiend
+    const diceCount = 1 + levelToUse + (smiteVsUndeadOrFiend ? 1 : 0);
+    smiteUsed = true;
+    showDivineSmite = false;
+    bonusBreakdown = [];
+    rollDice(`${diceCount}d8`, 'damage');
+  }
+
   // Auto-roll when notation is set and modal is visible
   // Also track damageNotation and attackName to ensure they're set before rolling
   $: if (notation && isInitialized && visible && notation !== lastRolledNotation) {
@@ -503,6 +570,8 @@
     isCriticalSuccess = false;
     isCriticalFail = false;
     guidedStrikeUsed = false;
+    showDivineSmite = false;
+    smiteUsed = false;
     setTimeout(() => rollDice(notation, rollType), 200);
   }
 
@@ -757,6 +826,31 @@
                 ⚡ Use Guided Strike (+10)
               </button>
             {/if}
+          </div>
+        {/if}
+        {#if showDivineSmite && availableSmiteSlots.length > 0}
+          <div class="divine-smite-section">
+            <h4>⚔️ Divine Smite</h4>
+            <div class="smite-controls">
+              <label class="smite-label">
+                Spell Slot Level:
+                <select bind:value={smiteLevel} class="smite-select use-enabled">
+                  {#each availableSmiteSlots as level}
+                    {@const diceFaces = 1 + level + (smiteVsUndeadOrFiend ? 1 : 0)}
+                    <option value={level}>
+                      {getOrdinal(level)} Level ({diceFaces}d8 radiant)
+                    </option>
+                  {/each}
+                </select>
+              </label>
+              <label class="smite-undead-label">
+                <input type="checkbox" bind:checked={smiteVsUndeadOrFiend} class="use-enabled" />
+                vs Undead/Fiend (+1d8)
+              </label>
+              <button on:click={rollDivineSmite} class="btn btn-smite use-enabled">
+                Roll Smite Damage
+              </button>
+            </div>
           </div>
         {/if}
       {/if}
@@ -1151,6 +1245,74 @@
     opacity: 0.5;
     cursor: not-allowed;
     background: #999;
+  }
+
+  .divine-smite-section {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #1a0a00, #2a1000);
+    border: 2px solid #c8860a;
+    border-radius: 8px;
+  }
+
+  .divine-smite-section h4 {
+    margin: 0 0 10px 0;
+    color: #f5c842;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .smite-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .smite-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f0e0b0;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .smite-select {
+    background: #2d1a00;
+    color: #f5c842;
+    border: 1px solid #c8860a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .smite-undead-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f0e0b0;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .btn-smite {
+    background: linear-gradient(135deg, #c8860a, #f5a623);
+    color: #1a0a00;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(200, 134, 10, 0.4);
+    align-self: flex-start;
+  }
+
+  .btn-smite:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(200, 134, 10, 0.5);
   }
 
   /* Side-by-side layout for wider screens */
