@@ -205,7 +205,9 @@ const initialCharacter: Character = {
     preparedSpells: ''
   },
   racialTraits: { uses: {} },
-  money: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 }
+  money: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+  conditions: [],
+  exhaustionLevel: 0
 };
 
 // Load from localStorage if available
@@ -262,6 +264,14 @@ function loadFromStorage(): Character {
       // Migrate: ensure money structure exists
       if (!loaded.money) {
         loaded.money = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+      }
+
+      // Migrate: ensure conditions structure exists
+      if (!Array.isArray(loaded.conditions)) {
+        loaded.conditions = [];
+      }
+      if (typeof loaded.exhaustionLevel !== 'number') {
+        loaded.exhaustionLevel = 0;
       }
 
       normalizeSpellSlotUsage(loaded);
@@ -581,6 +591,7 @@ interface CollapsedStates {
   rollHistory: boolean;
   money: boolean;
   turnTracker: boolean;
+  conditions: boolean;
 }
 
 function loadCollapsedStates(): CollapsedStates {
@@ -595,7 +606,8 @@ function loadCollapsedStates(): CollapsedStates {
       notes: false,
       damageInput: false,
       money: false,
-      turnTracker: false
+      turnTracker: false,
+      conditions: false
     };
   }
 
@@ -613,7 +625,8 @@ function loadCollapsedStates(): CollapsedStates {
         notes: parsed.notes ?? false,
         damageInput: parsed.damageInput ?? false,
         money: parsed.money ?? false,
-        turnTracker: parsed.turnTracker ?? false
+        turnTracker: parsed.turnTracker ?? false,
+        conditions: parsed.conditions ?? false
       };
     }
   } catch (e) {
@@ -630,7 +643,8 @@ function loadCollapsedStates(): CollapsedStates {
     notes: false,
     damageInput: false,
     money: false,
-    turnTracker: false
+    turnTracker: false,
+    conditions: false
   };
 }
 

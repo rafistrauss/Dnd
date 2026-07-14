@@ -43,6 +43,7 @@
   import Notes from '$lib/components/Notes.svelte';
   import Money from '$lib/components/Money.svelte';
   import TurnTracker from '$lib/components/TurnTracker.svelte';
+  import Conditions from '$lib/components/Conditions.svelte';
   import RollHistory from '$lib/components/RollHistory.svelte';
   import DiceRoller from '$lib/components/DiceRoller.svelte';
   import GistModal from '$lib/components/GistModal.svelte';
@@ -760,6 +761,7 @@
     <Skills on:roll={(e) => openDiceRoller(e.detail)} />
     <CombatStats on:rollHitDice={handleHitDiceRoll} on:rollInitiative={handleInitiativeRoll} />
     <TurnTracker />
+    <Conditions />
     <DamageInput />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
     <ClassFeatures on:roll={(e) => openDiceRoller(e.detail)} />

@@ -173,6 +173,8 @@ export interface Character {
   racialTraits?: RacialTraits; // Optional for backwards compatibility
   activeStates?: SpellState[];
   money?: Money; // Optional for backwards compatibility
+  conditions?: string[]; // Active standard conditions (e.g. "prone", "poisoned")
+  exhaustionLevel?: number; // 0-6
 }
 
 // Class Configuration Types
