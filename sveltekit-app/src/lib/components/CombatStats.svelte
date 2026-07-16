@@ -264,7 +264,7 @@
           aria-pressed={$character.inspiration}
           title={$character.inspiration ? 'You have inspiration' : 'No inspiration'}
         >
-          {$character.inspiration ? '⭐' : '☆'}
+          <span class="star">{$character.inspiration ? '⭐' : '☆'}</span>
           <span class="inspiration-text">{$character.inspiration ? 'Inspired' : 'None'}</span>
         </button>
       </div>
@@ -431,6 +431,7 @@
   .stat-box {
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     position: relative;
   }
 
@@ -446,6 +447,8 @@
     border-radius: 4px;
     font-size: 1rem;
     text-align: center;
+    box-sizing: border-box;
+    min-height: 40px;
   }
 
   .inspiration-toggle {
@@ -453,13 +456,15 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 7px 8px;
+    padding: 8px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: var(--card-bg);
     color: var(--text-color);
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    box-sizing: border-box;
+    min-height: 40px;
     transition:
       background 0.15s ease,
       border-color 0.15s ease;
@@ -472,6 +477,11 @@
   .inspiration-toggle.active {
     background: rgba(255, 200, 0, 0.15);
     border-color: #e6b800;
+  }
+
+  .inspiration-toggle .star {
+    font-size: 1.2rem;
+    line-height: 1;
   }
 
   .inspiration-text {
@@ -649,6 +659,11 @@
     align-items: center;
     gap: 5px;
     margin-bottom: 5px;
+    min-height: 20px;
+  }
+
+  .stat-label-with-icon label {
+    margin-bottom: 0;
   }
 
   .armor-config {

@@ -24,6 +24,9 @@
   let rollResult: any = null;
   let currentRollNotation = ''; // Track the notation actually used for the current roll
 
+  $: isD20Notation = /(^|[+\-])\d*d20(?!\d)/i.test(currentRollNotation);
+  $: canUseInspiration = !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
+
   // Export function to get last roll total
   export function getLastRollTotal(): number | null {
     return rollResult?.resultTotal ?? null;
@@ -506,6 +509,14 @@
     guidedStrikeUsed = true;
   }
 
+  function useInspirationReroll() {
+    if (!canUseInspiration) return;
+
+    // Spend inspiration and immediately reroll the same d20 check notation.
+    character.update((c) => ({ ...c, inspiration: false }));
+    rollDice(currentRollNotation, rollType);
+  }
+
   // Auto-roll when notation is set and modal is visible
   // Also track damageNotation and attackName to ensure they're set before rolling
   $: if (notation && isInitialized && visible && notation !== lastRolledNotation) {
@@ -744,6 +755,13 @@
             <em>No damage is dealt on a critical miss.</em>
           </div>
         {/if}
+        {#if canUseInspiration}
+          <div class="inspiration-reroll-row">
+            <button class="btn btn-inspiration" on:click={useInspirationReroll}>
+              ⭐ Use Inspiration (Reroll d20)
+            </button>
+          </div>
+        {/if}
         {#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0)}
           <div class="follow-up-actions">
             {#each followUpActions as action}
@@ -949,6 +967,23 @@
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .inspiration-reroll-row {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-inspiration {
+    background: rgba(255, 200, 0, 0.15);
+    border: 1px solid #e6b800;
+    color: var(--text-color);
+    font-weight: 600;
+  }
+
+  .btn-inspiration:hover {
+    background: rgba(255, 200, 0, 0.25);
   }
 
   .custom-dice-selector {
