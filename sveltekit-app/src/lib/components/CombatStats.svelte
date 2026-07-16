@@ -245,6 +245,25 @@
         <label for="speed">Speed</label>
         <input type="text" id="speed" bind:value={$character.speed} class="stat-input" />
       </div>
+      <div class="stat-box">
+        <div class="stat-label-with-icon">
+          <label>Inspiration</label>
+          <TooltipInfo
+            tooltipContent="Heroic Inspiration: you can expend it to reroll any d20 (attack, check, or save) and use the new roll. You can only hold one at a time."
+            ariaLabel="Show Inspiration details"
+          />
+        </div>
+        <button
+          class="inspiration-toggle use-enabled"
+          class:active={$character.inspiration}
+          on:click={() => character.update((c) => ({ ...c, inspiration: !c.inspiration }))}
+          aria-pressed={$character.inspiration}
+          title={$character.inspiration ? 'You have inspiration' : 'No inspiration'}
+        >
+          {$character.inspiration ? '⭐' : '☆'}
+          <span class="inspiration-text">{$character.inspiration ? 'Inspired' : 'None'}</span>
+        </button>
+      </div>
       {#if spellSaveDC !== null}
         <div class="stat-box">
           <div class="stat-label-with-icon">
@@ -423,6 +442,37 @@
     border-radius: 4px;
     font-size: 1rem;
     text-align: center;
+  }
+
+  .inspiration-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .inspiration-toggle:hover {
+    border-color: var(--primary-color);
+  }
+
+  .inspiration-toggle.active {
+    background: rgba(255, 200, 0, 0.15);
+    border-color: #e6b800;
+  }
+
+  .inspiration-text {
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 
   .hp-section {

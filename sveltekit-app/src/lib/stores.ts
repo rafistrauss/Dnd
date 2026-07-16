@@ -207,7 +207,8 @@ const initialCharacter: Character = {
   racialTraits: { uses: {} },
   money: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
   conditions: [],
-  exhaustionLevel: 0
+  exhaustionLevel: 0,
+  inspiration: false
 };
 
 // Load from localStorage if available
@@ -272,6 +273,9 @@ function loadFromStorage(): Character {
       }
       if (typeof loaded.exhaustionLevel !== 'number') {
         loaded.exhaustionLevel = 0;
+      }
+      if (typeof loaded.inspiration !== 'boolean') {
+        loaded.inspiration = false;
       }
 
       normalizeSpellSlotUsage(loaded);

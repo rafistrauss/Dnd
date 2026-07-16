@@ -175,6 +175,7 @@ export interface Character {
   money?: Money; // Optional for backwards compatibility
   conditions?: string[]; // Active standard conditions (e.g. "prone", "poisoned")
   exhaustionLevel?: number; // 0-6
+  inspiration?: boolean; // Heroic inspiration
 }
 
 // Class Configuration Types
