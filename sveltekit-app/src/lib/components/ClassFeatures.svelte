@@ -29,7 +29,11 @@
   // Derive available spell levels and their max slot counts from class config
   $: availableSpellLevels = (() => {
     if (!isCaster || !$character.class) return [];
-    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
+    const progression = getSpellSlotProgression(
+      $character.class,
+      $character.level,
+      $character.subclass
+    );
     return progression
       .map((slots, idx) => ({ level: idx + 1, slots }))
       .filter(({ slots }) => slots > 0);
@@ -41,8 +45,12 @@
   $: if (isCaster && spellAbility) {
     const abilityMod = $abilityModifiers[spellAbility];
     spellSaveDC =
-      getSpellSaveDC($character.class, abilityMod, $character.proficiencyBonus, $character.subclass) ||
-      0;
+      getSpellSaveDC(
+        $character.class,
+        abilityMod,
+        $character.proficiencyBonus,
+        $character.subclass
+      ) || 0;
     preparedCount = getPreparedSpellsCount(
       $character.class,
       $character.level,
@@ -67,7 +75,6 @@
       return c;
     });
   }
-
 
   function getMaxUses(feature: any): number {
     if (typeof feature.maxUses === 'function') {
@@ -191,16 +198,16 @@
   function useChannelDivinityWithRoll(feature: any) {
     const channelDivinityKey = 'ChannelDivinity';
     const current = $character.classFeatures.features[channelDivinityKey];
-    
+
     if (typeof current === 'number' && current > 0) {
       // Consume Channel Divinity
       character.update((c) => {
         c.classFeatures.features[channelDivinityKey] = current - 1;
         return c;
       });
-      
+
       const featureName = getFeatureName(feature);
-      
+
       // If the feature is rollable, open the dice roller
       if (feature.rollable && feature.rollFormula) {
         const formula = getRollFormula(feature);
@@ -242,13 +249,17 @@
   });
 
   // Consolidate all Channel Divinity features into one
-  $: channelDivinityPoolFeature = filteredFeatures.find((f) => f.type === 'pool' && getFeatureName(f) === 'Channel Divinity');
-  
+  $: channelDivinityPoolFeature = filteredFeatures.find(
+    (f) => f.type === 'pool' && getFeatureName(f) === 'Channel Divinity'
+  );
+
   $: allChannelDivinitySubFeatures = filteredFeatures.flatMap((feature) => {
     const subFeats: any[] = [];
     // Get subFeatures from any feature that has them, filtered by level
     if (feature.subFeatures) {
-      subFeats.push(...feature.subFeatures.filter((sf: any) => !sf.minLevel || sf.minLevel <= $character.level));
+      subFeats.push(
+        ...feature.subFeatures.filter((sf: any) => !sf.minLevel || sf.minLevel <= $character.level)
+      );
     }
     // Include standalone channelDivinity features (not the pool itself)
     if (feature.type === 'channelDivinity') {
@@ -300,7 +311,7 @@
         {@const featureData = $character.classFeatures.features[featureKey]}
         {@const isNumericData = typeof featureData === 'number'}
         {@const maxPool = getMaxPool(channelDivinityPoolFeature)}
-        
+
         <div class="feature-box channel-divinity-main">
           <h3>{featureName}</h3>
           <p class="feature-description">{@html getDescription(channelDivinityPoolFeature)}</p>

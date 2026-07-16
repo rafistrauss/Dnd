@@ -8,20 +8,80 @@
   }
 
   const CONDITIONS: { name: string; icon: string; description: string }[] = [
-    { name: 'Blinded', icon: '🙈', description: "Can't see, auto-fails sight checks. Attacks against have advantage; its attacks have disadvantage." },
-    { name: 'Charmed', icon: '💗', description: "Can't attack the charmer; charmer has advantage on social checks with it." },
+    {
+      name: 'Blinded',
+      icon: '🙈',
+      description:
+        "Can't see, auto-fails sight checks. Attacks against have advantage; its attacks have disadvantage."
+    },
+    {
+      name: 'Charmed',
+      icon: '💗',
+      description: "Can't attack the charmer; charmer has advantage on social checks with it."
+    },
     { name: 'Deafened', icon: '🔇', description: "Can't hear and auto-fails hearing checks." },
-    { name: 'Frightened', icon: '😨', description: 'Disadvantage on checks and attacks while source is in line of sight; can’t willingly move closer.' },
-    { name: 'Grappled', icon: '✊', description: 'Speed becomes 0; ends if grappler is incapacitated or moved away.' },
-    { name: 'Incapacitated', icon: '💫', description: "Can't take actions, bonus actions, or reactions." },
-    { name: 'Invisible', icon: '👻', description: 'Heavily obscured. Attacks against have disadvantage; its attacks have advantage.' },
-    { name: 'Paralyzed', icon: '🥶', description: 'Incapacitated, can’t move/speak. Auto-fails STR/DEX saves. Attacks have advantage; hits within 5 ft are crits.' },
-    { name: 'Petrified', icon: '🗿', description: 'Turned to solid substance; incapacitated, resistant to all damage, immune to poison/disease.' },
-    { name: 'Poisoned', icon: '🤢', description: 'Disadvantage on attack rolls and ability checks.' },
-    { name: 'Prone', icon: '🛌', description: 'Disadvantage on attacks. Melee attacks against have advantage; ranged have disadvantage. Costs half speed to stand.' },
-    { name: 'Restrained', icon: '🕸️', description: 'Speed 0; disadvantage on attacks and DEX saves. Attacks against have advantage.' },
-    { name: 'Stunned', icon: '😵', description: 'Incapacitated, can’t move. Auto-fails STR/DEX saves. Attacks against have advantage.' },
-    { name: 'Unconscious', icon: '😴', description: 'Incapacitated, prone, drops everything. Auto-fails STR/DEX saves. Hits within 5 ft are crits.' }
+    {
+      name: 'Frightened',
+      icon: '😨',
+      description:
+        'Disadvantage on checks and attacks while source is in line of sight; can’t willingly move closer.'
+    },
+    {
+      name: 'Grappled',
+      icon: '✊',
+      description: 'Speed becomes 0; ends if grappler is incapacitated or moved away.'
+    },
+    {
+      name: 'Incapacitated',
+      icon: '💫',
+      description: "Can't take actions, bonus actions, or reactions."
+    },
+    {
+      name: 'Invisible',
+      icon: '👻',
+      description:
+        'Heavily obscured. Attacks against have disadvantage; its attacks have advantage.'
+    },
+    {
+      name: 'Paralyzed',
+      icon: '🥶',
+      description:
+        'Incapacitated, can’t move/speak. Auto-fails STR/DEX saves. Attacks have advantage; hits within 5 ft are crits.'
+    },
+    {
+      name: 'Petrified',
+      icon: '🗿',
+      description:
+        'Turned to solid substance; incapacitated, resistant to all damage, immune to poison/disease.'
+    },
+    {
+      name: 'Poisoned',
+      icon: '🤢',
+      description: 'Disadvantage on attack rolls and ability checks.'
+    },
+    {
+      name: 'Prone',
+      icon: '🛌',
+      description:
+        'Disadvantage on attacks. Melee attacks against have advantage; ranged have disadvantage. Costs half speed to stand.'
+    },
+    {
+      name: 'Restrained',
+      icon: '🕸️',
+      description: 'Speed 0; disadvantage on attacks and DEX saves. Attacks against have advantage.'
+    },
+    {
+      name: 'Stunned',
+      icon: '😵',
+      description:
+        'Incapacitated, can’t move. Auto-fails STR/DEX saves. Attacks against have advantage.'
+    },
+    {
+      name: 'Unconscious',
+      icon: '😴',
+      description:
+        'Incapacitated, prone, drops everything. Auto-fails STR/DEX saves. Hits within 5 ft are crits.'
+    }
   ];
 
   function isActive(name: string): boolean {

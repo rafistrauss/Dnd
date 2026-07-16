@@ -75,10 +75,7 @@ export function getRaceConfig(race: string): RaceConfig | null {
   return RACE_CONFIG[normalizedRace] || null;
 }
 
-export function getRacialSpellsForLevel(
-  race: string,
-  characterLevel: number
-): RacialSpell[] {
+export function getRacialSpellsForLevel(race: string, characterLevel: number): RacialSpell[] {
   const raceConfig = getRaceConfig(race);
   if (!raceConfig) return [];
 

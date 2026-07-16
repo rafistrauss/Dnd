@@ -299,7 +299,10 @@ export function calculateDamage(
     const raceConfig = getRaceConfig(char.race);
     if (raceConfig) {
       for (const trait of raceConfig.traits) {
-        if (trait.resistances && trait.resistances.some(r => r.toLowerCase().trim() === normalizedType)) {
+        if (
+          trait.resistances &&
+          trait.resistances.some((r) => r.toLowerCase().trim() === normalizedType)
+        ) {
           const reducedAmount = Math.floor(finalDamage / 2);
           adjustments.push(
             `Resistant to ${damageType} (racial trait): ${finalDamage} → ${reducedAmount}`

@@ -75,7 +75,9 @@
             {abbr}
           </div>
           <div class="controls">
-            <button class="adj-btn" on:click={() => adjust(key, -1)} aria-label="Remove {label}">−</button>
+            <button class="adj-btn" on:click={() => adjust(key, -1)} aria-label="Remove {label}"
+              >−</button
+            >
             <input
               type="number"
               min="0"
@@ -83,7 +85,9 @@
               on:change={(e) => updateCurrency(key, (e.target as HTMLInputElement).value)}
               aria-label="{label} pieces"
             />
-            <button class="adj-btn" on:click={() => adjust(key, 1)} aria-label="Add {label}">+</button>
+            <button class="adj-btn" on:click={() => adjust(key, 1)} aria-label="Add {label}"
+              >+</button
+            >
           </div>
           <span class="currency-label">{label}</span>
         </div>
@@ -130,7 +134,9 @@
     font-size: 0.75rem;
     color: #333;
     border: 2px solid rgba(0, 0, 0, 0.2);
-    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      inset 0 2px 4px rgba(255, 255, 255, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.3);
     user-select: none;
   }
 

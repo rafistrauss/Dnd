@@ -118,7 +118,11 @@
   let modifier = 0;
 
   // Follow-up actions for multi-step rolls
-  let followUpActions: Array<{ label: string; notation: string; breakdown?: Array<{ value: number | string; source: string }> }> = [];
+  let followUpActions: Array<{
+    label: string;
+    notation: string;
+    breakdown?: Array<{ value: number | string; source: string }>;
+  }> = [];
   let isCriticalSuccess = false;
   let isCriticalFail = false;
   let guidedStrikeUsed = false;
@@ -334,7 +338,7 @@
       else if (type === 'damage') purpose = `${attackName || 'Damage'} Roll`;
       else if (type === 'check') purpose = `${attackName || 'Check'} Roll`;
       else if (type === 'save') purpose = `${attackName || 'Save'} Roll`;
-      
+
       rollHistory.addRoll(purpose, currentRollNotation, resultTotal, resultString);
 
       // Detect critical hits/fails on d20 rolls (check first die roll)
@@ -357,7 +361,7 @@
             // Double dice for critical hits (5e rules)
             const critDamage = doubleDiceNotation(damageNotation);
             // For critical hits, we need to double the dice in the breakdown too
-            const critBreakdown = damageBreakdown.map(b => {
+            const critBreakdown = damageBreakdown.map((b) => {
               if (typeof b.value === 'string' && b.value.match(/^\d+d\d+$/)) {
                 const doubled = doubleDiceNotation(b.value);
                 return { ...b, value: doubled };
@@ -382,12 +386,20 @@
         } else {
           // console.log('No damageNotation provided for attack roll');
         }
-        
+
         // Sneak Attack follow-up for rogues with the feature
-        if (attackName && damageNotation && $character.class?.toLowerCase() === 'rogue' && $character.features?.toLowerCase?.().includes('sneak attack')) {
+        if (
+          attackName &&
+          damageNotation &&
+          $character.class?.toLowerCase() === 'rogue' &&
+          $character.features?.toLowerCase?.().includes('sneak attack')
+        ) {
           // TODO: Level scaling for sneak attack dice (3d6 for level 5)
           const sneakAttackNotation = `${damageNotation}+3d6`;
-          const sneakAttackBreakdown = [...damageBreakdown, { value: '3d6', source: 'Sneak Attack' }];
+          const sneakAttackBreakdown = [
+            ...damageBreakdown,
+            { value: '3d6', source: 'Sneak Attack' }
+          ];
           followUpActions.push({
             label: `Roll Damage + Sneak Attack (${sneakAttackNotation})`,
             notation: sneakAttackNotation,
@@ -1061,7 +1073,7 @@
     font-size: 1.1rem;
     font-weight: bold;
     color: var(--roll-result);
-  } 
+  }
 
   .bonus-source {
     font-size: 0.75rem;

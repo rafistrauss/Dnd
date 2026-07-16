@@ -55,18 +55,17 @@
     force: '🌪️'
   };
 
-
   // Dynamically calculate damage when inputs change
   $: if (damageAmount >= 0 && damageType.trim()) {
-      const result = calculateDamage(damageAmount, damageType, $character);
-      let final = result.finalDamage;
-      let adjustments = [...result.adjustments];
-      if (uncannyDodge) {
-        final = Math.floor(final / 2);
-        adjustments.push('Uncanny Dodge: Halved final damage');
-      }
-      calculatedDamage = final;
-      adjustmentMessages = adjustments;
+    const result = calculateDamage(damageAmount, damageType, $character);
+    let final = result.finalDamage;
+    let adjustments = [...result.adjustments];
+    if (uncannyDodge) {
+      final = Math.floor(final / 2);
+      adjustments.push('Uncanny Dodge: Halved final damage');
+    }
+    calculatedDamage = final;
+    adjustmentMessages = adjustments;
   } else {
     calculatedDamage = 0;
     adjustmentMessages = [];
@@ -151,12 +150,13 @@
             on:click={() => (damageType = type)}
             class:active={damageType === type}
           >
-            {damageTypeEmojis[type]} {type}
+            {damageTypeEmojis[type]}
+            {type}
           </button>
         {/each}
       </div>
 
-        {#if hasUncannyDodge}
+      {#if hasUncannyDodge}
         <div class="input-field">
           <label class:disabled={$turnTracker.reaction}>
             <input type="checkbox" bind:checked={uncannyDodge} disabled={$turnTracker.reaction} />
@@ -170,7 +170,7 @@
             <span class="reaction-used-note">Reaction already used this turn</span>
           {/if}
         </div>
-        {/if}
+      {/if}
 
       {#if damageAmount >= 0 && damageType.trim()}
         <div class="calculation-result">
@@ -181,7 +181,9 @@
             <div class="damage-breakdown">
               <div class="damage-row">
                 <span class="label">Original Damage:</span>
-                <span class="value">{damageAmount} {damageTypeEmojis[damageType] || ''} {damageType}</span>
+                <span class="value"
+                  >{damageAmount} {damageTypeEmojis[damageType] || ''} {damageType}</span
+                >
               </div>
               <div class="adjustments">
                 {#each adjustmentMessages as msg}
@@ -365,7 +367,7 @@
     padding: 8px;
     background-color: var(--spell-background);
     border-radius: 4px;
-    border-left: 4px solid ;
+    border-left: 4px solid;
   }
 
   .adjustment-msg {

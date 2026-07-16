@@ -1,34 +1,34 @@
 <script lang="ts">
-let useRacialTraitMap: Record<string, boolean> = {};
+  let useRacialTraitMap: Record<string, boolean> = {};
 
-import { createEventDispatcher, onMount } from 'svelte';
-import {
-  character,
-  abilityModifiers,
-  searchFilter,
-  collapsedStates,
-  isEditMode,
-  toasts,
-  useRacialTrait,
-  turnTracker
-} from '$lib/stores';
-import SectionHeader from '$lib/components/SectionHeader.svelte';
-import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
-import type { Attack, Spell, ConditionAbility } from '$lib/types';
-import { loadSpells } from '$lib/dndData';
-import {
-  getSavingThrowInfo,
-  addsSpellcastingModifierToDamage,
-  isBuffSpell,
-  extractSpellEffectBonuses,
-  requiresSpellAttackRoll,
-  getAlternateDamageForDamagedTarget
-} from '$lib/spellUtils';
-import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
-import { getSpellSlotProgression } from '$lib/classConfig';
+  import { createEventDispatcher, onMount } from 'svelte';
+  import {
+    character,
+    abilityModifiers,
+    searchFilter,
+    collapsedStates,
+    isEditMode,
+    toasts,
+    useRacialTrait,
+    turnTracker
+  } from '$lib/stores';
+  import SectionHeader from '$lib/components/SectionHeader.svelte';
+  import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
+  import type { Attack, Spell, ConditionAbility } from '$lib/types';
+  import { loadSpells } from '$lib/dndData';
+  import {
+    getSavingThrowInfo,
+    addsSpellcastingModifierToDamage,
+    isBuffSpell,
+    extractSpellEffectBonuses,
+    requiresSpellAttackRoll,
+    getAlternateDamageForDamagedTarget
+  } from '$lib/spellUtils';
+  import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
+  import { getSpellSlotProgression } from '$lib/classConfig';
 
-// Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
-let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
+  // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
+  let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   // Computed: Get all abilities from active conditions
   $: conditionAbilities = $character.activeStates
@@ -238,7 +238,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
                 damageBreakdown.push({ value: state.damageBonus, source: state.name });
               }
             }
-            
+
             if (numericModifier !== 0 || stringModifiers.length > 0) {
               const totalModifier = baseModifier + numericModifier;
               let newDamage = `${dice}`;
@@ -348,7 +348,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
-          
+
           // Check if this is a racial spell
           let hasResource = false;
           if (attack.source === 'racial') {
@@ -364,7 +364,7 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
               return;
             }
           }
-          
+
           // Use scaled damage if applicable, with half damage or no damage if target succeeded on save
           const savingThrow = getSavingThrowInfo(spell);
           if (savingThrow && attack.targetSucceededSave && savingThrow.noDamageOnSave) {
@@ -448,7 +448,11 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
   function checkAndConsumeSpellSlot(level: number): boolean {
     if (!$character.class) return false;
 
-    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
+    const progression = getSpellSlotProgression(
+      $character.class,
+      $character.level,
+      $character.subclass
+    );
     const totalSlotsForLevel = progression[level - 1] || 0;
     if (totalSlotsForLevel <= 0) {
       return false;
@@ -581,7 +585,11 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   function getAvailableSpellLevels(spell: Spell): number[] {
     if (!$character.class) return [spell.level];
-    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
+    const progression = getSpellSlotProgression(
+      $character.class,
+      $character.level,
+      $character.subclass
+    );
     const levels: number[] = [];
 
     progression.forEach((total, idx) => {
@@ -727,7 +735,11 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
 
   $: maxAvailableSpellLevel = (() => {
     if (!$character.class) return 0;
-    const progression = getSpellSlotProgression($character.class, $character.level, $character.subclass);
+    const progression = getSpellSlotProgression(
+      $character.class,
+      $character.level,
+      $character.subclass
+    );
     for (let i = progression.length - 1; i >= 0; i--) {
       if (progression[i] > 0) return i + 1;
     }
@@ -898,10 +910,15 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
                       {/if}
                       {#if attack.source === 'racial'}
                         {#if attack.racialTraitName === 'Githyanki Psionics' && spell.name === 'Mage Hand'}
-                          <li style="color: #007bff;"><strong>Special:</strong> Mage Hand is invisible when cast via Githyanki Psionics.</li>
+                          <li style="color: #007bff;">
+                            <strong>Special:</strong> Mage Hand is invisible when cast via Githyanki Psionics.
+                          </li>
                         {/if}
                         {#if attack.racialTraitName}
-                          <li style="color: #007bff;"><strong>Cast via:</strong> {attack.racialTraitName}</li>
+                          <li style="color: #007bff;">
+                            <strong>Cast via:</strong>
+                            {attack.racialTraitName}
+                          </li>
                         {/if}
                       {/if}
                     </ul>
@@ -1022,11 +1039,18 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
             {#if attack.spellRef && spellsLoaded}
               {@const spell = getSpellByName(attack.spellRef)}
               {#if spell}
-                {@const racialUses = $character.racialTraits && $character.racialTraits.uses[attack.name]}
+                {@const racialUses =
+                  $character.racialTraits && $character.racialTraits.uses[attack.name]}
                 {#if attack.source === 'racial' && racialUses}
                   <div style="margin-bottom: 0.5em;">
                     <label style="font-size:0.95em;">
-                      <input type="checkbox" bind:checked={useRacialTraitMap[attack.id]} on:change={() => { useRacialTraitMap = { ...useRacialTraitMap }; }} />
+                      <input
+                        type="checkbox"
+                        bind:checked={useRacialTraitMap[attack.id]}
+                        on:change={() => {
+                          useRacialTraitMap = { ...useRacialTraitMap };
+                        }}
+                      />
                       Use Racial Trait
                       <span style="color:#007bff; font-size:0.95em; margin-left:0.5em;">
                         ({racialUses.currentUses}/{racialUses.maxUses} uses left)
@@ -1038,16 +1062,18 @@ let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
                   <!-- Spell requires attack roll (e.g., Guiding Bolt, Eldritch Blast) -->
                   {#if !useRacialTraitMap[attack.id]}
                     {#if $character.classFeatures && $character.classFeatures.spellSlotsByLevel && $character.classFeatures.spellSlotsByLevel[spell.level]?.some((slot) => !slot)}
-                      <button on:click={() => rollAttack(attack, false)} class="btn btn-primary">Roll Attack (Spell Slot)</button>
+                      <button on:click={() => rollAttack(attack, false)} class="btn btn-primary"
+                        >Roll Attack (Spell Slot)</button
+                      >
                     {:else}
                       <button class="btn btn-primary" disabled>No spell slots available</button>
                     {/if}
+                  {:else if racialUses && racialUses.currentUses > 0}
+                    <button on:click={() => rollAttack(attack, true)} class="btn btn-primary"
+                      >Roll Attack (Racial Trait)</button
+                    >
                   {:else}
-                    {#if racialUses && racialUses.currentUses > 0}
-                      <button on:click={() => rollAttack(attack, true)} class="btn btn-primary">Roll Attack (Racial Trait)</button>
-                    {:else}
-                      <button class="btn btn-primary" disabled>No racial uses left</button>
-                    {/if}
+                    <button class="btn btn-primary" disabled>No racial uses left</button>
                   {/if}
                 {/if}
                 {#if !requiresSpellAttackRoll(spell) && isBuffSpell(spell)}

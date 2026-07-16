@@ -12,7 +12,9 @@ function normalizeSpellSlotUsage(char: Character): Character {
     return char;
   }
 
-  const progression = char.class ? getSpellSlotProgression(char.class, char.level, char.subclass) : [];
+  const progression = char.class
+    ? getSpellSlotProgression(char.class, char.level, char.subclass)
+    : [];
   const normalized: Record<number, boolean[]> = {};
 
   progression.forEach((total, idx) => {
@@ -88,7 +90,7 @@ function createRollHistoryStore() {
   // Set nextId based on existing entries
   const existing = loadFromStorage();
   if (existing.length > 0) {
-    nextId = Math.max(...existing.map(e => e.id)) + 1;
+    nextId = Math.max(...existing.map((e) => e.id)) + 1;
   }
 
   const saveToStorage = (history: RollHistoryEntry[]) => {
@@ -123,14 +125,14 @@ function createRollHistoryStore() {
     import: (history: RollHistoryEntry[]) => {
       // Reset nextId based on imported entries
       if (history.length > 0) {
-        nextId = Math.max(...history.map(e => e.id)) + 1;
+        nextId = Math.max(...history.map((e) => e.id)) + 1;
       }
       set(history);
       saveToStorage(history);
     },
     export: (): RollHistoryEntry[] => {
       let currentHistory: RollHistoryEntry[] = [];
-      const unsubscribe = subscribe(value => {
+      const unsubscribe = subscribe((value) => {
         currentHistory = value;
       });
       unsubscribe();
@@ -496,14 +498,17 @@ export function initializeRacialTraits() {
 export function resetRacialTraitUses(restType: 'short' | 'long') {
   character.update((char) => {
     if (!char.racialTraits) return char;
-    
+
     Object.keys(char.racialTraits.uses).forEach((key) => {
       const traitUse = char.racialTraits!.uses[key];
-      if (traitUse.restType === restType || (restType === 'long' && traitUse.restType === 'short')) {
+      if (
+        traitUse.restType === restType ||
+        (restType === 'long' && traitUse.restType === 'short')
+      ) {
         traitUse.currentUses = traitUse.maxUses;
       }
     });
-    
+
     return char;
   });
 }
@@ -511,12 +516,12 @@ export function resetRacialTraitUses(restType: 'short' | 'long') {
 export function useRacialTrait(spellName: string) {
   character.update((char) => {
     if (!char.racialTraits || !char.racialTraits.uses[spellName]) return char;
-    
+
     const traitUse = char.racialTraits.uses[spellName];
     if (traitUse.currentUses > 0) {
       traitUse.currentUses -= 1;
     }
-    
+
     return char;
   });
 }
@@ -524,30 +529,30 @@ export function useRacialTrait(spellName: string) {
 export function syncRacialSpellAttacks() {
   character.update((char) => {
     if (!char.race) return char;
-    
+
     const raceConfig = getRaceConfig(char.race);
     if (!raceConfig) return char;
-    
+
     const racialSpells = getRacialSpellsForLevel(char.race, char.level);
-    
+
     // Get current attacks
     if (!char.attacks) {
       char.attacks = [];
     }
-    
+
     // Remove old racial spell attacks that are no longer available
     char.attacks = char.attacks.filter((attack) => {
       if (attack.source !== 'racial') return true;
       // Keep only if still in racialSpells list
       return racialSpells.some((spell) => spell.name === attack.name);
     });
-    
+
     // Add or update racial spell attacks
     racialSpells.forEach((spell) => {
       const existingAttack = char.attacks!.find(
         (a) => a.source === 'racial' && a.name === spell.name
       );
-      
+
       if (!existingAttack) {
         // Find which trait this spell belongs to
         let traitName = '';
@@ -557,7 +562,7 @@ export function syncRacialSpellAttacks() {
             break;
           }
         }
-        
+
         // Create new attack for this racial spell
         const newAttack = {
           id: `racial-${spell.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
@@ -574,7 +579,7 @@ export function syncRacialSpellAttacks() {
         char.attacks!.push(newAttack);
       }
     });
-    
+
     return char;
   });
 }

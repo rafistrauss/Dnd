@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getRaceConfig } from '$lib/raceConfig';
+  import { getRaceConfig } from '$lib/raceConfig';
   import { onMount } from 'svelte';
   import { character, initializeRacialTraits, syncRacialSpellAttacks } from '$lib/stores';
 
@@ -55,10 +55,13 @@
     <ul>
       {#each racialTraitsList as trait}
         <li>
-          <strong>{trait.name}:</strong> {trait.description}
+          <strong>{trait.name}:</strong>
+          {trait.description}
           {#if trait.resistances && trait.resistances.length > 0}
             <span style="color:#007bff; margin-left:0.5em;">
-              (Resistances: {trait.resistances.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')})
+              (Resistances: {trait.resistances
+                .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
+                .join(', ')})
             </span>
           {/if}
         </li>

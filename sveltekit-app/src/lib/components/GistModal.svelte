@@ -123,14 +123,14 @@
         token || undefined
       );
       character.set(loadedCharacter);
-      
+
       if (loadedHistory) {
         rollHistory.import(loadedHistory);
         toasts.add('Character and roll history loaded from Gist successfully!', 'success');
       } else {
         toasts.add('Character loaded from Gist successfully!', 'success');
       }
-      
+
       gistId = targetGistId;
 
       saveGistConfig({ token, gistId });

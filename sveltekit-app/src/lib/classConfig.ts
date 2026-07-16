@@ -8,15 +8,15 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     spellcastingAbility: 'charisma',
     // Half-caster: slots per spell level [1st, 2nd, 3rd, 4th, 5th] by character level
     spellSlotProgression: {
-      1:  [0, 0, 0, 0, 0],
-      2:  [2, 0, 0, 0, 0],
-      3:  [3, 0, 0, 0, 0],
-      4:  [3, 0, 0, 0, 0],
-      5:  [4, 2, 0, 0, 0],
-      6:  [4, 2, 0, 0, 0],
-      7:  [4, 3, 0, 0, 0],
-      8:  [4, 3, 0, 0, 0],
-      9:  [4, 3, 2, 0, 0],
+      1: [0, 0, 0, 0, 0],
+      2: [2, 0, 0, 0, 0],
+      3: [3, 0, 0, 0, 0],
+      4: [3, 0, 0, 0, 0],
+      5: [4, 2, 0, 0, 0],
+      6: [4, 2, 0, 0, 0],
+      7: [4, 3, 0, 0, 0],
+      8: [4, 3, 0, 0, 0],
+      9: [4, 3, 2, 0, 0],
       10: [4, 3, 2, 0, 0],
       11: [4, 3, 3, 0, 0],
       12: [4, 3, 3, 0, 0],
@@ -273,15 +273,15 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     spellcastingAbility: 'intelligence',
     // Full-caster: slots per spell level [1st–9th] by character level
     spellSlotProgression: {
-      1:  [2, 0, 0, 0, 0, 0, 0, 0, 0],
-      2:  [3, 0, 0, 0, 0, 0, 0, 0, 0],
-      3:  [4, 2, 0, 0, 0, 0, 0, 0, 0],
-      4:  [4, 3, 0, 0, 0, 0, 0, 0, 0],
-      5:  [4, 3, 2, 0, 0, 0, 0, 0, 0],
-      6:  [4, 3, 3, 0, 0, 0, 0, 0, 0],
-      7:  [4, 3, 3, 1, 0, 0, 0, 0, 0],
-      8:  [4, 3, 3, 2, 0, 0, 0, 0, 0],
-      9:  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+      1: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [4, 2, 0, 0, 0, 0, 0, 0, 0],
+      4: [4, 3, 0, 0, 0, 0, 0, 0, 0],
+      5: [4, 3, 2, 0, 0, 0, 0, 0, 0],
+      6: [4, 3, 3, 0, 0, 0, 0, 0, 0],
+      7: [4, 3, 3, 1, 0, 0, 0, 0, 0],
+      8: [4, 3, 3, 2, 0, 0, 0, 0, 0],
+      9: [4, 3, 3, 3, 1, 0, 0, 0, 0],
       10: [4, 3, 3, 3, 2, 0, 0, 0, 0],
       11: [4, 3, 3, 3, 2, 1, 0, 0, 0],
       12: [4, 3, 3, 3, 2, 1, 0, 0, 0],
@@ -320,15 +320,15 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     spellcastingAbility: 'wisdom',
     // Full-caster: slots per spell level [1st–9th] by character level
     spellSlotProgression: {
-      1:  [2, 0, 0, 0, 0, 0, 0, 0, 0],
-      2:  [3, 0, 0, 0, 0, 0, 0, 0, 0],
-      3:  [4, 2, 0, 0, 0, 0, 0, 0, 0],
-      4:  [4, 3, 0, 0, 0, 0, 0, 0, 0],
-      5:  [4, 3, 2, 0, 0, 0, 0, 0, 0],
-      6:  [4, 3, 3, 0, 0, 0, 0, 0, 0],
-      7:  [4, 3, 3, 1, 0, 0, 0, 0, 0],
-      8:  [4, 3, 3, 2, 0, 0, 0, 0, 0],
-      9:  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+      1: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [4, 2, 0, 0, 0, 0, 0, 0, 0],
+      4: [4, 3, 0, 0, 0, 0, 0, 0, 0],
+      5: [4, 3, 2, 0, 0, 0, 0, 0, 0],
+      6: [4, 3, 3, 0, 0, 0, 0, 0, 0],
+      7: [4, 3, 3, 1, 0, 0, 0, 0, 0],
+      8: [4, 3, 3, 2, 0, 0, 0, 0, 0],
+      9: [4, 3, 3, 3, 1, 0, 0, 0, 0],
       10: [4, 3, 3, 3, 2, 0, 0, 0, 0],
       11: [4, 3, 3, 3, 2, 1, 0, 0, 0],
       12: [4, 3, 3, 3, 2, 1, 0, 0, 0],
@@ -347,7 +347,7 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         type: 'pool',
         // These are the 2014 rules
         // maxPool: (level) => (level >= 18 ? 3 : level >= 6 ? 2 : 1),
-        // These are the 2024 rules: 
+        // These are the 2024 rules:
         maxPool: (level) => (level >= 18 ? 4 : level >= 6 ? 3 : 2),
         resetOn: 'short',
         description: 'Turn Undead or domain-specific ability',
@@ -361,7 +361,8 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         subName: (level) => (level >= 5 ? 'Improved Turn Undead' : null),
         type: 'channelDivinity',
         description: (level, wisMod = 1) => {
-          let description = 'As a Magic action, you present your Holy Symbol and censure Undead creatures. Each Undead of your choice within 30 feet of you must make a Wisdom saving throw. If the creature fails its save, it has the Frightened and Incapacitated conditions for 1 minute. For that duration, it tries to move as far from you as it can on its turns. This effect ends early on the creature if it takes any damage, if you have the Incapacitated condition, or if you die.';
+          let description =
+            'As a Magic action, you present your Holy Symbol and censure Undead creatures. Each Undead of your choice within 30 feet of you must make a Wisdom saving throw. If the creature fails its save, it has the Frightened and Incapacitated conditions for 1 minute. For that duration, it tries to move as far from you as it can on its turns. This effect ends early on the creature if it takes any damage, if you have the Incapacitated condition, or if you die.';
 
           if (level >= 5) {
             const diceCount = Math.max(1, wisMod);
@@ -565,10 +566,7 @@ export function getClassConfig(className: string): ClassConfig | null {
   return CLASS_CONFIG[key] || null;
 }
 
-export function getSubclassConfig(
-  className: string,
-  subclassName?: string
-): SubclassConfig | null {
+export function getSubclassConfig(className: string, subclassName?: string): SubclassConfig | null {
   if (!subclassName) return null;
   const config = getClassConfig(className);
   return config?.subclasses?.[subclassName] ?? null;

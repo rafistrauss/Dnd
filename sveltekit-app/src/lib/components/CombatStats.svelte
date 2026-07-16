@@ -236,7 +236,11 @@
             class="stat-input initiative-input"
             readonly
           />
-          <button on:click={rollInitiative} class="btn btn-primary roll-initiative-btn use-enabled" title="Roll Initiative">
+          <button
+            on:click={rollInitiative}
+            class="btn btn-primary roll-initiative-btn use-enabled"
+            title="Roll Initiative"
+          >
             🎲
           </button>
         </div>
@@ -635,7 +639,7 @@
     border-color: var(--primary-color);
   }
 
-  :global(body input[type="text"]).ac-enhanced {
+  :global(body input[type='text']).ac-enhanced {
     color: var(--ac-enhanced-color);
     font-weight: bold;
   }

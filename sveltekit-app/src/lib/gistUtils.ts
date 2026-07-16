@@ -16,7 +16,9 @@ function normalizeSpellSlotUsage(character: Character): Character {
     return character;
   }
 
-  const progression = character.class ? getSpellSlotProgression(character.class, character.level, character.subclass) : [];
+  const progression = character.class
+    ? getSpellSlotProgression(character.class, character.level, character.subclass)
+    : [];
   const normalized: Record<number, boolean[]> = {};
 
   progression.forEach((total, idx) => {
