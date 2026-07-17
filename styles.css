@@ -801,8 +801,8 @@ body:not(.use-mode) .hp-controls {
 
 #rollResult {
     text-align: center;
-    padding: 20px;
-    min-height: 152px;
+    padding: 10px 20px;
+    min-height: 60px;
 }
 
 #rollResult .roll-result-inline {
@@ -1267,9 +1267,14 @@ body:not(.use-mode) .hp-controls {
         overflow-y: auto;
     }
 
+    #rollResult {
+        padding: 5px 15px;
+        min-height: 50px;
+    }
+
     #rollResult .dice-roll {
         font-size: 2.5rem;
-        margin: 15px 0;
+        margin: 5px 0;
     }
 
     #rollResult .roll-details {
