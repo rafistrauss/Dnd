@@ -51,6 +51,7 @@
   import AddConditionModal from '$lib/components/AddConditionModal.svelte';
   import DamageInput from '$lib/components/DamageInput.svelte';
   import Toast from '$lib/components/Toast.svelte';
+  import ImportModal from '$lib/components/ImportModal.svelte';
   // import ConsoleViewer from '$lib/components/ConsoleViewer.svelte';
   import type { Character, SpellState } from '$lib/types';
 
@@ -80,8 +81,8 @@
   let showGistModal = false;
   let showWikidotImport = false;
   let showAddConditionModal = false;
+  let showImportModal = false;
   let gistMode: 'save' | 'load' = 'save';
-  let fileInput: HTMLInputElement | undefined = undefined;
   let diceNotation = '';
   let diceDamageNotation = '';
   let diceAttackName = '';
@@ -481,21 +482,7 @@
   }
 
   function handleImport() {
-    fileInput?.click();
-  }
-
-  async function handleFileChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
-
-    try {
-      const imported = await importCharacter(file);
-      character.set(imported);
-      alert('Character imported successfully!');
-    } catch {
-      alert('Failed to import character file');
-    }
+    showImportModal = true;
   }
 </script>
 
@@ -751,13 +738,6 @@
       </button>
       <button on:click={handleExport} class="btn btn-secondary">Export JSON</button>
       <button on:click={handleImport} class="btn btn-secondary">Import JSON</button>
-      <input
-        type="file"
-        bind:this={fileInput}
-        on:change={handleFileChange}
-        accept=".json"
-        style="display: none;"
-      />
     </div>
   </header>
 
@@ -796,6 +776,10 @@
 
 {#if showWikidotImport}
   <WikidotImport onClose={() => (showWikidotImport = false)} />
+{/if}
+
+{#if showImportModal}
+  <ImportModal on:close={() => (showImportModal = false)} />
 {/if}
 
 <AddConditionModal
