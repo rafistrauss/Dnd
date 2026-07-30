@@ -1,5 +1,6 @@
 import type { Character, RollHistoryEntry } from './types';
 import { getSpellSlotProgression } from './classConfig';
+import { initialCharacter } from './stores';
 
 const GIST_API = 'https://api.github.com/gists';
 
@@ -181,7 +182,7 @@ export async function loadFromGist(
   }
 
   try {
-    const character = JSON.parse(characterContent);
+    const character = { ...initialCharacter, ...JSON.parse(characterContent) };
 
     // Migrate: ensure all attacks have IDs
     if (character.attacks && Array.isArray(character.attacks)) {
@@ -223,6 +224,8 @@ export async function loadFromGist(
     // Migrate: ensure racialTraits structure exists
     if (!character.racialTraits) {
       character.racialTraits = { uses: {} };
+    } else if (!character.racialTraits.uses) {
+      character.racialTraits.uses = {};
     }
 
     // Migrate: ensure money structure exists

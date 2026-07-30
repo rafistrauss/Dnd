@@ -144,7 +144,7 @@ function createRollHistoryStore() {
 export const rollHistory = createRollHistoryStore();
 
 // Initial character state
-const initialCharacter: Character = {
+export const initialCharacter: Character = {
   name: '',
   class: '',
   subclass: '',
@@ -262,6 +262,8 @@ function loadFromStorage(): Character {
       // Migrate: ensure racialTraits structure exists
       if (!loaded.racialTraits) {
         loaded.racialTraits = { uses: {} };
+      } else if (!loaded.racialTraits.uses) {
+        loaded.racialTraits.uses = {};
       }
 
       // Migrate: ensure money structure exists
