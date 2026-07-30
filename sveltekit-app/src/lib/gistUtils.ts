@@ -220,6 +220,27 @@ export async function loadFromGist(
       }
     }
 
+    // Migrate: ensure racialTraits structure exists
+    if (!character.racialTraits) {
+      character.racialTraits = { uses: {} };
+    }
+
+    // Migrate: ensure money structure exists
+    if (!character.money) {
+      character.money = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+    }
+
+    // Migrate: ensure conditions structure exists
+    if (!Array.isArray(character.conditions)) {
+      character.conditions = [];
+    }
+    if (typeof character.exhaustionLevel !== 'number') {
+      character.exhaustionLevel = 0;
+    }
+    if (typeof character.inspiration !== 'boolean') {
+      character.inspiration = false;
+    }
+
     normalizeSpellSlotUsage(character as Character);
 
     let rollHistory: RollHistoryEntry[] | undefined = undefined;
