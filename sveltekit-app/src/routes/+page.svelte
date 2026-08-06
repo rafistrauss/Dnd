@@ -26,12 +26,14 @@
   import {
     character,
     isEditMode,
+    currentGistId,
     exportCharacter,
     importCharacter,
     searchFilter,
     toasts,
     resetRacialTraitUses
   } from '$lib/stores';
+  import { loadGistConfig } from '$lib/gistUtils';
   import { getClassConfig, getAvailableFeatures, getSpellSlotProgression } from '$lib/classConfig';
   import { getRacialSpellsForLevel } from '$lib/raceConfig';
   import CharacterInfo from '$lib/components/CharacterInfo.svelte';
@@ -80,6 +82,9 @@
   let showGistModal = false;
   let showWikidotImport = false;
   let showAddConditionModal = false;
+  let showPasteJsonModal = false;
+  let pasteJsonText = '';
+  let pasteJsonError = '';
   let gistMode: 'save' | 'load' = 'save';
   let fileInput: HTMLInputElement | undefined = undefined;
   let diceNotation = '';
@@ -492,10 +497,40 @@
     try {
       const imported = await importCharacter(file);
       character.set(imported);
-      alert('Character imported successfully!');
+      toasts.add('Character imported successfully!', 'success');
     } catch {
-      alert('Failed to import character file');
+      toasts.add('Failed to import character file', 'error');
     }
+  }
+
+  function handlePasteJson() {
+    pasteJsonText = '';
+    pasteJsonError = '';
+    showPasteJsonModal = true;
+  }
+
+  async function confirmPasteJson() {
+    pasteJsonError = '';
+    const text = pasteJsonText.trim();
+    if (!text) {
+      pasteJsonError = 'Please paste some JSON content.';
+      return;
+    }
+    try {
+      const blob = new Blob([text], { type: 'application/json' });
+      const file = new File([blob], 'character.json', { type: 'application/json' });
+      const imported = await importCharacter(file);
+      character.set(imported);
+      showPasteJsonModal = false;
+      toasts.add('Character loaded from pasted JSON!', 'success');
+    } catch {
+      pasteJsonError = 'Invalid JSON. Please check the content and try again.';
+    }
+  }
+
+  function refreshCurrentGistId() {
+    const config = loadGistConfig();
+    currentGistId.set(config.gistId || '');
   }
 </script>
 
@@ -711,6 +746,11 @@
                 {$isEditMode ? 'Edit Mode' : 'Use Mode'}</span
               >
             </button>
+            {#if $isEditMode && $currentGistId}
+              <span class="gist-id-badge" title="Current Gist ID: {$currentGistId}">
+                🔗 {$currentGistId.slice(0, 8)}…
+              </span>
+            {/if}
             <button on:click={toggleDarkMode} class="btn btn-mode" title="Toggle dark mode">
               <span class="btn-icon">{isDarkMode ? '☀️' : '🌙'}</span>
               <span class="btn-text">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
@@ -751,6 +791,7 @@
       </button>
       <button on:click={handleExport} class="btn btn-secondary">Export JSON</button>
       <button on:click={handleImport} class="btn btn-secondary">Import JSON</button>
+      <button on:click={handlePasteJson} class="btn btn-secondary">Paste JSON</button>
       <input
         type="file"
         bind:this={fileInput}
@@ -791,11 +832,44 @@
 />
 
 {#if showGistModal}
-  <GistModal mode={gistMode} on:close={() => (showGistModal = false)} />
+  <GistModal mode={gistMode} on:close={() => { showGistModal = false; refreshCurrentGistId(); }} />
 {/if}
 
 {#if showWikidotImport}
   <WikidotImport onClose={() => (showWikidotImport = false)} />
+{/if}
+
+{#if showPasteJsonModal}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="modal-overlay"
+    on:click={() => (showPasteJsonModal = false)}
+    on:keydown={(e) => e.key === 'Escape' && (showPasteJsonModal = false)}
+    role="button"
+    tabindex="-1"
+  >
+    <div class="modal-content paste-json-modal" on:click|stopPropagation on:keydown role="dialog" tabindex="0">
+      <div class="modal-header">
+        <h2>Paste JSON</h2>
+        <button class="close-btn" on:click={() => (showPasteJsonModal = false)}>×</button>
+      </div>
+      <div class="modal-body">
+        {#if pasteJsonError}
+          <div class="paste-json-error">{pasteJsonError}</div>
+        {/if}
+        <textarea
+          class="paste-json-textarea"
+          bind:value={pasteJsonText}
+          placeholder="Paste character JSON here..."
+          rows="12"
+        ></textarea>
+        <div class="modal-actions">
+          <button class="btn btn-primary" on:click={confirmPasteJson}>Load Character</button>
+          <button class="btn btn-secondary" on:click={() => (showPasteJsonModal = false)}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
 {/if}
 
 <AddConditionModal
@@ -1099,6 +1173,101 @@
 
   :global(body.use-mode) .header-actions {
     display: none;
+  }
+
+  .gist-id-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-family: monospace;
+    background: rgba(139, 0, 0, 0.1);
+    color: #8b0000;
+    border: 1px solid rgba(139, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: default;
+    white-space: nowrap;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 8px;
+    max-width: 560px;
+    width: 90vw;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    color: #8b0000;
+  }
+
+  .close-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #666;
+    line-height: 1;
+  }
+
+  .close-btn:hover {
+    color: #000;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .paste-json-textarea {
+    width: 100%;
+    font-family: monospace;
+    font-size: 0.85rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .paste-json-error {
+    background: #fee;
+    color: #c00;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    border: 1px solid #fcc;
+    font-size: 0.9rem;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 16px;
   }
 
   :global(.btn) {
