@@ -2,8 +2,10 @@
   import { onMount } from 'svelte';
   import { createEventDispatcher } from 'svelte';
   import { base } from '$app/paths';
-  import { character, rollHistory } from '$lib/stores';
+  import { character, rollHistory, abilityModifiers } from '$lib/stores';
   import { getAvailableFeatures } from '$lib/classConfig';
+  import { MASTERY_MAP } from '$lib/weaponMastery';
+  import type { WeaponMasteryName } from '$lib/weaponMastery';
 
   const dispatch = createEventDispatcher();
 
@@ -16,6 +18,28 @@
   export let bonusBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown of bonuses by source
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
   export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
+  export let mastery: string | undefined = undefined; // Weapon mastery property name
+
+  // Compute a contextual mastery note based on the mastery type and character stats
+  $: masteryNote = (() => {
+    if (!mastery) return '';
+    const m = MASTERY_MAP[mastery as WeaponMasteryName];
+    if (!m) return '';
+    const strMod = $abilityModifiers.strength;
+    const dexMod = $abilityModifiers.dexterity;
+    const abilityMod = Math.max(strMod, dexMod);
+    const profBonus = $character.proficiencyBonus;
+    if (mastery === 'Graze') {
+      return `Graze: on a miss, deal ${Math.max(0, abilityMod)} damage (ability mod, min 0).`;
+    } else if (mastery === 'Topple') {
+      const dc = 8 + profBonus + abilityMod;
+      return `Topple: on a hit, target makes CON save DC ${dc} or falls Prone.`;
+    } else if (mastery === 'Cleave') {
+      return `Cleave: on a hit, deal ${Math.max(0, strMod)} damage (STR mod) to an adjacent creature automatically.`;
+    } else {
+      return `${mastery}: ${m.summary}`;
+    }
+  })();
 
   let diceBox: any = null;
   let diceContainer: HTMLDivElement | undefined = undefined;
@@ -552,6 +576,7 @@
     notation = '';
     damageNotation = '';
     attackName = '';
+    mastery = undefined;
     lastRolledNotation = '';
     rollResult = null;
     guidedStrikeUsed = false;
@@ -772,6 +797,12 @@
             <em>No damage is dealt on a critical miss.</em>
           </div>
         {/if}
+        {#if masteryNote}
+          <div class="mastery-note">
+            <span class="mastery-note-badge">{mastery}</span>
+            <span class="mastery-note-text">{masteryNote.replace(/^[^:]+:\s*/, '')}</span>
+          </div>
+        {/if}
         {#if canUseInspiration}
           <div class="inspiration-reroll-row">
             <button class="btn btn-inspiration" on:click={useInspirationReroll}>
@@ -984,6 +1015,37 @@
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .mastery-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 7px 10px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.06);
+    border-left: 3px solid var(--primary-color, #7b3f00);
+    font-size: 0.85rem;
+  }
+
+  .mastery-note-badge {
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--primary-color, #7b3f00);
+    color: white;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .mastery-note-text {
+    line-height: 1.4;
+    color: var(--text-color);
   }
 
   .inspiration-reroll-row {

@@ -310,7 +310,8 @@
       applyHalfDamage,
       bonusBreakdown,
       damageBreakdown,
-      rollType: 'attack'
+      rollType: 'attack',
+      mastery: attack.mastery
     });
   }
 
@@ -427,7 +428,8 @@
       attackName: attack.name,
       applyHalfDamage,
       bonusBreakdown,
-      damageType
+      damageType,
+      mastery: attack.mastery
     });
   }
 
@@ -1448,6 +1450,7 @@
     align-items: center;
     gap: 8px;
     margin-top: 8px;
+    margin-bottom: 10px;
     padding: 6px 10px;
     border-radius: 5px;
     background: var(--bg-color);
