@@ -22,6 +22,7 @@
                 <button id="saveBtn" class="btn btn-primary">Save</button>
                 <button id="exportBtn" class="btn btn-secondary">Export</button>
                 <button id="importBtn" class="btn btn-secondary">Import</button>
+                <button id="pasteJsonBtn" class="btn btn-secondary">Paste JSON</button>
                 <button id="saveToGistBtn" class="btn btn-secondary">Save to Gist</button>
                 <button id="loadFromGistBtn" class="btn btn-secondary">Load from Gist</button>
                 <input type="file" id="fileInput" accept=".json" style="display: none;">
@@ -404,6 +405,23 @@
                 <div id="rollTitle"></div>
                 <div id="diceContainer"></div>
                 <div id="rollResult"></div>
+            </div>
+        </div>
+
+        <!-- Paste JSON Modal -->
+        <div id="pasteJsonModal" class="modal">
+            <div class="modal-content">
+                <span class="close-paste-json">&times;</span>
+                <h3>Paste Character JSON</h3>
+                <div class="form-group">
+                    <label>Paste your character JSON below:</label>
+                    <textarea id="pasteJsonTextarea" rows="12" style="width:100%;font-family:monospace;font-size:0.85em;" placeholder='{ "name": "...", ... }'></textarea>
+                </div>
+                <div class="gist-actions">
+                    <button id="pasteJsonConfirm" class="btn btn-primary">Load Character</button>
+                    <button id="pasteJsonCancel" class="btn btn-secondary">Cancel</button>
+                </div>
+                <div id="pasteJsonStatus"></div>
             </div>
         </div>
 
