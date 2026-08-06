@@ -751,6 +751,7 @@
       </button>
       <button on:click={handleExport} class="btn btn-secondary">Export JSON</button>
       <button on:click={handleImport} class="btn btn-secondary">Import JSON</button>
+      <a href="/print" target="_blank" class="btn btn-secondary">🖨 Print Sheet</a>
       <input
         type="file"
         bind:this={fileInput}
