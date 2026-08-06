@@ -15,6 +15,7 @@
   import SectionHeader from '$lib/components/SectionHeader.svelte';
   import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
   import type { Attack, Spell, ConditionAbility } from '$lib/types';
+  import { WEAPON_MASTERIES, MASTERY_MAP } from '$lib/weaponMastery';
   import { loadSpells } from '$lib/dndData';
   import {
     getSavingThrowInfo,
@@ -746,6 +747,23 @@
     return 0;
   })();
 
+  // Mastery helpers
+  function grazeDamage(): number {
+    const strMod = $abilityModifiers.strength;
+    const dexMod = $abilityModifiers.dexterity;
+    return Math.max(0, Math.max(strMod, dexMod));
+  }
+
+  function toppleDC(): number {
+    const strMod = $abilityModifiers.strength;
+    const dexMod = $abilityModifiers.dexterity;
+    return 8 + $character.proficiencyBonus + Math.max(strMod, dexMod);
+  }
+
+  function cleaveDamage(): number {
+    return Math.max(0, $abilityModifiers.strength);
+  }
+
   $: filteredAttacks = $character.attacks
     .filter((attack) => {
       // Filter out spells that require a higher slot level than the character has
@@ -857,6 +875,22 @@
                 class="attack-type"
               />
             </div>
+            {#if !attack.spellRef}
+              <div class="attack-field">
+                <label for="attack-mastery-{attack.id}">Mastery</label>
+                <select
+                  id="attack-mastery-{attack.id}"
+                  bind:value={attack.mastery}
+                  class="attack-mastery-select"
+                  disabled={!$isEditMode}
+                >
+                  <option value={undefined}>— None —</option>
+                  {#each WEAPON_MASTERIES as m}
+                    <option value={m.name}>{m.name}</option>
+                  {/each}
+                </select>
+              </div>
+            {/if}
           </div>
           {#if attack.spellRef}
             {#if spells.length === 0}
@@ -1032,6 +1066,23 @@
                   class="notes-input"
                   rows="2"
                 ></textarea>
+              </div>
+            {/if}
+            {#if attack.mastery}
+              {@const mastery = MASTERY_MAP[attack.mastery]}
+              <div class="mastery-info">
+                <span class="mastery-badge mastery-{attack.mastery.toLowerCase()}">{attack.mastery}</span>
+                <span class="mastery-summary">
+                  {#if attack.mastery === 'Graze'}
+                    On miss → deal <strong>{grazeDamage()}</strong> {attack.damageType || 'damage'} (ability mod)
+                  {:else if attack.mastery === 'Topple'}
+                    On hit → CON save DC <strong>{toppleDC()}</strong> or Prone
+                  {:else if attack.mastery === 'Cleave'}
+                    On hit → deal <strong>{cleaveDamage()}</strong> {attack.damageType || 'damage'} to adjacent creature
+                  {:else}
+                    {mastery.summary}
+                  {/if}
+                </span>
               </div>
             {/if}
           {/if}
@@ -1380,6 +1431,54 @@
     font-weight: bold;
     margin-bottom: 4px;
     display: block;
+  }
+
+  /* Mastery styles */
+  .attack-mastery-select {
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .mastery-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    background: var(--bg-color);
+    border-left: 3px solid var(--primary-color);
+  }
+
+  .mastery-badge {
+    font-size: 0.72rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    background: var(--primary-color);
+    color: white;
+  }
+
+  /* Per-mastery accent colours */
+  .mastery-graze { background: #c0392b; }
+  .mastery-cleave { background: #e67e22; }
+  .mastery-topple { background: #8e44ad; }
+  .mastery-push { background: #2980b9; }
+  .mastery-sap { background: #27ae60; }
+  .mastery-slow { background: #16a085; }
+  .mastery-nick { background: #d35400; }
+  .mastery-vex { background: #2c3e50; }
+
+  .mastery-summary {
+    font-size: 0.85rem;
+    color: var(--text-color);
   }
 
   .notes-input {

@@ -68,6 +68,7 @@ export interface Attack {
   notes?: string; // for non-spell attacks
   source?: 'racial' | 'class' | 'custom'; // source of the attack/spell
   racialTraitName?: string; // name of the racial trait (e.g., "Githyanki Psionics")
+  mastery?: import('./weaponMastery').WeaponMasteryName; // Weapon Mastery property (2024 PHB)
 }
 
 export interface Spell {

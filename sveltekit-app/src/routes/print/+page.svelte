@@ -192,6 +192,7 @@
                 <th>Atk Bonus</th>
                 <th>Damage</th>
                 <th>Type</th>
+                <th>Mastery</th>
               </tr>
             </thead>
             <tbody>
@@ -201,6 +202,7 @@
                   <td class="center">{atk.bonus !== 0 ? fmt(atk.bonus) : '—'}</td>
                   <td class="center">{atk.damage || '—'}</td>
                   <td>{atk.damageType || '—'}</td>
+                  <td>{atk.mastery || '—'}</td>
                 </tr>
               {/each}
             </tbody>
