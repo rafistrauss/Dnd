@@ -152,6 +152,23 @@
     return color;
   }
 
+  // Determine critical hit threshold based on class features (default 20)
+  $: critThreshold = (() => {
+    if (!$character.class) return 20;
+    const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
+    const hasSuperiorCritical = features.some(
+      (f) =>
+        f.name === 'Superior Critical' || f.subFeatures?.some((sf) => sf.name === 'Superior Critical')
+    );
+    if (hasSuperiorCritical) return 18;
+    const hasImprovedCritical = features.some(
+      (f) =>
+        f.name === 'Improved Critical' || f.subFeatures?.some((sf) => sf.name === 'Improved Critical')
+    );
+    if (hasImprovedCritical) return 19;
+    return 20;
+  })();
+
   // Check if character has Guided Strike and Channel Divinity uses
   $: hasGuidedStrike = (() => {
     if (!$character.class) return false;
@@ -348,7 +365,7 @@
       if (type === 'attack') {
         if (notationObj.result && notationObj.result.length > 0) {
           const firstDie = notationObj.result[0];
-          isCriticalSuccess = firstDie === 20;
+          isCriticalSuccess = firstDie >= critThreshold;
           isCriticalFail = firstDie === 1;
 
           // TODO: Play sounds for crit/fail
