@@ -159,6 +159,44 @@ function setupEventListeners() {
     });
     
     document.getElementById('fileInput').addEventListener('change', importCharacter);
+
+    // Paste JSON button
+    document.getElementById('pasteJsonBtn').addEventListener('click', () => {
+        document.getElementById('pasteJsonTextarea').value = '';
+        document.getElementById('pasteJsonStatus').textContent = '';
+        document.getElementById('pasteJsonModal').style.display = 'flex';
+    });
+    document.querySelector('.close-paste-json').addEventListener('click', () => {
+        document.getElementById('pasteJsonModal').style.display = 'none';
+    });
+    document.getElementById('pasteJsonCancel').addEventListener('click', () => {
+        document.getElementById('pasteJsonModal').style.display = 'none';
+    });
+    document.getElementById('pasteJsonConfirm').addEventListener('click', () => {
+        const text = document.getElementById('pasteJsonTextarea').value.trim();
+        const statusEl = document.getElementById('pasteJsonStatus');
+        try {
+            const loadedCharacter = JSON.parse(text);
+            character = {
+                ...character,
+                ...loadedCharacter,
+                classFeatures: {
+                    ...character.classFeatures,
+                    ...(loadedCharacter.classFeatures || {})
+                }
+            };
+            populateForm();
+            document.getElementById('pasteJsonModal').style.display = 'none';
+        } catch (error) {
+            statusEl.style.color = 'red';
+            statusEl.textContent = 'Error: ' + error.message;
+        }
+    });
+    window.addEventListener('click', (event) => {
+        if (event.target === document.getElementById('pasteJsonModal')) {
+            document.getElementById('pasteJsonModal').style.display = 'none';
+        }
+    });
     
     // Gist buttons
     document.getElementById('saveToGistBtn').addEventListener('click', openGistModal.bind(null, 'save'));
