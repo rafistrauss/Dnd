@@ -316,6 +316,21 @@ if (browser) {
   });
 }
 
+// Current gist ID store (kept in sync with gist config saves)
+export const currentGistId = writable<string>('');
+
+if (browser) {
+  const saved = localStorage.getItem('dnd_gist_config');
+  if (saved) {
+    try {
+      const config = JSON.parse(saved);
+      if (config.gistId) currentGistId.set(config.gistId);
+    } catch {
+      // ignore
+    }
+  }
+}
+
 // Turn / action-economy tracker (transient combat state, persisted to localStorage)
 export interface TurnState {
   round: number;
