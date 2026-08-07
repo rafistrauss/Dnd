@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { character, abilityModifiers, calculateModifier } from '$lib/stores';
   import { SKILL_ABILITIES } from '$lib/types';
   import type { SkillName } from '$lib/types';
@@ -62,7 +63,7 @@
 <div class="sheet">
   <!-- Print button (hidden when printing) -->
   <div class="print-controls no-print">
-    <a href="/" class="btn-back">← Back to Sheet</a>
+    <a href={resolve('/')} class="btn-back">← Back to Sheet</a>
     <button class="btn-print" onclick={() => window.print()}>🖨 Print / Save PDF</button>
   </div>
 
