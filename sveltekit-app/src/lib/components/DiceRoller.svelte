@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { createEventDispatcher } from 'svelte';
   import { base } from '$app/paths';
   import { character, rollHistory, abilityModifiers } from '$lib/stores';
@@ -627,18 +627,6 @@
     setTimeout(() => rollDice(notation, rollType), 200);
   }
 
-  // Lock body scroll while the modal is open so the browser UI bars on mobile
-  // don't animate, which would cause the fixed overlay to jump position.
-  $: if (typeof document !== 'undefined') {
-    document.body.style.overflow = visible ? 'hidden' : '';
-  }
-
-  onDestroy(() => {
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = '';
-    }
-  });
-
   function close() {
     dispatch('close');
     // Reset state when closing (clear lastRolledNotation to force re-roll)
@@ -933,6 +921,7 @@
     transition:
       opacity 0.2s,
       visibility 0.2s;
+    touch-action: none;
   }
 
   .modal-overlay.hidden {
@@ -953,6 +942,8 @@
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     overflow-y: auto;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
   }
 
   .modal-header {
