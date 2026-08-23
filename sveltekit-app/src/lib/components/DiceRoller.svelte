@@ -1097,8 +1097,12 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    flex: 1;
-    min-height: 0;
+    /* Grow to fill available space but never shrink below the intrinsic height of
+       the dice canvas + inputs. Previously `flex: 1; min-height: 0` let this area
+       shrink smaller than its content on short viewports, so the inputs and
+       Roll/Reset controls overflowed downward and were covered by the transparent
+       `.roll-result` sibling (which reserves min-height), making them un-tappable. */
+    flex: 1 0 auto;
   }
 
   .dice-container {
