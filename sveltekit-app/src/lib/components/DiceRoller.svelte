@@ -157,10 +157,13 @@
   let guidedStrikeUsed = false;
   let gwfSummary = '';
 
-  // Track whether the touch that may produce a close-click started on the overlay backdrop
-  // (not inside modal-content). This guards against Android Chrome's viewport-resize
-  // causing the synthesized click to land on the overlay even when the touch began inside.
-  let touchStartedOnOverlay = false;
+  // Track whether the pointer that may produce a close-click went down on the overlay
+  // backdrop itself (not on modal-content or its children). `pointerdown` fires at the
+  // true physical location *before* any viewport resize, so it stays correct even when
+  // Android Chrome hides/shows the URL bar mid-gesture and misdelivers the synthesized
+  // click to the overlay. The modal only closes when the pointer both went down and the
+  // click landed on the backdrop.
+  let pointerDownOnOverlay = false;
 
   // Dice color customization
   let diceColor = '#051e0a';
@@ -652,14 +655,16 @@
 <div
   class="modal-overlay"
   class:hidden={!visible}
-  on:touchstart={(e) => { touchStartedOnOverlay = e.target === e.currentTarget; }}
+  on:pointerdown={(e) => {
+    pointerDownOnOverlay = e.target === e.currentTarget;
+  }}
   on:click={(e) => {
-    if (e.target !== e.currentTarget) return;
-    // On touch devices, only close if the touch started on the overlay backdrop
-    // (guards against Android Chrome synthesizing a click on the overlay when a
-    // viewport resize shifts coordinates during a touch on modal-content)
-    const isTouchEvent = window.matchMedia('(pointer: coarse)').matches;
-    if (!isTouchEvent || touchStartedOnOverlay) close();
+    // Only close when the click both starts (pointerdown) and lands on the overlay
+    // backdrop itself. On Android Chrome a viewport resize (URL bar hide/show) can
+    // misdeliver the synthesized click to the overlay even though the pointer went
+    // down on a button inside the modal (e.g. the Roll button); tracking the
+    // pointerdown target keeps that stray click from closing the modal mid-interaction.
+    if (e.target === e.currentTarget && pointerDownOnOverlay) close();
   }}
   on:keydown={(e) => e.key === 'Escape' && close()}
   role="button"

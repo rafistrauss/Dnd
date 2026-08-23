@@ -1,16 +1,18 @@
 /**
  * Tests for DiceRoller modal button behaviour.
  *
- * The core regression being guarded here is that a touch that begins inside
- * modal-content must never close the modal, even if Android Chrome's viewport
- * resize causes the synthesised click event to resolve to the overlay backdrop.
+ * The core regression being guarded here is that a pointer interaction that
+ * begins inside modal-content (for example tapping the Roll button) must never
+ * close the modal, even if Android Chrome's viewport resize (URL bar hide/show)
+ * causes the synthesised click event to resolve to the overlay backdrop.
  *
- * The fix uses a `touchstart` listener on the overlay to record whether the
- * touch originated on the backdrop (`touchStartedOnOverlay`).  The click
- * handler on the overlay only calls `close()` when both:
+ * The fix uses a `pointerdown` listener on the overlay to record whether the
+ * pointer went down on the backdrop (`pointerDownOnOverlay`). `pointerdown`
+ * fires at the true physical location *before* any viewport resize, so it stays
+ * correct regardless of URL bar movement. The click handler on the overlay only
+ * calls `close()` when both:
  *   1. `e.target === e.currentTarget` (click landed on the overlay itself), AND
- *   2. On touch devices: `touchStartedOnOverlay` is true (touch began on backdrop).
- *      On pointer devices (mouse): no touchstart fires so the guard is skipped.
+ *   2. `pointerDownOnOverlay` is true (the pointer went down on the backdrop).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -64,11 +66,19 @@ vi.mock('$lib/weaponMastery', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Simulate a complete touch-tap sequence on an element. */
+/** Simulate a complete tap sequence (pointer + touch + click) on an element. */
 function simulateTap(element: Element) {
   const touch = new Touch({ identifier: 1, target: element, clientX: 0, clientY: 0 });
-  fireEvent(element, new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [touch] }));
-  fireEvent(element, new TouchEvent('touchend', { bubbles: true, cancelable: true, changedTouches: [touch] }));
+  fireEvent(element, new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+  fireEvent(
+    element,
+    new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [touch] })
+  );
+  fireEvent(
+    element,
+    new TouchEvent('touchend', { bubbles: true, cancelable: true, changedTouches: [touch] })
+  );
+  fireEvent(element, new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
   // happy-dom / jsdom don't auto-synthesise click from touch, so fire it manually
   // (this mirrors what a real mobile browser does after a successful tap)
   fireEvent.click(element);
@@ -145,8 +155,9 @@ describe('DiceRoller modal buttons', () => {
       events: { close: closeSpy }
     });
 
-    // Mouse click directly on overlay (no touchstart) — isTouchEvent is false so it closes
+    // Mouse press + release both on the overlay backdrop — should close
     const overlay = container.querySelector('.modal-overlay') as HTMLElement;
+    fireEvent(overlay, new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
     await fireEvent.click(overlay);
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
@@ -166,7 +177,7 @@ describe('DiceRoller modal buttons', () => {
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('Android Chrome regression: touchstart on modal-content + click on overlay does NOT close (touch guard)', async () => {
+  it('Android Chrome regression: pointerdown on modal-content + click on overlay does NOT close (pointer guard)', async () => {
     const closeSpy = vi.fn();
     const { container } = render(DiceRoller, {
       props: { visible: true, notation: '' },
@@ -176,9 +187,8 @@ describe('DiceRoller modal buttons', () => {
     const content = container.querySelector('.modal-content') as HTMLElement;
     const overlay = container.querySelector('.modal-overlay') as HTMLElement;
 
-    // Simulate touch starting inside modal-content (sets touchStartedOnOverlay = false)
-    const touch = new Touch({ identifier: 1, target: content, clientX: 0, clientY: 0 });
-    fireEvent(content, new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [touch] }));
+    // Simulate pointer going down inside modal-content (sets pointerDownOnOverlay = false)
+    fireEvent(content, new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
 
     // Synthesised click resolves to overlay (Android Chrome viewport-shift scenario)
     await fireEvent.click(overlay);
