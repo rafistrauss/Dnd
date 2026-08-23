@@ -314,7 +314,11 @@
       bonusBreakdown,
       damageBreakdown,
       rollType: 'attack',
-      mastery: attack.mastery
+      mastery: attack.mastery,
+      greatWeaponFighting:
+        !attack.spellRef &&
+        (!!$character.greatWeaponFighting || hasGreatWeaponFightingFeat) &&
+        !!attack.twoHanded
     });
   }
 
