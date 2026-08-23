@@ -669,6 +669,26 @@ body:not(.use-mode) .hp-controls {
     margin-bottom: 10px;
 }
 
+.weapon-properties {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.property-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.property-label input[type="checkbox"] {
+    cursor: pointer;
+}
+
 .attack-actions {
     display: flex;
     gap: 10px;
@@ -829,6 +849,12 @@ body:not(.use-mode) .hp-controls {
 #rollResult .roll-details {
     font-size: 1rem;
     color: var(--text-color);
+}
+
+.gwf-note {
+    font-size: 0.85em;
+    color: var(--accent-color, #c0a060);
+    font-style: italic;
 }
 
 #rollResult .reroll-buttons {
