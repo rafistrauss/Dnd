@@ -177,6 +177,7 @@ export interface Character {
   conditions?: string[]; // Active standard conditions (e.g. "prone", "poisoned")
   exhaustionLevel?: number; // 0-6
   inspiration?: boolean; // Heroic inspiration
+  greatWeaponFighting?: boolean; // Great Weapon Fighting style: reroll 1s and 2s on weapon damage dice
 }
 
 // Class Configuration Types

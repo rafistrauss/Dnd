@@ -429,7 +429,8 @@
       applyHalfDamage,
       bonusBreakdown,
       damageType,
-      mastery: attack.mastery
+      mastery: attack.mastery,
+      greatWeaponFighting: !attack.spellRef && !!$character.greatWeaponFighting
     });
   }
 

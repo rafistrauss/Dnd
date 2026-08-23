@@ -118,6 +118,18 @@
           placeholder="e.g., Lawful Good"
         />
       </div>
+      <div class="form-group form-group-checkbox">
+        <label for="greatWeaponFighting" title="When you roll a 1 or 2 on a weapon damage die, you may reroll and must use the new roll.">
+          Great Weapon Fighting
+        </label>
+        <input
+          type="checkbox"
+          id="greatWeaponFighting"
+          checked={!!$character.greatWeaponFighting}
+          on:change={(e) =>
+            character.update((c) => ({ ...c, greatWeaponFighting: (e.target as HTMLInputElement).checked }))}
+        />
+      </div>
     </div>
   {/if}
 </section>
@@ -173,6 +185,24 @@
     font-weight: bold;
     margin-bottom: 5px;
     font-size: 0.9rem;
+  }
+
+  .form-group-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-group-checkbox input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .form-group-checkbox label {
+    margin-bottom: 0;
+    cursor: pointer;
   }
 
   input,
