@@ -164,6 +164,12 @@
   // click to the overlay. The modal only closes when the pointer both went down and the
   // click landed on the backdrop.
   let pointerDownOnOverlay = false;
+  // The element the pointer physically went down on. When Android Chrome resizes the
+  // viewport mid-tap it can misdeliver the synthesized `click` to the overlay backdrop
+  // even though the user tapped a control inside the modal (e.g. the Roll button). In
+  // that case the click is otherwise lost and the button appears unresponsive, so we
+  // replay it on the original target. Reset before each tap via `pointerdown`.
+  let pointerDownTarget: EventTarget | null = null;
 
   // Dice color customization
   let diceColor = '#051e0a';
@@ -657,14 +663,29 @@
   class:hidden={!visible}
   on:pointerdown={(e) => {
     pointerDownOnOverlay = e.target === e.currentTarget;
+    pointerDownTarget = e.target;
   }}
   on:click={(e) => {
-    // Only close when the click both starts (pointerdown) and lands on the overlay
-    // backdrop itself. On Android Chrome a viewport resize (URL bar hide/show) can
-    // misdeliver the synthesized click to the overlay even though the pointer went
-    // down on a button inside the modal (e.g. the Roll button); tracking the
-    // pointerdown target keeps that stray click from closing the modal mid-interaction.
-    if (e.target === e.currentTarget && pointerDownOnOverlay) close();
+    // The overlay click handler only runs when the click actually lands on the overlay
+    // backdrop (controls inside .modal-content stop click propagation). There are two
+    // cases when that happens:
+    //   1. A genuine backdrop tap — the pointer also went down on the overlay
+    //      (pointerDownOnOverlay) — so close the modal.
+    //   2. Android Chrome misrouted the tap: the pointer went down on a control inside
+    //      the modal but a mid-gesture viewport resize (URL bar hide/show) caused the
+    //      synthesized click to be delivered to the overlay instead. Closing here would
+    //      be wrong AND the intended control (e.g. the Roll button) would never fire, so
+    //      instead we replay the click on the element the pointer physically went down on.
+    if (e.target !== e.currentTarget) return;
+    if (pointerDownOnOverlay) {
+      close();
+    } else if (
+      pointerDownTarget &&
+      pointerDownTarget !== e.currentTarget &&
+      pointerDownTarget instanceof HTMLElement
+    ) {
+      pointerDownTarget.click();
+    }
   }}
   on:keydown={(e) => e.key === 'Escape' && close()}
   role="button"
