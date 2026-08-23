@@ -30,6 +30,7 @@
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
+  $: hasGreatWeaponFightingFeat = /\bgreat weapon fighting\b/i.test($character.features || '');
 
   // Computed: Get all abilities from active conditions
   $: conditionAbilities = $character.activeStates
@@ -128,6 +129,8 @@
           bonus: 0,
           damage: '',
           damageType: '',
+          twoHanded: false,
+          versatile: false,
           notes: ''
         }
       ];
@@ -429,7 +432,12 @@
       applyHalfDamage,
       bonusBreakdown,
       damageType,
-      mastery: attack.mastery
+      mastery: attack.mastery,
+      rollType: 'damage',
+      greatWeaponFighting:
+        !attack.spellRef &&
+        (!!$character.greatWeaponFighting || hasGreatWeaponFightingFeat) &&
+        !!attack.twoHanded
     });
   }
 
@@ -892,6 +900,29 @@
                   {/each}
                 </select>
               </div>
+              {#if $isEditMode || attack.twoHanded || attack.versatile}
+                <div class="attack-field attack-field-properties">
+                  <span class="attack-field-label">Properties</span>
+                  <div class="weapon-properties">
+                    <label class="property-label">
+                      <input
+                        type="checkbox"
+                        bind:checked={attack.twoHanded}
+                        disabled={!$isEditMode}
+                      />
+                      2-Handed
+                    </label>
+                    <label class="property-label">
+                      <input
+                        type="checkbox"
+                        bind:checked={attack.versatile}
+                        disabled={!$isEditMode}
+                      />
+                      Versatile
+                    </label>
+                  </div>
+                </div>
+              {/if}
             {/if}
           </div>
           {#if attack.spellRef}
@@ -1073,14 +1104,18 @@
             {#if attack.mastery}
               {@const mastery = MASTERY_MAP[attack.mastery]}
               <div class="mastery-info">
-                <span class="mastery-badge mastery-{attack.mastery.toLowerCase()}">{attack.mastery}</span>
+                <span class="mastery-badge mastery-{attack.mastery.toLowerCase()}"
+                  >{attack.mastery}</span
+                >
                 <span class="mastery-summary">
                   {#if attack.mastery === 'Graze'}
-                    On miss → deal <strong>{grazeDamage()}</strong> {attack.damageType || 'damage'} (ability mod)
+                    On miss → deal <strong>{grazeDamage()}</strong>
+                    {attack.damageType || 'damage'} (ability mod)
                   {:else if attack.mastery === 'Topple'}
                     On hit → CON save DC <strong>{toppleDC()}</strong> or Prone
                   {:else if attack.mastery === 'Cleave'}
-                    On hit → deal <strong>{cleaveDamage()}</strong> {attack.damageType || 'damage'} to adjacent creature
+                    On hit → deal <strong>{cleaveDamage()}</strong>
+                    {attack.damageType || 'damage'} to adjacent creature
                   {:else}
                     {mastery.summary}
                   {/if}
@@ -1402,7 +1437,7 @@
 
   .attack-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
     margin-bottom: 10px;
   }
@@ -1412,13 +1447,26 @@
     flex-direction: column;
   }
 
+  .attack-field-properties {
+    grid-column: 1 / -1;
+  }
+
   .attack-field label {
     font-size: 0.85rem;
     font-weight: bold;
     margin-bottom: 4px;
   }
 
-  .attack-field input {
+  .attack-field-label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+
+  .attack-field input,
+  .attack-mastery-select {
+    box-sizing: border-box;
+    width: 100%;
     padding: 6px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -1433,6 +1481,39 @@
     font-weight: bold;
     margin-bottom: 4px;
     display: block;
+  }
+
+  .weapon-properties {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .property-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: normal;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-color);
+    padding: 6px 8px;
+    min-height: 34px;
+  }
+
+  .property-label input[type='checkbox'] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    .weapon-properties {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* Mastery styles */
@@ -1470,14 +1551,30 @@
   }
 
   /* Per-mastery accent colours */
-  .mastery-graze { background: #c0392b; }
-  .mastery-cleave { background: #e67e22; }
-  .mastery-topple { background: #8e44ad; }
-  .mastery-push { background: #2980b9; }
-  .mastery-sap { background: #27ae60; }
-  .mastery-slow { background: #16a085; }
-  .mastery-nick { background: #d35400; }
-  .mastery-vex { background: #2c3e50; }
+  .mastery-graze {
+    background: #c0392b;
+  }
+  .mastery-cleave {
+    background: #e67e22;
+  }
+  .mastery-topple {
+    background: #8e44ad;
+  }
+  .mastery-push {
+    background: #2980b9;
+  }
+  .mastery-sap {
+    background: #27ae60;
+  }
+  .mastery-slow {
+    background: #16a085;
+  }
+  .mastery-nick {
+    background: #d35400;
+  }
+  .mastery-vex {
+    background: #2c3e50;
+  }
 
   .mastery-summary {
     font-size: 0.85rem;

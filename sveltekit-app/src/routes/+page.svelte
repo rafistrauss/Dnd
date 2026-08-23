@@ -91,6 +91,7 @@
   let diceDamageBreakdown: Array<{ value: number | string; source: string }> = [];
   let diceRollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
   let diceMastery: string | undefined = undefined;
+  let diceGreatWeaponFighting = false;
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
   let hitDiceCountToDecrement = 1;
@@ -356,6 +357,7 @@
           damageBreakdown?: Array<{ value: number | string; source: string }>;
           rollType?: 'attack' | 'damage' | 'check' | 'save' | 'other';
           mastery?: string;
+          greatWeaponFighting?: boolean;
         }
   ) {
     // Reset notation first to ensure Svelte sees a change even if same value
@@ -367,6 +369,7 @@
     diceDamageBreakdown = [];
     diceRollType = 'other';
     diceMastery = undefined;
+    diceGreatWeaponFighting = false;
     isHitDiceRoll = false;
 
     // Set all values together to ensure they update simultaneously
@@ -381,6 +384,7 @@
       diceDamageBreakdown = detail.damageBreakdown || [];
       diceRollType = detail.rollType || 'other';
       diceMastery = detail.mastery;
+      diceGreatWeaponFighting = !!detail.greatWeaponFighting;
     }
     showDiceRoller = true;
   }
@@ -793,6 +797,7 @@
   damageBreakdown={diceDamageBreakdown}
   rollType={diceRollType}
   mastery={diceMastery}
+  greatWeaponFighting={diceGreatWeaponFighting}
   visible={showDiceRoller}
   on:close={handleDiceRollerClose}
 />

@@ -556,6 +556,7 @@ function rollDamage(attackIndex) {
         showRollResult(`${attack.name} Damage`, 0, 'Invalid damage format');
         return;
     }
+    const gwfDiceCount = parseInt(match[1] || '1', 10);
     
     // Check if this is a melee weapon for divine smite
     const isMelee = attack.name.toLowerCase().includes('longsword') || 
@@ -563,6 +564,10 @@ function rollDamage(attackIndex) {
                     attack.name.toLowerCase().includes('sword') ||
                     attack.name.toLowerCase().includes('mace') ||
                     attack.damageType.toLowerCase().includes('melee');
+    
+    // Great Weapon Fighting (2024): treat 1s and 2s as 3s for two-handed melee weapons
+    const hasGreatWeaponFightingFeat = /\bgreat weapon fighting\b/i.test(character.features || '');
+    const gwfActive = hasGreatWeaponFightingFeat && !!attack.twoHanded;
     
     // The dice library will handle the rolling
     showRollResult(
@@ -572,11 +577,13 @@ function rollDamage(attackIndex) {
         damageStr, // Pass the damage notation directly
         0, // No additional modifier (already in notation)
         'damage', // Type of roll
-        isMelee ? attackIndex : null
+        isMelee ? attackIndex : null,
+        gwfActive,
+        gwfDiceCount
     );
 }
 
-function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20', attackIndex = null) {
+function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20', attackIndex = null, gwfActive = false, gwfDiceCount = 0) {
     const modal = document.getElementById('rollModal');
     const titleDiv = document.getElementById('rollTitle');
     const resultDiv = document.getElementById('rollResult');
@@ -589,7 +596,9 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
         diceNotation: diceNotation,
         bonusModifier: bonusModifier,
         rollType: rollType,
-        attackIndex: attackIndex
+        attackIndex: attackIndex,
+        gwfActive: gwfActive,
+        gwfDiceCount: gwfDiceCount
     };
     
     // Show the modal first
@@ -609,7 +618,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             setTimeout(() => {
                 const initialized = initializeDiceBox();
                 if (initialized) {
-                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex);
+                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex, gwfActive, gwfDiceCount);
                 } else {
                     // Fallback to instant result if initialization fails
                     const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -621,7 +630,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             }, 150);
         } else {
             // Dice box already initialized, use it
-            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex);
+            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex, gwfActive, gwfDiceCount);
         }
     } else {
         // No dice animation, just show the result
@@ -632,7 +641,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
     }
 }
 
-function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20', attackIndex = null) {
+function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20', attackIndex = null, gwfActive = false, gwfDiceCount = 0) {
     if (!diceBox) {
         // Fallback if dice box not available
         const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -664,9 +673,27 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                 
                 let finalTotal, details;
                 if (rollType === 'damage') {
-                    // For damage rolls, just show the dice result
-                    finalTotal = notation.resultTotal;
-                    details = `${notation.resultString}`;
+                    // Apply Great Weapon Fighting (2024): treat 1s and 2s as 3s
+                    if (gwfActive && notation.result && notation.result.length > 0) {
+                        const originalResults = [...notation.result];
+                        const diceToAdjust = Math.min(gwfDiceCount || originalResults.length, originalResults.length);
+                        const adjustedResults = originalResults.map((v, i) => (
+                            i < diceToAdjust && (v === 1 || v === 2) ? 3 : v
+                        ));
+                        const bumped = originalResults.slice(0, diceToAdjust).some(v => v === 1 || v === 2);
+                        const adjustedDiceTotal = adjustedResults.reduce((s, a) => s + a, 0);
+                        finalTotal = adjustedDiceTotal + constant;
+                        let resultStr = adjustedResults.join(' ');
+                        if (constant > 0) resultStr += ' +' + constant;
+                        else if (constant < 0) resultStr += ' -' + Math.abs(constant);
+                        if (adjustedResults.length > 1 || constant) resultStr += ' = ' + finalTotal;
+                        details = resultStr;
+                        if (bumped) details += ' <span class="gwf-note">(GWF: 1s &amp; 2s → 3)</span>';
+                    } else {
+                        // For damage rolls, just show the dice result
+                        finalTotal = notation.resultTotal;
+                        details = `${notation.resultString}`;
+                    }
                 } else {
                     // For d20 rolls, add the modifier
                     finalTotal = diceTotal + modifier;
@@ -761,7 +788,9 @@ function rerollDice() {
         currentRollContext.diceNotation,
         currentRollContext.bonusModifier,
         currentRollContext.rollType,
-        currentRollContext.attackIndex
+        currentRollContext.attackIndex,
+        currentRollContext.gwfActive,
+        currentRollContext.gwfDiceCount
     );
 }
 
@@ -1095,7 +1124,9 @@ function addAttack() {
         name: 'New Attack',
         attackBonus: 0,
         damage: '1d6',
-        damageType: 'slashing'
+        damageType: 'slashing',
+        twoHanded: false,
+        versatile: false
     };
     
     character.attacks.push(attack);
@@ -1166,6 +1197,21 @@ function renderAttacks() {
                     <label>Damage Type</label>
                     <input type="text" value="${attack.damageType}" 
                         onchange="character.attacks[${index}].damageType = this.value">
+                </div>
+                <div class="form-group">
+                    <label>Properties</label>
+                    <div class="weapon-properties">
+                        <label class="property-label">
+                            <input type="checkbox" ${attack.twoHanded ? 'checked' : ''}
+                                onchange="character.attacks[${index}].twoHanded = this.checked">
+                            2-Handed
+                        </label>
+                        <label class="property-label">
+                            <input type="checkbox" ${attack.versatile ? 'checked' : ''}
+                                onchange="character.attacks[${index}].versatile = this.checked">
+                            Versatile
+                        </label>
+                    </div>
                 </div>
             </div>
             <div class="attack-actions">

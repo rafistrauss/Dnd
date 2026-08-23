@@ -19,6 +19,7 @@
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
   export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
   export let mastery: string | undefined = undefined; // Weapon mastery property name
+  export let greatWeaponFighting = false; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
 
   // Compute a contextual mastery note based on the mastery type and character stats
   $: masteryNote = (() => {
@@ -49,7 +50,8 @@
   let currentRollNotation = ''; // Track the notation actually used for the current roll
 
   $: isD20Notation = /(^|[+\-])\d*d20(?!\d)/i.test(currentRollNotation);
-  $: canUseInspiration = !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
+  $: canUseInspiration =
+    !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
 
   // Export function to get last roll total
   export function getLastRollTotal(): number | null {
@@ -153,6 +155,7 @@
   let isCriticalSuccess = false;
   let isCriticalFail = false;
   let guidedStrikeUsed = false;
+  let gwfSummary = '';
 
   // Dice color customization
   let diceColor = '#051e0a';
@@ -182,12 +185,14 @@
     const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
     const hasSuperiorCritical = features.some(
       (f) =>
-        f.name === 'Superior Critical' || f.subFeatures?.some((sf) => sf.name === 'Superior Critical')
+        f.name === 'Superior Critical' ||
+        f.subFeatures?.some((sf) => sf.name === 'Superior Critical')
     );
     if (hasSuperiorCritical) return 18;
     const hasImprovedCritical = features.some(
       (f) =>
-        f.name === 'Improved Critical' || f.subFeatures?.some((sf) => sf.name === 'Improved Critical')
+        f.name === 'Improved Critical' ||
+        f.subFeatures?.some((sf) => sf.name === 'Improved Critical')
     );
     if (hasImprovedCritical) return 19;
     return 20;
@@ -347,6 +352,7 @@
 
     rollType = type;
     guidedStrikeUsed = false; // Reset Guided Strike usage for new rolls
+    gwfSummary = '';
 
     // Store the notation being used for this roll
     currentRollNotation = notation;
@@ -363,15 +369,16 @@
     // after_roll callback - handle the result
     const afterRoll = (notationObj: any) => {
       // console.log('After roll:', notationObj);
-      let resultTotal = notationObj.resultTotal;
-      let resultString = notationObj.resultString;
+      const adjustedRoll = applyGreatWeaponFighting(notationObj);
+      let resultTotal = adjustedRoll.resultTotal;
+      let resultString = adjustedRoll.resultString;
       // If applyHalfDamage is true, halve the result (rounded down)
       if (applyHalfDamage) {
         resultTotal = Math.floor(resultTotal / 2);
         resultString = resultString + ' (halved)';
       }
       rollResult = {
-        ...notationObj,
+        ...adjustedRoll,
         resultTotal,
         resultString
       };
@@ -501,6 +508,7 @@
     isCriticalFail = false;
     rollType = 'other';
     guidedStrikeUsed = false;
+    gwfSummary = '';
   }
 
   function updateDiceColors() {
@@ -552,10 +560,58 @@
 
   function useInspirationReroll() {
     if (!canUseInspiration) return;
-
     // Spend inspiration and immediately reroll the same d20 check notation.
     character.update((c) => ({ ...c, inspiration: false }));
     rollDice(currentRollNotation, rollType);
+  }
+
+  function applyGreatWeaponFighting(result: any) {
+    if (!greatWeaponFighting || rollType !== 'damage' || !result?.result?.length) {
+      gwfSummary = '';
+      return result;
+    }
+
+    const normalizedNotation = currentRollNotation.replace(/\s+/g, '');
+    const diceMatch = normalizedNotation.match(/(?:^|[+(\-])(\d*)d(\d+)/i);
+    if (!diceMatch) {
+      gwfSummary = '';
+      return result;
+    }
+
+    const count = parseInt(diceMatch[1] || '1');
+    const newResult = [...result.result];
+    let totalAdjustment = 0;
+    let adjusted = false;
+
+    for (let i = 0; i < count && i < newResult.length; i++) {
+      if (newResult[i] === 1 || newResult[i] === 2) {
+        totalAdjustment += 3 - newResult[i];
+        newResult[i] = 3;
+        adjusted = true;
+      }
+    }
+
+    if (!adjusted) {
+      gwfSummary = '';
+      return result;
+    }
+
+    gwfSummary = 'GWF: 1s & 2s → 3';
+    const adjustedTotal = result.resultTotal + totalAdjustment;
+    const diceTotal = newResult.reduce((sum, value) => sum + value, 0);
+    const remainingModifier = adjustedTotal - diceTotal;
+    const modifierText =
+      remainingModifier === 0
+        ? ''
+        : ` ${remainingModifier > 0 ? '+' : '-'} ${Math.abs(remainingModifier)}`;
+    const adjustedResultString = `${newResult.join(' + ')}${modifierText} = ${adjustedTotal} (${gwfSummary})`;
+
+    return {
+      ...result,
+      result: newResult,
+      resultTotal: adjustedTotal,
+      resultString: adjustedResultString
+    };
   }
 
   // Auto-roll when notation is set and modal is visible
@@ -567,6 +623,7 @@
     isCriticalSuccess = false;
     isCriticalFail = false;
     guidedStrikeUsed = false;
+    gwfSummary = '';
     setTimeout(() => rollDice(notation, rollType), 200);
   }
 
@@ -582,6 +639,7 @@
     guidedStrikeUsed = false;
     isCriticalSuccess = false;
     isCriticalFail = false;
+    gwfSummary = '';
     resetDice();
   }
 </script>
@@ -802,6 +860,9 @@
             <span class="mastery-note-badge">{mastery}</span>
             <span class="mastery-note-text">{masteryNote.replace(/^[^:]+:\s*/, '')}</span>
           </div>
+        {/if}
+        {#if gwfSummary}
+          <div class="gwf-note">{gwfSummary}</div>
         {/if}
         {#if canUseInspiration}
           <div class="inspiration-reroll-row">
@@ -1277,6 +1338,13 @@
     opacity: 0.5;
     cursor: not-allowed;
     background: #999;
+  }
+
+  .gwf-note {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #c8a24d;
+    font-style: italic;
   }
 
   /* Side-by-side layout for wider screens */
