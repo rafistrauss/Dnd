@@ -157,6 +157,20 @@
   let guidedStrikeUsed = false;
   let gwfSummary = '';
 
+  // Track whether the pointer that may produce a close-click went down on the overlay
+  // backdrop itself (not on modal-content or its children). `pointerdown` fires at the
+  // true physical location *before* any viewport resize, so it stays correct even when
+  // Android Chrome hides/shows the URL bar mid-gesture and misdelivers the synthesized
+  // click to the overlay. The modal only closes when the pointer both went down and the
+  // click landed on the backdrop.
+  let pointerDownOnOverlay = false;
+  // The element the pointer physically went down on. When Android Chrome resizes the
+  // viewport mid-tap it can misdeliver the synthesized `click` to the overlay backdrop
+  // even though the user tapped a control inside the modal (e.g. the Roll button). In
+  // that case the click is otherwise lost and the button appears unresponsive, so we
+  // replay it on the original target. Reset before each tap via `pointerdown`.
+  let pointerDownTarget: EventTarget | null = null;
+
   // Dice color customization
   let diceColor = '#051e0a';
   let labelColor = '#ffffff';
@@ -647,7 +661,32 @@
 <div
   class="modal-overlay"
   class:hidden={!visible}
-  on:click={close}
+  on:pointerdown={(e) => {
+    pointerDownOnOverlay = e.target === e.currentTarget;
+    pointerDownTarget = e.target;
+  }}
+  on:click={(e) => {
+    // The overlay click handler only runs when the click actually lands on the overlay
+    // backdrop (controls inside .modal-content stop click propagation). There are two
+    // cases when that happens:
+    //   1. A genuine backdrop tap — the pointer also went down on the overlay
+    //      (pointerDownOnOverlay) — so close the modal.
+    //   2. Android Chrome misrouted the tap: the pointer went down on a control inside
+    //      the modal but a mid-gesture viewport resize (URL bar hide/show) caused the
+    //      synthesized click to be delivered to the overlay instead. Closing here would
+    //      be wrong AND the intended control (e.g. the Roll button) would never fire, so
+    //      instead we replay the click on the element the pointer physically went down on.
+    if (e.target !== e.currentTarget) return;
+    if (pointerDownOnOverlay) {
+      close();
+    } else if (
+      pointerDownTarget &&
+      pointerDownTarget !== e.currentTarget &&
+      pointerDownTarget instanceof HTMLElement
+    ) {
+      pointerDownTarget.click();
+    }
+  }}
   on:keydown={(e) => e.key === 'Escape' && close()}
   role="button"
   tabindex="-1"
@@ -909,7 +948,12 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    /* Use the dynamic viewport height so the overlay matches the *visible* area
+       rather than the layout viewport. When a mobile browser's bottom bar is
+       showing, `inset: 0` would size the overlay to the taller layout viewport,
+       and centering the modal within it pushes the modal's bottom (Roll/Reset
+       buttons and dice inputs) behind the bottom bar where it can't be tapped. */
+    height: 100dvh;
     background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: center;
@@ -920,6 +964,7 @@
     transition:
       opacity 0.2s,
       visibility 0.2s;
+    overscroll-behavior: none;
   }
 
   .modal-overlay.hidden {
@@ -935,10 +980,13 @@
     width: 900px;
     max-width: 95vw;
     height: 700px;
+    max-height: 90dvh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     overflow-y: auto;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
   }
 
   .modal-header {
@@ -946,6 +994,11 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--card-bg);
+    padding-bottom: 4px;
   }
 
   .modal-header h2 {
@@ -1044,8 +1097,12 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    flex: 1;
-    min-height: 0;
+    /* Grow to fill available space but never shrink below the intrinsic height of
+       the dice canvas + inputs. Previously `flex: 1; min-height: 0` let this area
+       shrink smaller than its content on short viewports, so the inputs and
+       Roll/Reset controls overflowed downward and were covered by the transparent
+       `.roll-result` sibling (which reserves min-height), making them un-tappable. */
+    flex: 1 0 auto;
   }
 
   .dice-container {
@@ -1375,7 +1432,7 @@
   @media (max-width: 768px) {
     .modal-content {
       width: 95vw;
-      height: 90vh;
+      height: 90dvh;
       padding: 15px;
     }
 
