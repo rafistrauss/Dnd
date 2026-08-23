@@ -556,6 +556,7 @@ function rollDamage(attackIndex) {
         showRollResult(`${attack.name} Damage`, 0, 'Invalid damage format');
         return;
     }
+    const gwfDiceCount = parseInt(match[1] || '1', 10);
     
     // Check if this is a melee weapon for divine smite
     const isMelee = attack.name.toLowerCase().includes('longsword') || 
@@ -577,11 +578,12 @@ function rollDamage(attackIndex) {
         0, // No additional modifier (already in notation)
         'damage', // Type of roll
         isMelee ? attackIndex : null,
-        gwfActive
+        gwfActive,
+        gwfDiceCount
     );
 }
 
-function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20', attackIndex = null, gwfActive = false) {
+function showRollResult(title, modifier, details, diceNotation = null, bonusModifier = 0, rollType = 'd20', attackIndex = null, gwfActive = false, gwfDiceCount = 0) {
     const modal = document.getElementById('rollModal');
     const titleDiv = document.getElementById('rollTitle');
     const resultDiv = document.getElementById('rollResult');
@@ -595,7 +597,8 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
         bonusModifier: bonusModifier,
         rollType: rollType,
         attackIndex: attackIndex,
-        gwfActive: gwfActive
+        gwfActive: gwfActive,
+        gwfDiceCount: gwfDiceCount
     };
     
     // Show the modal first
@@ -615,7 +618,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             setTimeout(() => {
                 const initialized = initializeDiceBox();
                 if (initialized) {
-                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex, gwfActive);
+                    rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex, gwfActive, gwfDiceCount);
                 } else {
                     // Fallback to instant result if initialization fails
                     const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -627,7 +630,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
             }, 150);
         } else {
             // Dice box already initialized, use it
-            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex, gwfActive);
+            rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType, attackIndex, gwfActive, gwfDiceCount);
         }
     } else {
         // No dice animation, just show the result
@@ -638,7 +641,7 @@ function showRollResult(title, modifier, details, diceNotation = null, bonusModi
     }
 }
 
-function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20', attackIndex = null, gwfActive = false) {
+function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 'd20', attackIndex = null, gwfActive = false, gwfDiceCount = 0) {
     if (!diceBox) {
         // Fallback if dice box not available
         const fallbackResult = Math.floor(Math.random() * 20) + 1 + modifier;
@@ -673,8 +676,11 @@ function rollDiceAnimation(title, modifier, diceNotation, resultDiv, rollType = 
                     // Apply Great Weapon Fighting (2024): treat 1s and 2s as 3s
                     if (gwfActive && notation.result && notation.result.length > 0) {
                         const originalResults = [...notation.result];
-                        const adjustedResults = originalResults.map(v => (v === 1 || v === 2) ? 3 : v);
-                        const bumped = originalResults.some(v => v === 1 || v === 2);
+                        const diceToAdjust = Math.min(gwfDiceCount || originalResults.length, originalResults.length);
+                        const adjustedResults = originalResults.map((v, i) => (
+                            i < diceToAdjust && (v === 1 || v === 2) ? 3 : v
+                        ));
+                        const bumped = originalResults.slice(0, diceToAdjust).some(v => v === 1 || v === 2);
                         const adjustedDiceTotal = adjustedResults.reduce((s, a) => s + a, 0);
                         finalTotal = adjustedDiceTotal + constant;
                         let resultStr = adjustedResults.join(' ');
@@ -783,7 +789,8 @@ function rerollDice() {
         currentRollContext.bonusModifier,
         currentRollContext.rollType,
         currentRollContext.attackIndex,
-        currentRollContext.gwfActive
+        currentRollContext.gwfActive,
+        currentRollContext.gwfDiceCount
     );
 }
 
