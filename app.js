@@ -565,9 +565,9 @@ function rollDamage(attackIndex) {
                     attack.name.toLowerCase().includes('mace') ||
                     attack.damageType.toLowerCase().includes('melee');
     
-    // Great Weapon Fighting (2024): treat 1s and 2s as 3s for two-handed or versatile melee weapons
+    // Great Weapon Fighting (2024): treat 1s and 2s as 3s for two-handed melee weapons
     const hasGreatWeaponFightingFeat = /\bgreat weapon fighting\b/i.test(character.features || '');
-    const gwfActive = hasGreatWeaponFightingFeat && !!(attack.twoHanded || attack.versatile);
+    const gwfActive = hasGreatWeaponFightingFeat && !!attack.twoHanded;
     
     // The dice library will handle the rolling
     showRollResult(
