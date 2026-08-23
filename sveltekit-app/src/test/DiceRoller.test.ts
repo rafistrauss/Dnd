@@ -93,9 +93,10 @@ function simulateTouchmoveAndCheckPreventDefault(element: Element): boolean {
 describe('DiceRoller modal buttons', () => {
   beforeEach(() => {
     // Prevent script injection from running in tests
+    const originalQuerySelector = document.querySelector.bind(document);
     vi.spyOn(document, 'querySelector').mockImplementation((sel) => {
       if (typeof sel === 'string' && sel.startsWith('script[src=')) return {} as Element;
-      return document.querySelector.call(document, sel);
+      return originalQuerySelector(sel);
     });
   });
 
