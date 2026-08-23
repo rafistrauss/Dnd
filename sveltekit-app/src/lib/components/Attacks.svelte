@@ -900,7 +900,7 @@
               </div>
               {#if $isEditMode || attack.twoHanded || attack.versatile}
                 <div class="attack-field">
-                  <label>Properties</label>
+                  <span class="attack-field-label">Properties</span>
                   <div class="weapon-properties">
                     <label class="property-label">
                       <input
@@ -1102,14 +1102,18 @@
             {#if attack.mastery}
               {@const mastery = MASTERY_MAP[attack.mastery]}
               <div class="mastery-info">
-                <span class="mastery-badge mastery-{attack.mastery.toLowerCase()}">{attack.mastery}</span>
+                <span class="mastery-badge mastery-{attack.mastery.toLowerCase()}"
+                  >{attack.mastery}</span
+                >
                 <span class="mastery-summary">
                   {#if attack.mastery === 'Graze'}
-                    On miss → deal <strong>{grazeDamage()}</strong> {attack.damageType || 'damage'} (ability mod)
+                    On miss → deal <strong>{grazeDamage()}</strong>
+                    {attack.damageType || 'damage'} (ability mod)
                   {:else if attack.mastery === 'Topple'}
                     On hit → CON save DC <strong>{toppleDC()}</strong> or Prone
                   {:else if attack.mastery === 'Cleave'}
-                    On hit → deal <strong>{cleaveDamage()}</strong> {attack.damageType || 'damage'} to adjacent creature
+                    On hit → deal <strong>{cleaveDamage()}</strong>
+                    {attack.damageType || 'damage'} to adjacent creature
                   {:else}
                     {mastery.summary}
                   {/if}
@@ -1447,6 +1451,12 @@
     margin-bottom: 4px;
   }
 
+  .attack-field-label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+
   .attack-field input {
     padding: 6px;
     border: 1px solid var(--border-color);
@@ -1520,14 +1530,30 @@
   }
 
   /* Per-mastery accent colours */
-  .mastery-graze { background: #c0392b; }
-  .mastery-cleave { background: #e67e22; }
-  .mastery-topple { background: #8e44ad; }
-  .mastery-push { background: #2980b9; }
-  .mastery-sap { background: #27ae60; }
-  .mastery-slow { background: #16a085; }
-  .mastery-nick { background: #d35400; }
-  .mastery-vex { background: #2c3e50; }
+  .mastery-graze {
+    background: #c0392b;
+  }
+  .mastery-cleave {
+    background: #e67e22;
+  }
+  .mastery-topple {
+    background: #8e44ad;
+  }
+  .mastery-push {
+    background: #2980b9;
+  }
+  .mastery-sap {
+    background: #27ae60;
+  }
+  .mastery-slow {
+    background: #16a085;
+  }
+  .mastery-nick {
+    background: #d35400;
+  }
+  .mastery-vex {
+    background: #2c3e50;
+  }
 
   .mastery-summary {
     font-size: 0.85rem;

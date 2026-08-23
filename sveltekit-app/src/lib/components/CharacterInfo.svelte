@@ -119,7 +119,10 @@
         />
       </div>
       <div class="form-group form-group-checkbox">
-        <label for="greatWeaponFighting" title="Treat 1s and 2s as 3s on damage dice for attacks marked Two-Handed or Versatile.">
+        <label
+          for="greatWeaponFighting"
+          title="Treat 1s and 2s as 3s on damage dice for attacks marked Two-Handed or Versatile."
+        >
           Great Weapon Fighting
         </label>
         <input
@@ -127,7 +130,10 @@
           id="greatWeaponFighting"
           checked={!!$character.greatWeaponFighting}
           on:change={(e) =>
-            character.update((c) => ({ ...c, greatWeaponFighting: (e.target as HTMLInputElement).checked }))}
+            character.update((c) => ({
+              ...c,
+              greatWeaponFighting: (e.target as HTMLInputElement).checked
+            }))}
         />
       </div>
     </div>

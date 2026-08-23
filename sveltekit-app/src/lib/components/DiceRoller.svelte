@@ -50,7 +50,8 @@
   let currentRollNotation = ''; // Track the notation actually used for the current roll
 
   $: isD20Notation = /(^|[+\-])\d*d20(?!\d)/i.test(currentRollNotation);
-  $: canUseInspiration = !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
+  $: canUseInspiration =
+    !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
 
   // Export function to get last roll total
   export function getLastRollTotal(): number | null {
@@ -184,12 +185,14 @@
     const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
     const hasSuperiorCritical = features.some(
       (f) =>
-        f.name === 'Superior Critical' || f.subFeatures?.some((sf) => sf.name === 'Superior Critical')
+        f.name === 'Superior Critical' ||
+        f.subFeatures?.some((sf) => sf.name === 'Superior Critical')
     );
     if (hasSuperiorCritical) return 18;
     const hasImprovedCritical = features.some(
       (f) =>
-        f.name === 'Improved Critical' || f.subFeatures?.some((sf) => sf.name === 'Improved Critical')
+        f.name === 'Improved Critical' ||
+        f.subFeatures?.some((sf) => sf.name === 'Improved Critical')
     );
     if (hasImprovedCritical) return 19;
     return 20;
