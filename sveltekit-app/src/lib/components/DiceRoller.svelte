@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { createEventDispatcher } from 'svelte';
   import { base } from '$app/paths';
   import { character, rollHistory, abilityModifiers } from '$lib/stores';
@@ -626,6 +626,18 @@
     gwfSummary = '';
     setTimeout(() => rollDice(notation, rollType), 200);
   }
+
+  // Lock body scroll while the modal is open so the browser UI bars on mobile
+  // don't animate, which would cause the fixed overlay to jump position.
+  $: if (typeof document !== 'undefined') {
+    document.body.style.overflow = visible ? 'hidden' : '';
+  }
+
+  onDestroy(() => {
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = '';
+    }
+  });
 
   function close() {
     dispatch('close');
