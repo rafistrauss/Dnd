@@ -19,7 +19,7 @@
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
   export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
   export let mastery: string | undefined = undefined; // Weapon mastery property name
-  export let greatWeaponFighting = false; // Great Weapon Fighting style: reroll 1s and 2s on weapon damage dice
+  export let greatWeaponFighting = false; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
 
   // Compute a contextual mastery note based on the mastery type and character stats
   $: masteryNote = (() => {
@@ -154,7 +154,7 @@
   let isCriticalSuccess = false;
   let isCriticalFail = false;
   let guidedStrikeUsed = false;
-  let gwfApplied = false; // Track if GWF reroll has been used for the current roll
+  let gwfSummary = '';
 
   // Dice color customization
   let diceColor = '#051e0a';
@@ -208,20 +208,6 @@
     const channelDivinityKey = 'ChannelDivinity';
     const current = $character.classFeatures.features[channelDivinityKey];
     return typeof current === 'number' ? current : 0;
-  })();
-
-  // Reactive: whether GWF reroll button should be shown
-  $: canApplyGWF = (() => {
-    if (!greatWeaponFighting || gwfApplied || !rollResult || rollType !== 'damage') return false;
-    if (!rollResult.result || rollResult.result.length === 0) return false;
-    // Parse the base dice count from the notation (first dice group)
-    const diceMatch = currentRollNotation.match(/^(\d+)d(\d+)/);
-    if (!diceMatch) return false;
-    const count = parseInt(diceMatch[1]);
-    for (let i = 0; i < count && i < rollResult.result.length; i++) {
-      if (rollResult.result[i] <= 2) return true;
-    }
-    return false;
   })();
 
   // Reactive notation that updates when any dice count changes
@@ -363,6 +349,7 @@
 
     rollType = type;
     guidedStrikeUsed = false; // Reset Guided Strike usage for new rolls
+    gwfSummary = '';
 
     // Store the notation being used for this roll
     currentRollNotation = notation;
@@ -379,15 +366,16 @@
     // after_roll callback - handle the result
     const afterRoll = (notationObj: any) => {
       // console.log('After roll:', notationObj);
-      let resultTotal = notationObj.resultTotal;
-      let resultString = notationObj.resultString;
+      const adjustedRoll = applyGreatWeaponFighting(notationObj);
+      let resultTotal = adjustedRoll.resultTotal;
+      let resultString = adjustedRoll.resultString;
       // If applyHalfDamage is true, halve the result (rounded down)
       if (applyHalfDamage) {
         resultTotal = Math.floor(resultTotal / 2);
         resultString = resultString + ' (halved)';
       }
       rollResult = {
-        ...notationObj,
+        ...adjustedRoll,
         resultTotal,
         resultString
       };
@@ -517,7 +505,7 @@
     isCriticalFail = false;
     rollType = 'other';
     guidedStrikeUsed = false;
-    gwfApplied = false;
+    gwfSummary = '';
   }
 
   function updateDiceColors() {
@@ -574,49 +562,44 @@
     rollDice(currentRollNotation, rollType);
   }
 
-  function applyGWF() {
-    if (!rollResult || !rollResult.result || gwfApplied) return;
+  function applyGreatWeaponFighting(result: any) {
+    if (!greatWeaponFighting || rollType !== 'damage' || !result?.result?.length) {
+      gwfSummary = '';
+      return result;
+    }
 
-    // Parse the base dice count and sides from the notation (first dice group)
-    const diceMatch = currentRollNotation.match(/^(\d+)d(\d+)/);
-    if (!diceMatch) return;
+    const diceMatch = currentRollNotation.match(/^(\d*)d(\d+)/i);
+    if (!diceMatch) {
+      gwfSummary = '';
+      return result;
+    }
 
-    const count = parseInt(diceMatch[1]);
-    const sides = parseInt(diceMatch[2]);
-
+    const count = parseInt(diceMatch[1] || '1');
+    const newResult = [...result.result];
     let totalAdjustment = 0;
-    const newResult = [...rollResult.result];
-    const rerolledDetails: string[] = [];
+    let adjusted = false;
 
     for (let i = 0; i < count && i < newResult.length; i++) {
-      if (newResult[i] <= 2) {
-        const oldValue = newResult[i];
-        const newValue = Math.floor(Math.random() * sides) + 1;
-        totalAdjustment += newValue - oldValue;
-        rerolledDetails.push(`d${sides}: ${oldValue}→${newValue}`);
-        newResult[i] = newValue;
+      if (newResult[i] === 1 || newResult[i] === 2) {
+        totalAdjustment += 3 - newResult[i];
+        newResult[i] = 3;
+        adjusted = true;
       }
     }
 
-    if (rerolledDetails.length === 0) return;
+    if (!adjusted) {
+      gwfSummary = '';
+      return result;
+    }
 
-    const newTotal = rollResult.resultTotal + totalAdjustment;
-    const newResultString = rollResult.resultString + ` (GWF: ${rerolledDetails.join(', ')})`;
-    rollResult = {
-      ...rollResult,
+    gwfSummary = 'GWF: 1s & 2s → 3';
+
+    return {
+      ...result,
       result: newResult,
-      resultTotal: newTotal,
-      resultString: newResultString
+      resultTotal: result.resultTotal + totalAdjustment,
+      resultString: `${result.resultString} (${gwfSummary})`
     };
-
-    rollHistory.addRoll(
-      `${attackName || 'Damage'} Roll (GWF Reroll)`,
-      currentRollNotation,
-      newTotal,
-      newResultString
-    );
-
-    gwfApplied = true;
   }
 
   // Auto-roll when notation is set and modal is visible
@@ -628,7 +611,7 @@
     isCriticalSuccess = false;
     isCriticalFail = false;
     guidedStrikeUsed = false;
-    gwfApplied = false;
+    gwfSummary = '';
     setTimeout(() => rollDice(notation, rollType), 200);
   }
 
@@ -644,6 +627,7 @@
     guidedStrikeUsed = false;
     isCriticalSuccess = false;
     isCriticalFail = false;
+    gwfSummary = '';
     resetDice();
   }
 </script>
@@ -865,17 +849,13 @@
             <span class="mastery-note-text">{masteryNote.replace(/^[^:]+:\s*/, '')}</span>
           </div>
         {/if}
+        {#if gwfSummary}
+          <div class="gwf-note">{gwfSummary}</div>
+        {/if}
         {#if canUseInspiration}
           <div class="inspiration-reroll-row">
             <button class="btn btn-inspiration" on:click={useInspirationReroll}>
               ⭐ Use Inspiration (Reroll d20)
-            </button>
-          </div>
-        {/if}
-        {#if canApplyGWF}
-          <div class="inspiration-reroll-row">
-            <button class="btn btn-gwf" on:click={applyGWF} title="Great Weapon Fighting: reroll 1s and 2s on weapon damage dice">
-              ⚔️ Apply GWF (Reroll 1s &amp; 2s)
             </button>
           </div>
         {/if}
@@ -1348,22 +1328,11 @@
     background: #999;
   }
 
-  .btn-gwf {
-    background: linear-gradient(135deg, #4a2060, #6b3090);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(74, 32, 96, 0.3);
-  }
-
-  .btn-gwf:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(74, 32, 96, 0.4);
+  .gwf-note {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #c8a24d;
+    font-style: italic;
   }
 
   /* Side-by-side layout for wider screens */

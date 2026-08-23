@@ -128,6 +128,8 @@
           bonus: 0,
           damage: '',
           damageType: '',
+          twoHanded: false,
+          versatile: false,
           notes: ''
         }
       ];
@@ -430,7 +432,10 @@
       bonusBreakdown,
       damageType,
       mastery: attack.mastery,
-      greatWeaponFighting: !attack.spellRef && !!$character.greatWeaponFighting
+      greatWeaponFighting:
+        !attack.spellRef &&
+        !!$character.greatWeaponFighting &&
+        !!(attack.twoHanded || attack.versatile)
     });
   }
 
@@ -893,6 +898,29 @@
                   {/each}
                 </select>
               </div>
+              {#if $isEditMode || attack.twoHanded || attack.versatile}
+                <div class="attack-field">
+                  <label>Properties</label>
+                  <div class="weapon-properties">
+                    <label class="property-label">
+                      <input
+                        type="checkbox"
+                        bind:checked={attack.twoHanded}
+                        disabled={!$isEditMode}
+                      />
+                      Two-Handed
+                    </label>
+                    <label class="property-label">
+                      <input
+                        type="checkbox"
+                        bind:checked={attack.versatile}
+                        disabled={!$isEditMode}
+                      />
+                      Versatile
+                    </label>
+                  </div>
+                </div>
+              {/if}
             {/if}
           </div>
           {#if attack.spellRef}
@@ -1434,6 +1462,27 @@
     font-weight: bold;
     margin-bottom: 4px;
     display: block;
+  }
+
+  .weapon-properties {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 34px;
+  }
+
+  .property-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .property-label input[type='checkbox'] {
+    cursor: pointer;
   }
 
   /* Mastery styles */

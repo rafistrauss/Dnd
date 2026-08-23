@@ -58,6 +58,8 @@ export interface Attack {
   bonus: number;
   damage: string;
   damageType: string;
+  twoHanded?: boolean;
+  versatile?: boolean;
   spellRef?: string; // canonical spell name
   infoNotes?: string; // Range, Duration, Components, etc.
   generalNotes?: string; // summary/effects
@@ -177,7 +179,7 @@ export interface Character {
   conditions?: string[]; // Active standard conditions (e.g. "prone", "poisoned")
   exhaustionLevel?: number; // 0-6
   inspiration?: boolean; // Heroic inspiration
-  greatWeaponFighting?: boolean; // Great Weapon Fighting style: reroll 1s and 2s on weapon damage dice
+  greatWeaponFighting?: boolean; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
 }
 
 // Class Configuration Types

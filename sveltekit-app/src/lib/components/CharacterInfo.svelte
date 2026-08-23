@@ -119,7 +119,7 @@
         />
       </div>
       <div class="form-group form-group-checkbox">
-        <label for="greatWeaponFighting" title="When you roll a 1 or 2 on a weapon damage die, you may reroll and must use the new roll.">
+        <label for="greatWeaponFighting" title="Treat 1s and 2s as 3s on damage dice for attacks marked Two-Handed or Versatile.">
           Great Weapon Fighting
         </label>
         <input
