@@ -571,7 +571,8 @@
       return result;
     }
 
-    const diceMatch = currentRollNotation.match(/^(\d*)d(\d+)/i);
+    const normalizedNotation = currentRollNotation.replace(/\s+/g, '');
+    const diceMatch = normalizedNotation.match(/(?:^|[+(-])(\d*)d(\d+)/i);
     if (!diceMatch) {
       gwfSummary = '';
       return result;

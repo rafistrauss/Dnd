@@ -670,23 +670,30 @@ body:not(.use-mode) .hp-controls {
 }
 
 .weapon-properties {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
 }
 
 .property-label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
     font-size: 0.9rem;
     cursor: pointer;
-    white-space: nowrap;
+    white-space: normal;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-color);
+    padding: 6px 8px;
+    min-height: 34px;
 }
 
 .property-label input[type="checkbox"] {
     cursor: pointer;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 .attack-actions {
@@ -1370,6 +1377,10 @@ body:not(.use-mode) .hp-controls {
 
     .combat-stats {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .weapon-properties {
+        grid-template-columns: 1fr;
     }
 
     .save-item, .skill-item {
