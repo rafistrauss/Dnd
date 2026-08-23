@@ -157,6 +157,11 @@
   let guidedStrikeUsed = false;
   let gwfSummary = '';
 
+  // Track whether the touch that may produce a close-click started on the overlay backdrop
+  // (not inside modal-content). This guards against Android Chrome's viewport-resize
+  // causing the synthesized click to land on the overlay even when the touch began inside.
+  let touchStartedOnOverlay = false;
+
   // Dice color customization
   let diceColor = '#051e0a';
   let labelColor = '#ffffff';
@@ -647,7 +652,15 @@
 <div
   class="modal-overlay"
   class:hidden={!visible}
-  on:click={(e) => { if (e.target === e.currentTarget) close(); }}
+  on:touchstart={(e) => { touchStartedOnOverlay = e.target === e.currentTarget; }}
+  on:click={(e) => {
+    if (e.target !== e.currentTarget) return;
+    // On touch devices, only close if the touch started on the overlay backdrop
+    // (guards against Android Chrome synthesizing a click on the overlay when a
+    // viewport resize shifts coordinates during a touch on modal-content)
+    const isTouchEvent = window.matchMedia('(pointer: coarse)').matches;
+    if (!isTouchEvent || touchStartedOnOverlay) close();
+  }}
   on:keydown={(e) => e.key === 'Escape' && close()}
   role="button"
   tabindex="-1"

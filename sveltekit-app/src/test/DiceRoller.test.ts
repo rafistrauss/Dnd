@@ -1,15 +1,16 @@
 /**
  * Tests for DiceRoller modal button behaviour.
  *
- * The core regression being guarded here is that touch-event handling on the
- * modal overlay must NOT prevent buttons inside the modal from receiving click
- * (or synthesised-from-touch) events.  Earlier fixes used
- *   on:touchmove|nonpassive|preventDefault
- * on the overlay which caused Android Chrome to stop synthesising click events
- * for child elements whenever there was any slight finger movement during a tap.
+ * The core regression being guarded here is that a touch that begins inside
+ * modal-content must never close the modal, even if Android Chrome's viewport
+ * resize causes the synthesised click event to resolve to the overlay backdrop.
  *
- * The current fix uses pure CSS (overscroll-behavior: none on the overlay)
- * which never intercepts touch events, so button taps always complete normally.
+ * The fix uses a `touchstart` listener on the overlay to record whether the
+ * touch originated on the backdrop (`touchStartedOnOverlay`).  The click
+ * handler on the overlay only calls `close()` when both:
+ *   1. `e.target === e.currentTarget` (click landed on the overlay itself), AND
+ *   2. On touch devices: `touchStartedOnOverlay` is true (touch began on backdrop).
+ *      On pointer devices (mouse): no touchstart fires so the guard is skipped.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -137,17 +138,52 @@ describe('DiceRoller modal buttons', () => {
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('clicking the backdrop (overlay) fires the close event', async () => {
+  it('clicking the backdrop (overlay) fires the close event (mouse)', async () => {
     const closeSpy = vi.fn();
     const { container } = render(DiceRoller, {
       props: { visible: true, notation: '' },
       events: { close: closeSpy }
     });
 
+    // Mouse click directly on overlay (no touchstart) — isTouchEvent is false so it closes
     const overlay = container.querySelector('.modal-overlay') as HTMLElement;
     await fireEvent.click(overlay);
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('tapping the backdrop (overlay) fires the close event (touch)', async () => {
+    const closeSpy = vi.fn();
+    const { container } = render(DiceRoller, {
+      props: { visible: true, notation: '' },
+      events: { close: closeSpy }
+    });
+
+    // Touch tap that starts and ends on the overlay — should close
+    const overlay = container.querySelector('.modal-overlay') as HTMLElement;
+    simulateTap(overlay);
+
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('Android Chrome regression: touchstart on modal-content + click on overlay does NOT close (touch guard)', async () => {
+    const closeSpy = vi.fn();
+    const { container } = render(DiceRoller, {
+      props: { visible: true, notation: '' },
+      events: { close: closeSpy }
+    });
+
+    const content = container.querySelector('.modal-content') as HTMLElement;
+    const overlay = container.querySelector('.modal-overlay') as HTMLElement;
+
+    // Simulate touch starting inside modal-content (sets touchStartedOnOverlay = false)
+    const touch = new Touch({ identifier: 1, target: content, clientX: 0, clientY: 0 });
+    fireEvent(content, new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [touch] }));
+
+    // Synthesised click resolves to overlay (Android Chrome viewport-shift scenario)
+    await fireEvent.click(overlay);
+
+    expect(closeSpy).not.toHaveBeenCalled();
   });
 
   it('clicking modal content does NOT fire the close event (target guard)', async () => {
