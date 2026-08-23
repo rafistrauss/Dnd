@@ -597,12 +597,20 @@
     }
 
     gwfSummary = 'GWF: 1s & 2s → 3';
+    const adjustedTotal = result.resultTotal + totalAdjustment;
+    const diceTotal = newResult.reduce((sum, value) => sum + value, 0);
+    const remainingModifier = adjustedTotal - diceTotal;
+    const modifierText =
+      remainingModifier === 0
+        ? ''
+        : ` ${remainingModifier > 0 ? '+' : '-'} ${Math.abs(remainingModifier)}`;
+    const adjustedResultString = `${newResult.join(' + ')}${modifierText} = ${adjustedTotal} (${gwfSummary})`;
 
     return {
       ...result,
       result: newResult,
-      resultTotal: result.resultTotal + totalAdjustment,
-      resultString: `${result.resultString} (${gwfSummary})`
+      resultTotal: adjustedTotal,
+      resultString: adjustedResultString
     };
   }
 
