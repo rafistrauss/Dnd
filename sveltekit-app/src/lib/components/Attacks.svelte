@@ -436,7 +436,7 @@
       greatWeaponFighting:
         !attack.spellRef &&
         (!!$character.greatWeaponFighting || hasGreatWeaponFightingFeat) &&
-        !!(attack.twoHanded || attack.versatile)
+        !!attack.twoHanded
     });
   }
 
@@ -1436,7 +1436,7 @@
 
   .attack-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
     margin-bottom: 10px;
   }
@@ -1462,7 +1462,10 @@
     margin-bottom: 4px;
   }
 
-  .attack-field input {
+  .attack-field input,
+  .attack-mastery-select {
+    box-sizing: border-box;
+    width: 100%;
     padding: 6px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
