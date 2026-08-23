@@ -150,7 +150,7 @@ describe('DiceRoller modal buttons', () => {
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('clicking modal content does NOT fire the close event (stopPropagation)', async () => {
+  it('clicking modal content does NOT fire the close event (target guard)', async () => {
     const closeSpy = vi.fn();
     const { container } = render(DiceRoller, {
       props: { visible: true, notation: '' },
