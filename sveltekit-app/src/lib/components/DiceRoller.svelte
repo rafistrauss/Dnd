@@ -649,10 +649,11 @@
   class:hidden={!visible}
   on:click={close}
   on:keydown={(e) => e.key === 'Escape' && close()}
+  on:touchmove|nonpassive|preventDefault
   role="button"
   tabindex="-1"
 >
-  <div class="modal-content" on:click|stopPropagation on:keydown role="dialog" tabindex="0">
+  <div class="modal-content" on:click|stopPropagation on:keydown on:touchmove|stopPropagation role="dialog" tabindex="0">
     <div class="modal-header">
       <h2>
         {#if attackName}
@@ -921,7 +922,6 @@
     transition:
       opacity 0.2s,
       visibility 0.2s;
-    touch-action: none;
   }
 
   .modal-overlay.hidden {
