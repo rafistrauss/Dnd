@@ -30,6 +30,7 @@
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
+  $: hasGreatWeaponFightingFeat = /\bgreat weapon fighting\b/i.test($character.features || '');
 
   // Computed: Get all abilities from active conditions
   $: conditionAbilities = $character.activeStates
@@ -434,7 +435,7 @@
       mastery: attack.mastery,
       greatWeaponFighting:
         !attack.spellRef &&
-        !!$character.greatWeaponFighting &&
+        (!!$character.greatWeaponFighting || hasGreatWeaponFightingFeat) &&
         !!(attack.twoHanded || attack.versatile)
     });
   }
@@ -899,7 +900,7 @@
                 </select>
               </div>
               {#if $isEditMode || attack.twoHanded || attack.versatile}
-                <div class="attack-field">
+                <div class="attack-field attack-field-properties">
                   <span class="attack-field-label">Properties</span>
                   <div class="weapon-properties">
                     <label class="property-label">
@@ -908,7 +909,7 @@
                         bind:checked={attack.twoHanded}
                         disabled={!$isEditMode}
                       />
-                      Two-Handed
+                      2-Handed
                     </label>
                     <label class="property-label">
                       <input
@@ -1445,6 +1446,10 @@
     flex-direction: column;
   }
 
+  .attack-field-properties {
+    grid-column: 1 / -1;
+  }
+
   .attack-field label {
     font-size: 0.85rem;
     font-weight: bold;
@@ -1475,24 +1480,36 @@
   }
 
   .weapon-properties {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-    min-height: 34px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
   }
 
   .property-label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
     font-size: 0.9rem;
     cursor: pointer;
-    white-space: nowrap;
+    white-space: normal;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-color);
+    padding: 6px 8px;
+    min-height: 34px;
   }
 
   .property-label input[type='checkbox'] {
     cursor: pointer;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    .weapon-properties {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* Mastery styles */
