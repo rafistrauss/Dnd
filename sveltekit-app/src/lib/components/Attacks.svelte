@@ -433,6 +433,7 @@
       bonusBreakdown,
       damageType,
       mastery: attack.mastery,
+      rollType: 'damage',
       greatWeaponFighting:
         !attack.spellRef &&
         (!!$character.greatWeaponFighting || hasGreatWeaponFightingFeat) &&
