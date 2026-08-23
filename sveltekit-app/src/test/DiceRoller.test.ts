@@ -196,6 +196,33 @@ describe('DiceRoller modal buttons', () => {
     expect(closeSpy).not.toHaveBeenCalled();
   });
 
+  it('Android Chrome regression: misrouted overlay click is replayed on the tapped control (Roll button still fires)', async () => {
+    const closeSpy = vi.fn();
+    const { container } = render(DiceRoller, {
+      props: { visible: true, notation: '' },
+      events: { close: closeSpy }
+    });
+
+    const overlay = container.querySelector('.modal-overlay') as HTMLElement;
+    // The Reset button is always enabled (the Roll button is disabled until the 3D dice
+    // engine initialises, which doesn't happen in the test DOM), so use it to observe
+    // that a misrouted overlay click is replayed on the physically-tapped control.
+    const resetBtn = container.querySelector('.dice-controls button.btn-secondary') as HTMLElement;
+    expect(resetBtn).not.toBeNull();
+
+    const resetClickSpy = vi.fn();
+    resetBtn.addEventListener('click', resetClickSpy);
+
+    // Pointer physically goes down on the button...
+    fireEvent(resetBtn, new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+    // ...but a mid-gesture viewport resize misroutes the synthesized click to the overlay.
+    await fireEvent.click(overlay);
+
+    // The tap must be recovered by replaying it on the tapped control, and must NOT close.
+    expect(resetClickSpy).toHaveBeenCalledTimes(1);
+    expect(closeSpy).not.toHaveBeenCalled();
+  });
+
   it('clicking modal content does NOT fire the close event (target guard)', async () => {
     const closeSpy = vi.fn();
     const { container } = render(DiceRoller, {
