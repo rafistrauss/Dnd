@@ -924,7 +924,15 @@
 <style>
   .modal-overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Use the dynamic viewport height so the overlay matches the *visible* area
+       rather than the layout viewport. When a mobile browser's bottom bar is
+       showing, `inset: 0` would size the overlay to the taller layout viewport,
+       and centering the modal within it pushes the modal's bottom (Roll/Reset
+       buttons and dice inputs) behind the bottom bar where it can't be tapped. */
+    height: 100dvh;
     background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: center;
