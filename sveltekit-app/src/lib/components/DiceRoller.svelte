@@ -908,8 +908,9 @@
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
     background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: center;
@@ -935,6 +936,7 @@
     width: 900px;
     max-width: 95vw;
     height: 700px;
+    max-height: 90dvh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -946,6 +948,11 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--card-bg);
+    padding-bottom: 4px;
   }
 
   .modal-header h2 {
@@ -1375,7 +1382,7 @@
   @media (max-width: 768px) {
     .modal-content {
       width: 95vw;
-      height: 90vh;
+      height: 90dvh;
       padding: 15px;
     }
 
