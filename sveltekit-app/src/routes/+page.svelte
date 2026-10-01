@@ -114,6 +114,11 @@
       if (!c.activeStates) {
         c.activeStates = [];
       }
+      // Like Aid: a condition with an HP bonus temporarily increases both max and current HP
+      if (condition.hpBonus && condition.target !== 'other') {
+        c.maxHP += condition.hpBonus;
+        c.currentHP += condition.hpBonus;
+      }
       c.activeStates = [...c.activeStates, condition];
       return c;
     });
@@ -572,6 +577,9 @@
                     {/if}
                     {#if state.acBonus}
                       <span>AC Bonus: {state.acBonus > 0 ? '+' : ''}{state.acBonus}</span><br />
+                    {/if}
+                    {#if state.hpBonus}
+                      <span>HP Bonus: +{state.hpBonus} (max and current)</span><br />
                     {/if}
                     {#if state.darkvision}
                       <span>Darkvision: {state.darkvision} feet</span><br />

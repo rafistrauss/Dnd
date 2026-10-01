@@ -10,6 +10,7 @@
   let attackBonus: number | string = 0;
   let damageBonus: number | string = 0;
   let acBonus = 0;
+  let hpBonus = 0;
   let darkvision = 0;
   let resistances: string[] = [];
   let resistanceInput = '';
@@ -26,6 +27,7 @@
     attackBonus = 0;
     damageBonus = 0;
     acBonus = 0;
+    hpBonus = 0;
     darkvision = 0;
     resistances = [];
     resistanceInput = '';
@@ -90,6 +92,7 @@
     };
 
     if (acBonus !== 0) condition.acBonus = acBonus;
+    if (hpBonus !== 0) condition.hpBonus = hpBonus;
     if (darkvision > 0) condition.darkvision = darkvision;
     if (resistances.length > 0) condition.resistances = resistances;
     if (abilities.length > 0) condition.abilities = abilities;
@@ -154,6 +157,14 @@
             <label for="acBonus">AC Bonus</label>
             <input type="number" id="acBonus" bind:value={acBonus} placeholder="0" />
           </div>
+        </div>
+
+        <div class="form-group">
+          <label for="hpBonus">HP Bonus (max and current)</label>
+          <input type="number" id="hpBonus" bind:value={hpBonus} placeholder="0" />
+          <small class="help-text"
+            >Like Aid: temporarily increases both max and current HP. Removed on expiration/removal.</small
+          >
         </div>
 
         <div class="form-group">
