@@ -1,5 +1,10 @@
 import { writable, derived } from 'svelte/store';
-import type { Character, RacialTraitUses, RollHistoryEntry } from './types';
+import type { Character, LevelUpChoices, RacialTraitUses, RollHistoryEntry } from './types';
+import {
+  getAdvancedAbilities,
+  removeAdvancementsAbove,
+  validateLevelUpChoices
+} from './advancement';
 import { browser } from '$app/environment';
 import { getRacialSpellsForLevel, getRaceConfig } from './raceConfig';
 import {
@@ -603,6 +608,7 @@ export function setCharacterLevel(level: number) {
     ensureCharacterStructures(char);
     ensureHPHistory(char);
     char.hpByLevel![previousLevel] = char.maxHP;
+    if (nextLevel < previousLevel) removeAdvancementsAbove(char, nextLevel);
 
     if (char.class) {
       const previousMaxHP =
@@ -649,9 +655,11 @@ export interface LevelUpPreview {
   conMod: number;
   spellSlotsRestored: number;
   classFeatureCounts: { [name: string]: { current: number; max: number } };
+  newFeatures: { name: string; description: string }[];
+  constitutionHPBonus: number;
 }
 
-export function getLevelUpPreview(): LevelUpPreview | null {
+export function getLevelUpPreview(choices: LevelUpChoices = {}): LevelUpPreview | null {
   let preview: LevelUpPreview | null = null;
 
   const unsubscribe = character.subscribe((char) => {
@@ -662,7 +670,11 @@ export function getLevelUpPreview(): LevelUpPreview | null {
 
     const currentLevel = char.level;
     const newLevel = currentLevel + 1;
-    const conMod = calculateModifier(char.abilities.constitution);
+    const abilities = getAdvancedAbilities(char.abilities, choices);
+    const conMod = calculateModifier(abilities.constitution);
+    const constitutionHPBonus =
+      (conMod - calculateModifier(char.abilities.constitution)) * currentLevel;
+    const subclass = choices.subclass || char.subclass;
     const classConfig = getClassConfig(char.class);
 
     if (!classConfig) {
@@ -674,20 +686,21 @@ export function getLevelUpPreview(): LevelUpPreview | null {
     const hitDieSize = parseInt(classConfig.hitDice.substring(1));
     const hpGainAverage = Math.max(1, Math.floor(hitDieSize / 2) + 1 + conMod);
 
-    const spellcastingAbility = getSpellcastingAbility(char.class, char.subclass);
+    const spellcastingAbility = getSpellcastingAbility(char.class, subclass);
     const abilityMod = spellcastingAbility
-      ? calculateModifier(char.abilities[spellcastingAbility])
+      ? calculateModifier(abilities[spellcastingAbility])
       : undefined;
 
     // Calculate spell slots to restore
-    const nextProgression = getSpellSlotProgression(char.class, newLevel, char.subclass);
+    const nextProgression = getSpellSlotProgression(char.class, newLevel, subclass);
     const spellSlotsRestored = nextProgression.reduce(
       (sum, slots) => sum + (slots > 0 ? slots : 0),
       0
     );
 
     // Get class features
-    const nextFeatures = getAvailableFeatures(char.class, newLevel, char.subclass);
+    const nextFeatures = getAvailableFeatures(char.class, newLevel, subclass);
+    const previousFeatures = getAvailableFeatures(char.class, currentLevel, char.subclass);
     const classFeatureCounts: { [name: string]: { current: number; max: number } } = {};
 
     nextFeatures.forEach((feature) => {
@@ -713,11 +726,22 @@ export function getLevelUpPreview(): LevelUpPreview | null {
       newLevel,
       currentHP: char.currentHP,
       maxHPCurrent: char.maxHP,
-      maxHPAfter: char.maxHP + hpGainAverage,
+      maxHPAfter: char.maxHP + constitutionHPBonus + hpGainAverage,
       hpGainAverage,
       conMod,
       spellSlotsRestored,
-      classFeatureCounts
+      classFeatureCounts,
+      constitutionHPBonus,
+      newFeatures: nextFeatures
+        .filter((feature) => !previousFeatures.includes(feature))
+        .map((feature) => ({
+          name:
+            typeof feature.name === 'function' ? feature.name(newLevel, abilityMod) : feature.name,
+          description:
+            typeof feature.description === 'function'
+              ? feature.description(newLevel, abilityMod)
+              : feature.description
+        }))
     };
   });
 
@@ -725,11 +749,19 @@ export function getLevelUpPreview(): LevelUpPreview | null {
   return preview;
 }
 
-export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollResult?: number) {
+export function applyLevelUp(
+  hpGainMethod: 'average' | 'roll' | 'reuse',
+  hpRollResult?: number,
+  choices: LevelUpChoices = {}
+): boolean {
+  let applied = false;
   character.update((char) => {
     if (!char.class || char.level >= MAX_CHARACTER_LEVEL) {
       return char;
     }
+    if (validateLevelUpChoices(char, choices)) return char;
+    const classConfig = getClassConfig(char.class);
+    if (!classConfig) return char;
 
     const currentLevel = char.level;
     const newLevel = currentLevel + 1;
@@ -741,12 +773,12 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
     // Store current level's HP before leveling
     char.hpByLevel![currentLevel] = char.maxHP;
 
-    const classConfig = getClassConfig(char.class);
-    if (!classConfig) {
-      return char;
-    }
-
+    const oldConMod = calculateModifier(char.abilities.constitution);
+    const previousSubclass = char.subclass;
+    char.abilities = getAdvancedAbilities(char.abilities, choices);
+    if (choices.subclass) char.subclass = choices.subclass;
     const conMod = calculateModifier(char.abilities.constitution);
+    const conDelta = conMod - oldConMod;
     const hitDieSize = parseInt(classConfig.hitDice.substring(1));
 
     // Calculate HP gain or use stored
@@ -754,7 +786,7 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
 
     if (hpGainMethod === 'reuse' && char.hpByLevel![newLevel]) {
       // Reuse previously stored HP for this level
-      newMaxHP = char.hpByLevel![newLevel];
+      newMaxHP = char.hpByLevel![newLevel] + conDelta * newLevel;
     } else {
       // Calculate new HP
       let hpGain: number;
@@ -764,13 +796,18 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
         // average (rounded up)
         hpGain = Math.max(1, Math.floor(hitDieSize / 2) + 1 + conMod);
       }
-      newMaxHP = char.maxHP + hpGain;
+      newMaxHP = char.maxHP + conDelta * previousLevel + hpGain;
     }
     char.maxHP = newMaxHP;
     char.currentHP = newMaxHP; // Restore to full HP on level up
 
     // Store new level's HP
     char.hpByLevel![newLevel] = newMaxHP;
+    if (conDelta) {
+      for (const hpLevel of Object.keys(char.hpByLevel!).map(Number)) {
+        if (hpLevel > newLevel) char.hpByLevel![hpLevel] += conDelta * hpLevel;
+      }
+    }
 
     if (hpGainMethod !== 'reuse' || char.hpRolls![newLevel - 2] === undefined) {
       const averageRoll = Math.floor(hitDieSize / 2) + 1;
@@ -830,8 +867,32 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
     // Restore hit dice to match new level
     char.hitDice.max = newLevel;
     char.hitDice.current = newLevel;
+    const details: string[] = [];
+    if (choices.feat) details.push(`Feat: ${choices.feat.name}\n${choices.feat.description}`);
+    if (choices.subclass) details.push(`Subclass: ${choices.subclass}`);
+    if (choices.abilityIncreases) {
+      details.push(
+        ...Object.entries(choices.abilityIncreases)
+          .filter(([, increase]) => increase)
+          .map(([ability, increase]) => `${ability} +${increase}`)
+      );
+    }
+    if (choices.notes?.trim()) details.push(choices.notes.trim());
+    const featureText = details.length
+      ? `\n\nLevel ${newLevel} advancement\n${details.join('\n')}`
+      : '';
+    char.features += featureText;
+    char.advancements ??= {};
+    char.advancements[newLevel] = {
+      choices: structuredClone(choices),
+      previousSubclass,
+      featureText,
+      constitutionHPBonus: conDelta * newLevel
+    };
+    applied = true;
     return char;
   });
+  return applied;
 }
 
 export function levelDownCharacter() {
@@ -847,6 +908,7 @@ export function levelDownCharacter() {
 
     // Store current level's HP before downleveling
     char.hpByLevel![previousLevel] = char.maxHP;
+    removeAdvancementsAbove(char, newLevel);
 
     // Restore HP from the level we're going back to
     const targetHP = char.hpByLevel![newLevel];

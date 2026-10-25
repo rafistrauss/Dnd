@@ -1,7 +1,17 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { character, getLevelUpPreview, applyLevelUp, toasts } from '$lib/stores';
   import { rollFromNotation } from '$lib/diceUtils';
-  import { getClassConfig } from '$lib/classConfig';
+  import { getClassConfig, isSpellcaster } from '$lib/classConfig';
+  import { loadFeats, searchFeats } from '$lib/dndData';
+  import type { Feat } from '$lib/dndData';
+  import type { AbilityName, LevelUpChoices } from '$lib/types';
+  import {
+    ABILITY_NAMES,
+    gainsAbilityImprovement,
+    getSubclassChoices,
+    validateLevelUpChoices
+  } from '$lib/advancement';
   import type { LevelUpPreview } from '$lib/stores';
 
   export let isOpen = false;
@@ -14,15 +24,63 @@
   let isRolling = false;
   let storedHPAvailable: boolean = false;
   let storedHPValue: number = 0;
+  let improvement: 'asi' | 'feat' = 'asi';
+  let abilityIncreases: Partial<Record<AbilityName, number>> = {};
+  let feats: Feat[] = [];
+  let featSearch = '';
+  let featId = '';
+  let customFeatName = '';
+  let customFeatDescription = '';
+  let featConfirmed = false;
+  let subclass = '';
+  let choiceNotes = '';
+
+  onMount(async () => {
+    feats = await loadFeats();
+  });
+
+  $: earnsImprovement = gainsAbilityImprovement($character.class, $character.level + 1);
+  $: subclassOptions = getSubclassChoices($character, $character.level + 1);
+  $: selectedFeat = feats.find((feat) => feat.id === featId);
+  $: choices = {
+    ...(earnsImprovement
+      ? {
+          improvement,
+          abilityIncreases,
+          ...(improvement === 'feat'
+            ? {
+                feat:
+                  featId === 'custom'
+                    ? { name: customFeatName.trim(), description: customFeatDescription.trim() }
+                    : selectedFeat,
+                featConfirmed
+              }
+            : {})
+        }
+      : {}),
+    ...(subclassOptions.length ? { subclass } : {}),
+    notes: choiceNotes
+  } satisfies LevelUpChoices;
+  $: choiceError = validateLevelUpChoices($character, choices);
+  $: hpRollModifier = preview?.conMod ?? 0;
 
   $: if (!isOpen) {
     hpGainMethod = 'average';
     hpRollValue = null;
+    improvement = 'asi';
+    abilityIncreases = {};
+    featId = '';
+    featSearch = '';
+    customFeatName = '';
+    customFeatDescription = '';
+    featConfirmed = false;
+    subclass = '';
+    choiceNotes = '';
   }
 
   $: {
     if (isOpen) {
-      preview = getLevelUpPreview();
+      preview = getLevelUpPreview(choices);
       // Check if this level was visited before
       if (preview) {
         const prevHP = $character.hpByLevel?.[preview.newLevel];
@@ -34,8 +92,11 @@
 
   $: maxHPAfter = preview
     ? hpGainMethod === 'reuse' && storedHPAvailable
-      ? storedHPValue
+      ? storedHPValue +
+        (preview.conMod - Math.floor(($character.abilities.constitution - 10) / 2)) *
+          preview.newLevel
       : preview.maxHPCurrent +
+        preview.constitutionHPBonus +
         (hpGainMethod === 'roll' && hpRollValue !== null
           ? Math.max(1, hpRollValue + preview.conMod)
           : preview.hpGainAverage)
@@ -50,7 +111,6 @@
     isRolling = true;
     const result = rollFromNotation(`1${classConfig.hitDice}`);
     hpRollValue = result.rolls[0]; // Just the die roll, not total
-    hpRollModifier = preview?.conMod ?? 0;
     isRolling = false;
   }
 
@@ -69,7 +129,13 @@
       finalHPGain = undefined; // Signal to use stored HP
     }
 
-    applyLevelUp(hpGainMethod, finalHPGain);
+    if (!applyLevelUp(hpGainMethod, finalHPGain, choices)) {
+      toasts.add(
+        choiceError || 'Unable to apply this level-up. Please review your choices.',
+        'error'
+      );
+      return;
+    }
     toasts.add(`Leveled up to ${preview.newLevel}! HP restored, resources recharged.`, 'success');
     isOpen = false;
     onClose();
@@ -109,6 +175,131 @@
       </div>
 
       <div class="modal-body">
+        {#if subclassOptions.length}
+          <div class="section advancement-section">
+            <h3>Choose a Subclass</h3>
+            <label for="level-up-subclass">Subclass</label>
+            <select id="level-up-subclass" bind:value={subclass}>
+              <option value="">Choose a subclass</option>
+              {#each subclassOptions as option}
+                <option value={option.id}>{option.name}</option>
+              {/each}
+            </select>
+          </div>
+        {/if}
+
+        {#if earnsImprovement}
+          <div class="section advancement-section">
+            <h3>Ability Score Improvement or Feat</h3>
+            <label for="level-up-improvement">Choose your improvement</label>
+            <select
+              id="level-up-improvement"
+              bind:value={improvement}
+              on:change={() => {
+                abilityIncreases = {};
+                featConfirmed = false;
+              }}
+            >
+              <option value="asi">Ability Score Improvement</option>
+              <option value="feat">Feat</option>
+            </select>
+            {#if improvement === 'feat'}
+              <label for="level-up-feat-search">Search feats</label>
+              <input id="level-up-feat-search" type="search" bind:value={featSearch} />
+              <label for="level-up-feat">Feat</label>
+              <select
+                id="level-up-feat"
+                bind:value={featId}
+                on:change={() => {
+                  abilityIncreases = {};
+                  featConfirmed = false;
+                }}
+              >
+                <option value="">Choose a feat</option>
+                <option value="custom">Custom / another source</option>
+                {#each searchFeats(feats, featSearch) as feat}
+                  <option value={feat.id}>{feat.name}</option>
+                {/each}
+              </select>
+              {#if featId === 'custom'}
+                <label for="level-up-feat-name">Feat name</label>
+                <input id="level-up-feat-name" type="text" bind:value={customFeatName} />
+                <label for="level-up-feat-description">Feat benefits and prerequisites</label>
+                <textarea id="level-up-feat-description" bind:value={customFeatDescription}
+                ></textarea>
+              {:else if selectedFeat}
+                {#if selectedFeat.prerequisite}<p>{selectedFeat.prerequisite}</p>{/if}
+                <p class="choice-description">{selectedFeat.description}</p>
+              {/if}
+              <p>
+                Only selected ability increases are applied automatically. Record other choices
+                below and update proficiencies, attacks, spells, or other feat effects on your
+                sheet.
+              </p>
+              <label class="radio-label">
+                <input type="checkbox" bind:checked={featConfirmed} />
+                I have checked the prerequisites and any manual effects with my DM.
+              </label>
+            {:else}
+              <p>Add +2 to one ability or +1 to two abilities, to a maximum score of 20.</p>
+            {/if}
+            <p>
+              {improvement === 'feat'
+                ? 'Ability increases granted by this feat only (if any):'
+                : 'Allocate 2 points:'}
+            </p>
+            <div class="ability-choices">
+              {#each ABILITY_NAMES as ability}
+                <label for={`level-up-${ability}`}>
+                  {ability} ({$character.abilities[ability]} → {$character.abilities[ability] +
+                    (abilityIncreases[ability] ?? 0)})
+                </label>
+                <input
+                  id={`level-up-${ability}`}
+                  type="number"
+                  min="0"
+                  max={Math.max(0, Math.min(2, 20 - $character.abilities[ability]))}
+                  value={abilityIncreases[ability] ?? 0}
+                  on:input={(event) => {
+                    abilityIncreases = {
+                      ...abilityIncreases,
+                      [ability]: event.currentTarget.valueAsNumber
+                    };
+                  }}
+                />
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        {#if preview.newFeatures.length}
+          <div class="section">
+            <h3>New Class Features</h3>
+            {#each preview.newFeatures as feature}
+              <details>
+                <summary>{feature.name}</summary>
+                <p class="choice-description">{feature.description}</p>
+              </details>
+            {/each}
+          </div>
+        {/if}
+
+        <div class="section advancement-section">
+          <label for="level-up-notes">Other choices / notes</label>
+          <textarea
+            id="level-up-notes"
+            bind:value={choiceNotes}
+            placeholder="Record fighting styles, expertise, spells, or other choices here."
+          ></textarea>
+          <p>
+            Saved in Features &amp; Traits. Choices not modeled by the app need manual sheet
+            updates.
+          </p>
+          {#if isSpellcaster($character.class, subclass || $character.subclass)}
+            <p>Review your spells and prepared spells in Class Features after leveling up.</p>
+          {/if}
+        </div>
+
         <!-- HP Section -->
         <div class="section">
           <h3>Hit Points</h3>
@@ -125,6 +316,12 @@
               <span class="label">New Max HP:</span>
               <span class="value">{maxHPAfter}</span>
             </div>
+            {#if preview.constitutionHPBonus}
+              <p>
+                Includes +{preview.constitutionHPBonus} HP for previous levels from your Constitution
+                increase.
+              </p>
+            {/if}
             <div class="hp-row">
               <span class="label">Current HP will be restored to:</span>
               <span class="value">{maxHPAfter}</span>
@@ -210,11 +407,12 @@
       </div>
 
       <div class="modal-footer">
+        {#if choiceError}<p class="choice-error" role="status">{choiceError}</p>{/if}
         <button class="btn btn-secondary" on:click={handleCancel}>Cancel</button>
         <button
           class="btn btn-primary"
           on:click={handleConfirm}
-          disabled={hpGainMethod === 'roll' && hpRollValue === null}
+          disabled={!!choiceError || (hpGainMethod === 'roll' && hpRollValue === null)}
         >
           Confirm Level Up
         </button>
@@ -436,6 +634,45 @@
     padding: 16px 20px;
     border-top: 2px solid var(--border-color);
     justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .advancement-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .advancement-section input,
+  .advancement-section select,
+  .advancement-section textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px;
+    background: var(--card-bg-secondary);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+  }
+
+  .advancement-section input[type='checkbox'] {
+    width: auto;
+  }
+
+  .ability-choices {
+    display: grid;
+    grid-template-columns: 1fr 64px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .choice-description {
+    white-space: pre-wrap;
+  }
+
+  .choice-error {
+    width: 100%;
+    margin: 0;
   }
 
   .btn {
