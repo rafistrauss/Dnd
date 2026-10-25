@@ -144,11 +144,39 @@ export interface Money {
   pp: number; // platinum pieces
 }
 
+export interface LevelUpChoices {
+  improvement?: 'asi' | 'feat';
+  abilityIncreases?: Partial<Record<AbilityName, number>>;
+  feat?: {
+    id?: string;
+    name: string;
+    description: string;
+    source?: string;
+    classes?: string[];
+    requiredFeatures?: string[];
+    prerequisite?: string;
+  };
+  featSource?: string;
+  featConfirmed?: boolean;
+  subclass?: string;
+  notes?: string;
+}
+
+export interface LevelAdvancement {
+  choices: LevelUpChoices;
+  previousSubclass?: string;
+  featureText: string;
+  constitutionHPBonus: number;
+}
+
 export interface Character {
   name: string;
   class: string;
   subclass?: string;
   level: number;
+  hpByLevel?: Record<number, number>;
+  hpRolls?: number[];
+  advancements?: Record<number, LevelAdvancement>;
   race: string;
   background: string;
   alignment: string;

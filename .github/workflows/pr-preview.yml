@@ -30,6 +30,7 @@ jobs:
         run: cd sveltekit-app && bun run build
         env:
           NODE_ENV: production
+          BASE_PATH: /${{ github.event.repository.name }}/pr-${{ github.event.pull_request.number }}
 
       - name: Deploy to GitHub Pages (PR Preview)
         uses: peaceiris/actions-gh-pages@v3

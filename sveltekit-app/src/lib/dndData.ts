@@ -27,6 +27,8 @@ export interface Feat {
   prerequisite?: string;
   description: string;
   source: string;
+  classes?: string[];
+  requiredFeatures?: string[];
 }
 
 let spellsCache: Spell[] | null = null;

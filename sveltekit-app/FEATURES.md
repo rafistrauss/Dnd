@@ -19,6 +19,24 @@ This is a fully functional D&D 5th Edition character sheet built with SvelteKit,
 - **Skills**: 18 skills with proficiency tracking and modifier calculations
 - **Combat Stats**: HP, AC, Initiative tracking
 - **Attacks**: Dynamic attack list with dice notation support
+- **Level-up choices**: In Edit Mode, use **Level Up** beside the Level field to choose HP,
+  an ASI (+2 to one score or +1 to two, capped at 20) or a feat at levels 4, 8, 12, 16,
+  and 19. Fighters also receive choices at 6 and 14; Rogues at 10.
+  - Browse the local feat catalog or enter a custom feat. Confirm prerequisites with your DM;
+    allocate only the ability increases the feat grants. Other feat effects require manual sheet updates.
+  - Select a feat source before browsing. Only that exact source and feats compatible with the
+    selected class/subclass are shown; general feats remain available to every class.
+    Class-feature and spellcasting requirements are checked where the catalog provides them.
+    Other prerequisites still require DM confirmation. The current catalog has no PHB-labeled
+    entries: choosing PHB shows no results rather than substituting SRD or third-party material.
+    Custom feats are a separate, explicitly selected source.
+  - Constitution modifier increases add HP retroactively. Available subclass choices and new
+    class features appear in the dialog; record other choices in its notes field.
+  - Feats and notes are saved in **Features & Traits**, with structured advancement history in
+    character exports. Level Down (or lowering the level directly) undoes recorded ability, feat,
+    subclass, and note changes above the target level.
+  - Directly editing the Level field is a manual setup shortcut, not the guided choice flow.
+    Spells, expertise, fighting styles, and unmodeled effects must be updated on the sheet manually.
 
 ### 2. Dice Rolling
 
