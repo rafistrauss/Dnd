@@ -1,5 +1,6 @@
 import { getAvailableSubclasses, getClassConfig } from './classConfig';
 import type { Abilities, AbilityName, Character, LevelUpChoices } from './types';
+import { featMatchesClass, getFeatSource } from './featUtils';
 
 export const ABILITY_NAMES: AbilityName[] = [
   'strength',
@@ -74,6 +75,23 @@ export function validateLevelUpChoices(char: Character, choices: LevelUpChoices)
     }
     if (choices.improvement === 'feat' && !choices.featConfirmed) {
       return 'Confirm the feat prerequisites and any manual effects with your DM.';
+    }
+    if (choices.improvement === 'feat' && choices.feat) {
+      if (choices.feat.source && !choices.featSource) return 'Choose a feat source.';
+      if (
+        choices.featSource &&
+        getFeatSource(choices.feat.source ?? '') !== getFeatSource(choices.featSource)
+      ) {
+        return 'Choose a feat from the selected source.';
+      }
+      if (
+        !featMatchesClass(
+          { ...choices.feat, id: choices.feat.id ?? '', source: choices.feat.source ?? '' },
+          { ...char, subclass: choices.subclass || char.subclass },
+          level
+        )
+      )
+        return 'Choose a feat available to your class.';
     }
     if (points > 2) return 'Allocate no more than 2 ability score points.';
   } else if (choices.improvement || choices.feat || points) {

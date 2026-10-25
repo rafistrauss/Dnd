@@ -306,3 +306,23 @@ test('ASI to a spellcasting ability refreshes ability-based resource limits', ()
   applyLevelUp('average', undefined, choices);
   expect(get(character).classFeatures.features.DivineSense).toEqual(Array(6).fill(false));
 });
+
+test('feat source is saved and incompatible class/source selections cannot level up', () => {
+  prepareImprovement();
+  const before = structuredClone(get(character));
+  const choices = {
+    improvement: 'feat',
+    featConfirmed: true,
+    featSource: 'PHB',
+    feat: { id: 'example', name: 'Example', description: '', source: 'SRD', classes: ['wizard'] }
+  };
+  expect(applyLevelUp('average', undefined, choices)).toBe(false);
+  expect(get(character)).toEqual(before);
+  choices.feat.source = 'PHB';
+  expect(applyLevelUp('average', undefined, choices)).toBe(false);
+  choices.feat.classes = ['paladin'];
+  expect(applyLevelUp('average', undefined, choices)).toBe(true);
+  const saved = JSON.parse(JSON.stringify(get(character)));
+  expect(saved.advancements[4].choices.featSource).toBe('PHB');
+  expect(saved.advancements[4].choices.feat.source).toBe('PHB');
+});

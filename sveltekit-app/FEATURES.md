@@ -24,6 +24,12 @@ This is a fully functional D&D 5th Edition character sheet built with SvelteKit,
   and 19. Fighters also receive choices at 6 and 14; Rogues at 10.
   - Browse the local feat catalog or enter a custom feat. Confirm prerequisites with your DM;
     allocate only the ability increases the feat grants. Other feat effects require manual sheet updates.
+  - Select a feat source before browsing. Only that exact source and feats compatible with the
+    selected class/subclass are shown; general feats remain available to every class.
+    Class-feature and spellcasting requirements are checked where the catalog provides them.
+    Other prerequisites still require DM confirmation. The current catalog has no PHB-labeled
+    entries: choosing PHB shows no results rather than substituting SRD or third-party material.
+    Custom feats are a separate, explicitly selected source.
   - Constitution modifier increases add HP retroactively. Available subclass choices and new
     class features appear in the dialog; record other choices in its notes field.
   - Feats and notes are saved in **Features & Traits**, with structured advancement history in

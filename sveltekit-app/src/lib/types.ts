@@ -147,7 +147,16 @@ export interface Money {
 export interface LevelUpChoices {
   improvement?: 'asi' | 'feat';
   abilityIncreases?: Partial<Record<AbilityName, number>>;
-  feat?: { id?: string; name: string; description: string };
+  feat?: {
+    id?: string;
+    name: string;
+    description: string;
+    source?: string;
+    classes?: string[];
+    requiredFeatures?: string[];
+    prerequisite?: string;
+  };
+  featSource?: string;
   featConfirmed?: boolean;
   subclass?: string;
   notes?: string;

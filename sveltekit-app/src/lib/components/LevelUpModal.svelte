@@ -5,6 +5,7 @@
   import { getClassConfig, isSpellcaster } from '$lib/classConfig';
   import { loadFeats, searchFeats } from '$lib/dndData';
   import type { Feat } from '$lib/dndData';
+  import { filterLevelUpFeats, getFeatSources } from '$lib/featUtils';
   import type { AbilityName, LevelUpChoices } from '$lib/types';
   import {
     ABILITY_NAMES,
@@ -29,6 +30,7 @@
   let feats: Feat[] = [];
   let featSearch = '';
   let featId = '';
+  let featSource = '';
   let customFeatName = '';
   let customFeatDescription = '';
   let featConfirmed = false;
@@ -41,7 +43,14 @@
 
   $: earnsImprovement = gainsAbilityImprovement($character.class, $character.level + 1);
   $: subclassOptions = getSubclassChoices($character, $character.level + 1);
-  $: selectedFeat = feats.find((feat) => feat.id === featId);
+  $: featSources = getFeatSources(feats);
+  $: availableFeats = filterLevelUpFeats(
+    feats,
+    { ...$character, subclass: subclass || $character.subclass },
+    featSource
+  );
+  $: selectedFeat = availableFeats.find((feat) => feat.id === featId);
+  $: clearUnavailableFeat(availableFeats, featSource);
   $: choices = {
     ...(earnsImprovement
       ? {
@@ -51,8 +60,13 @@
             ? {
                 feat:
                   featId === 'custom'
-                    ? { name: customFeatName.trim(), description: customFeatDescription.trim() }
+                    ? {
+                        name: customFeatName.trim(),
+                        description: customFeatDescription.trim(),
+                        source: 'custom'
+                      }
                     : selectedFeat,
+                featSource,
                 featConfirmed
               }
             : {})
@@ -70,6 +84,7 @@
     improvement = 'asi';
     abilityIncreases = {};
     featId = '';
+    featSource = '';
     featSearch = '';
     customFeatName = '';
     customFeatDescription = '';
@@ -112,6 +127,18 @@
     const result = rollFromNotation(`1${classConfig.hitDice}`);
     hpRollValue = result.rolls[0]; // Just the die roll, not total
     isRolling = false;
+  }
+
+  function clearUnavailableFeat(available: Feat[], source: string) {
+    if (
+      featId &&
+      !(source === 'custom' && featId === 'custom') &&
+      !available.some((feat) => feat.id === featId)
+    ) {
+      featId = '';
+      featConfirmed = false;
+      abilityIncreases = {};
+    }
   }
 
   function handleConfirm() {
@@ -204,6 +231,28 @@
               <option value="feat">Feat</option>
             </select>
             {#if improvement === 'feat'}
+              <label for="level-up-feat-source">Feat source</label>
+              <select
+                id="level-up-feat-source"
+                bind:value={featSource}
+                on:change={() => {
+                  featId = '';
+                  abilityIncreases = {};
+                  featConfirmed = false;
+                }}
+              >
+                <option value="">Choose a source</option>
+                {#each featSources as source}
+                  <option value={source.id}>{source.name}</option>
+                {/each}
+                <option value="custom">Custom / another source (DM-approved)</option>
+              </select>
+              {#if featSource && featSource !== 'custom' && !availableFeats.length}
+                <p role="status">
+                  No feats from this source are available for your class in the local catalog. PHB
+                  material is not substituted with SRD or third-party feats.
+                </p>
+              {/if}
               <label for="level-up-feat-search">Search feats</label>
               <input id="level-up-feat-search" type="search" bind:value={featSearch} />
               <label for="level-up-feat">Feat</label>
@@ -216,8 +265,10 @@
                 }}
               >
                 <option value="">Choose a feat</option>
-                <option value="custom">Custom / another source</option>
-                {#each searchFeats(feats, featSearch) as feat}
+                {#if featSource === 'custom'}
+                  <option value="custom">Custom feat</option>
+                {/if}
+                {#each searchFeats(availableFeats, featSearch) as feat}
                   <option value={feat.id}>{feat.name}</option>
                 {/each}
               </select>
