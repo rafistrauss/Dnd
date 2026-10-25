@@ -239,11 +239,13 @@
 
   .modal-content {
     background: var(--card-bg);
+    color: var(--text-color);
     border-radius: 12px;
     box-shadow: 0 18px 40px rgba(17, 31, 46, 0.28);
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
+    max-height: 90dvh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -301,13 +303,13 @@
   .section h3 {
     margin-top: 0;
     margin-bottom: 12px;
-    color: #2c5aa0;
+    color: var(--primary-color);
     font-size: 1.1rem;
   }
 
   .section.info {
-    background: #f0f4f8;
-    border-left: 3px solid #2c5aa0;
+    background: var(--card-bg-secondary);
+    border-left: 3px solid var(--primary-color);
     border-radius: 6px;
     padding: 12px;
   }
@@ -318,7 +320,7 @@
   }
 
   .hp-preview {
-    background: #f5f1e8;
+    background: var(--card-bg-secondary);
     padding: 12px;
     border-radius: 6px;
     margin-bottom: 16px;
@@ -332,8 +334,8 @@
   }
 
   .hp-row.highlight {
-    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-    color: #fff;
+    background: var(--roll-result-background);
+    color: var(--roll-result);
     margin: 0 -12px;
     padding: 8px 12px;
     font-weight: 700;
@@ -415,7 +417,7 @@
     align-items: center;
     gap: 8px;
     padding: 8px;
-    background: #f0f4f8;
+    background: var(--card-bg-secondary);
     border-left: 3px solid #2ecc71;
     border-radius: 4px;
     font-size: 0.95rem;
@@ -432,7 +434,7 @@
     display: flex;
     gap: 12px;
     padding: 16px 20px;
-    border-top: 2px solid #e8eef5;
+    border-top: 2px solid var(--border-color);
     justify-content: flex-end;
   }
 
@@ -463,11 +465,11 @@
   }
 
   .btn-secondary {
-    background: #e8eef5;
-    color: #2c3e50;
+    background: var(--card-bg-secondary);
+    color: var(--text-color);
   }
 
   .btn-secondary:hover:not(:disabled) {
-    background: #d4dce6;
+    background: var(--border-color);
   }
 </style>

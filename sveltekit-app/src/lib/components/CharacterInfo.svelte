@@ -4,6 +4,7 @@
     setCharacterLevel,
     levelDownCharacter,
     collapsedStates,
+    isEditMode,
     toasts
   } from '$lib/stores';
   import { getAvailableClasses, getAvailableSubclasses } from '$lib/classConfig';
@@ -107,22 +108,24 @@
             min="1"
             max="20"
           />
-          <button
-            type="button"
-            class="level-up-btn"
-            on:click={handleLevelUp}
-            disabled={!$character.class || $character.level >= 20}
-          >
-            Level Up
-          </button>
-          <button
-            type="button"
-            class="level-down-btn"
-            on:click={handleLevelDown}
-            disabled={!$character.class || $character.level <= 1}
-          >
-            Level Down
-          </button>
+          {#if $isEditMode}
+            <button
+              type="button"
+              class="level-up-btn"
+              on:click={handleLevelUp}
+              disabled={!$character.class || $character.level >= 20}
+            >
+              Level Up
+            </button>
+            <button
+              type="button"
+              class="level-down-btn"
+              on:click={handleLevelDown}
+              disabled={!$character.class || $character.level <= 1}
+            >
+              Level Down
+            </button>
+          {/if}
         </div>
       </div>
       <div class="form-group">
