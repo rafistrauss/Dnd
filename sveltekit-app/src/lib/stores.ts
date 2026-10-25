@@ -2,8 +2,37 @@ import { writable, derived } from 'svelte/store';
 import type { Character, RacialTraitUses, RollHistoryEntry } from './types';
 import { browser } from '$app/environment';
 import { getRacialSpellsForLevel, getRaceConfig } from './raceConfig';
+<<<<<<< HEAD
 import { getAvailableFeatures, getClassConfig, getSpellSlotProgression } from './classConfig';
 import { calculateMaxHP } from './combatUtils';
+=======
+import { getSpellSlotProgression } from './classConfig';
+
+function normalizeSpellSlotUsage(char: Character): Character {
+  if (!char.classFeatures) return char;
+
+  if (!char.classFeatures.spellSlotsByLevel) {
+    char.classFeatures.spellSlotsByLevel = {};
+    return char;
+  }
+
+  const progression = char.class
+    ? getSpellSlotProgression(char.class, char.level, char.subclass)
+    : [];
+  const normalized: Record<number, boolean[]> = {};
+
+  progression.forEach((total, idx) => {
+    if (total <= 0) return;
+    const level = idx + 1;
+    const rawSlots = char.classFeatures.spellSlotsByLevel?.[level] ?? [];
+    const slots = Array.isArray(rawSlots) ? rawSlots : [];
+    normalized[level] = slots.slice(0, total).map((used) => !!used);
+  });
+
+  char.classFeatures.spellSlotsByLevel = normalized;
+  return char;
+}
+>>>>>>> origin/sveltekit
 
 // Toast notification store
 export interface Toast {
@@ -66,7 +95,7 @@ function createRollHistoryStore() {
   // Set nextId based on existing entries
   const existing = loadFromStorage();
   if (existing.length > 0) {
-    nextId = Math.max(...existing.map(e => e.id)) + 1;
+    nextId = Math.max(...existing.map((e) => e.id)) + 1;
   }
 
   const saveToStorage = (history: RollHistoryEntry[]) => {
@@ -101,14 +130,14 @@ function createRollHistoryStore() {
     import: (history: RollHistoryEntry[]) => {
       // Reset nextId based on imported entries
       if (history.length > 0) {
-        nextId = Math.max(...history.map(e => e.id)) + 1;
+        nextId = Math.max(...history.map((e) => e.id)) + 1;
       }
       set(history);
       saveToStorage(history);
     },
     export: (): RollHistoryEntry[] => {
       let currentHistory: RollHistoryEntry[] = [];
-      const unsubscribe = subscribe(value => {
+      const unsubscribe = subscribe((value) => {
         currentHistory = value;
       });
       unsubscribe();
@@ -184,7 +213,11 @@ const initialCharacter: Character = {
     spellSlotsByLevel: {},
     preparedSpells: ''
   },
-  racialTraits: { uses: {} }
+  racialTraits: { uses: {} },
+  money: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+  conditions: [],
+  exhaustionLevel: 0,
+  inspiration: false
 };
 
 const MAX_CHARACTER_LEVEL = 20;
@@ -399,6 +432,10 @@ function loadFromStorage(): Character {
         if (loaded.classFeatures.preparedSpells === undefined) {
           loaded.classFeatures.preparedSpells = '';
         }
+        // Migrate: preparedSpells stored as array -> newline-separated string
+        if (Array.isArray(loaded.classFeatures.preparedSpells)) {
+          loaded.classFeatures.preparedSpells = loaded.classFeatures.preparedSpells.join('\n');
+        }
       }
 
       // Migrate: ensure racialTraits structure exists
@@ -415,6 +452,24 @@ function loadFromStorage(): Character {
       }
 
       ensureHPHistory(loaded);
+
+      // Migrate: ensure money structure exists
+      if (!loaded.money) {
+        loaded.money = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+      }
+
+      // Migrate: ensure conditions structure exists
+      if (!Array.isArray(loaded.conditions)) {
+        loaded.conditions = [];
+      }
+      if (typeof loaded.exhaustionLevel !== 'number') {
+        loaded.exhaustionLevel = 0;
+      }
+      if (typeof loaded.inspiration !== 'boolean') {
+        loaded.inspiration = false;
+      }
+
+      normalizeSpellSlotUsage(loaded);
 
       return loaded;
     }
@@ -447,6 +502,51 @@ if (browser) {
 
   isEditMode.subscribe((value) => {
     localStorage.setItem('dndMode', value ? 'edit' : 'use');
+  });
+}
+
+// Turn / action-economy tracker (transient combat state, persisted to localStorage)
+export interface TurnState {
+  round: number;
+  action: boolean;
+  bonusAction: boolean;
+  reaction: boolean;
+}
+
+function loadTurnState(): TurnState {
+  const defaults: TurnState = {
+    round: 1,
+    action: false,
+    bonusAction: false,
+    reaction: false
+  };
+  if (!browser) return defaults;
+  try {
+    const saved = localStorage.getItem('dndTurnState');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        round: typeof parsed.round === 'number' ? parsed.round : 1,
+        action: !!parsed.action,
+        bonusAction: !!parsed.bonusAction,
+        reaction: !!parsed.reaction
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load turn state:', e);
+  }
+  return defaults;
+}
+
+export const turnTracker = writable<TurnState>(loadTurnState());
+
+if (browser) {
+  turnTracker.subscribe((value) => {
+    try {
+      localStorage.setItem('dndTurnState', JSON.stringify(value));
+    } catch (e) {
+      console.error('Failed to save turn state:', e);
+    }
   });
 }
 
@@ -822,6 +922,7 @@ export function importCharacter(file: File): Promise<Character> {
         }
 
         ensureHPHistory(merged);
+        normalizeSpellSlotUsage(merged);
 
         resolve(merged);
       } catch {
@@ -873,14 +974,17 @@ export function initializeRacialTraits() {
 export function resetRacialTraitUses(restType: 'short' | 'long') {
   character.update((char) => {
     if (!char.racialTraits) return char;
-    
+
     Object.keys(char.racialTraits.uses).forEach((key) => {
       const traitUse = char.racialTraits!.uses[key];
-      if (traitUse.restType === restType || (restType === 'long' && traitUse.restType === 'short')) {
+      if (
+        traitUse.restType === restType ||
+        (restType === 'long' && traitUse.restType === 'short')
+      ) {
         traitUse.currentUses = traitUse.maxUses;
       }
     });
-    
+
     return char;
   });
 }
@@ -888,12 +992,12 @@ export function resetRacialTraitUses(restType: 'short' | 'long') {
 export function useRacialTrait(spellName: string) {
   character.update((char) => {
     if (!char.racialTraits || !char.racialTraits.uses[spellName]) return char;
-    
+
     const traitUse = char.racialTraits.uses[spellName];
     if (traitUse.currentUses > 0) {
       traitUse.currentUses -= 1;
     }
-    
+
     return char;
   });
 }
@@ -901,30 +1005,30 @@ export function useRacialTrait(spellName: string) {
 export function syncRacialSpellAttacks() {
   character.update((char) => {
     if (!char.race) return char;
-    
+
     const raceConfig = getRaceConfig(char.race);
     if (!raceConfig) return char;
-    
+
     const racialSpells = getRacialSpellsForLevel(char.race, char.level);
-    
+
     // Get current attacks
     if (!char.attacks) {
       char.attacks = [];
     }
-    
+
     // Remove old racial spell attacks that are no longer available
     char.attacks = char.attacks.filter((attack) => {
       if (attack.source !== 'racial') return true;
       // Keep only if still in racialSpells list
       return racialSpells.some((spell) => spell.name === attack.name);
     });
-    
+
     // Add or update racial spell attacks
     racialSpells.forEach((spell) => {
       const existingAttack = char.attacks!.find(
         (a) => a.source === 'racial' && a.name === spell.name
       );
-      
+
       if (!existingAttack) {
         // Find which trait this spell belongs to
         let traitName = '';
@@ -934,7 +1038,7 @@ export function syncRacialSpellAttacks() {
             break;
           }
         }
-        
+
         // Create new attack for this racial spell
         const newAttack = {
           id: `racial-${spell.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
@@ -951,7 +1055,7 @@ export function syncRacialSpellAttacks() {
         char.attacks!.push(newAttack);
       }
     });
-    
+
     return char;
   });
 }
@@ -970,6 +1074,9 @@ interface CollapsedStates {
   notes: boolean;
   damageInput: boolean;
   rollHistory: boolean;
+  money: boolean;
+  turnTracker: boolean;
+  conditions: boolean;
 }
 
 function loadCollapsedStates(): CollapsedStates {
@@ -983,7 +1090,10 @@ function loadCollapsedStates(): CollapsedStates {
       classFeatures: false,
       notes: false,
       damageInput: false,
-      rollHistory: false
+      rollHistory: false,
+      money: false,
+      turnTracker: false,
+      conditions: false
     };
   }
 
@@ -991,7 +1101,6 @@ function loadCollapsedStates(): CollapsedStates {
     const saved = localStorage.getItem('dndCollapsedStates');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Ensure damageInput and rollHistory exist in loaded state
       return {
         characterInfo: parsed.characterInfo ?? false,
         combatStats: parsed.combatStats ?? false,
@@ -1001,7 +1110,10 @@ function loadCollapsedStates(): CollapsedStates {
         classFeatures: parsed.classFeatures ?? false,
         notes: parsed.notes ?? false,
         damageInput: parsed.damageInput ?? false,
-        rollHistory: parsed.rollHistory ?? false
+        rollHistory: parsed.rollHistory ?? false,
+        money: parsed.money ?? false,
+        turnTracker: parsed.turnTracker ?? false,
+        conditions: parsed.conditions ?? false
       };
     }
   } catch (e) {
@@ -1017,7 +1129,10 @@ function loadCollapsedStates(): CollapsedStates {
     classFeatures: false,
     notes: false,
     damageInput: false,
-    rollHistory: false
+    rollHistory: false,
+    money: false,
+    turnTracker: false,
+    conditions: false
   };
 }
 

@@ -237,7 +237,11 @@
             class="stat-input initiative-input"
             readonly
           />
-          <button on:click={rollInitiative} class="btn btn-primary roll-initiative-btn use-enabled" title="Roll Initiative">
+          <button
+            on:click={rollInitiative}
+            class="btn btn-primary roll-initiative-btn use-enabled"
+            title="Roll Initiative"
+          >
             🎲
           </button>
         </div>
@@ -245,6 +249,25 @@
       <div class="stat-box">
         <label for="speed">Speed</label>
         <input type="text" id="speed" bind:value={$character.speed} class="stat-input" />
+      </div>
+      <div class="stat-box">
+        <div class="stat-label-with-icon">
+          <label>Inspiration</label>
+          <TooltipInfo
+            tooltipContent="Heroic Inspiration: you can expend it to reroll any d20 (attack, check, or save) and use the new roll. You can only hold one at a time."
+            ariaLabel="Show Inspiration details"
+          />
+        </div>
+        <button
+          class="inspiration-toggle use-enabled"
+          class:active={$character.inspiration}
+          on:click={() => character.update((c) => ({ ...c, inspiration: !c.inspiration }))}
+          aria-pressed={$character.inspiration}
+          title={$character.inspiration ? 'You have inspiration' : 'No inspiration'}
+        >
+          <span class="star">{$character.inspiration ? '⭐' : '☆'}</span>
+          <span class="inspiration-text">{$character.inspiration ? 'Inspired' : 'None'}</span>
+        </button>
       </div>
       {#if spellSaveDC !== null}
         <div class="stat-box">
@@ -415,6 +438,7 @@
   .stat-box {
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     position: relative;
   }
 
@@ -430,6 +454,46 @@
     border-radius: 4px;
     font-size: 1rem;
     text-align: center;
+    box-sizing: border-box;
+    min-height: 40px;
+  }
+
+  .inspiration-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1rem;
+    box-sizing: border-box;
+    min-height: 40px;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .inspiration-toggle:hover {
+    border-color: var(--primary-color);
+  }
+
+  .inspiration-toggle.active {
+    background: rgba(255, 200, 0, 0.15);
+    border-color: #e6b800;
+  }
+
+  .inspiration-toggle .star {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .inspiration-text {
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 
   .hp-section {
@@ -592,7 +656,7 @@
     border-color: var(--primary-color);
   }
 
-  :global(body input[type="text"]).ac-enhanced {
+  :global(body input[type='text']).ac-enhanced {
     color: var(--ac-enhanced-color);
     font-weight: bold;
   }
@@ -602,6 +666,11 @@
     align-items: center;
     gap: 5px;
     margin-bottom: 5px;
+    min-height: 20px;
+  }
+
+  .stat-label-with-icon label {
+    margin-bottom: 0;
   }
 
   .armor-config {

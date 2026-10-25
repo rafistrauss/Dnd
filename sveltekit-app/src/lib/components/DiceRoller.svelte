@@ -24,6 +24,9 @@
   let rollResult: any = null;
   let currentRollNotation = ''; // Track the notation actually used for the current roll
 
+  $: isD20Notation = /(^|[+\-])\d*d20(?!\d)/i.test(currentRollNotation);
+  $: canUseInspiration = !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
+
   // Export function to get last roll total
   export function getLastRollTotal(): number | null {
     return rollResult?.resultTotal ?? null;
@@ -118,7 +121,11 @@
   let modifier = 0;
 
   // Follow-up actions for multi-step rolls
-  let followUpActions: Array<{ label: string; notation: string; breakdown?: Array<{ value: number | string; source: string }> }> = [];
+  let followUpActions: Array<{
+    label: string;
+    notation: string;
+    breakdown?: Array<{ value: number | string; source: string }>;
+  }> = [];
   let isCriticalSuccess = false;
   let isCriticalFail = false;
   let guidedStrikeUsed = false;
@@ -334,7 +341,7 @@
       else if (type === 'damage') purpose = `${attackName || 'Damage'} Roll`;
       else if (type === 'check') purpose = `${attackName || 'Check'} Roll`;
       else if (type === 'save') purpose = `${attackName || 'Save'} Roll`;
-      
+
       rollHistory.addRoll(purpose, currentRollNotation, resultTotal, resultString);
 
       // Detect critical hits/fails on d20 rolls (check first die roll)
@@ -357,7 +364,7 @@
             // Double dice for critical hits (5e rules)
             const critDamage = doubleDiceNotation(damageNotation);
             // For critical hits, we need to double the dice in the breakdown too
-            const critBreakdown = damageBreakdown.map(b => {
+            const critBreakdown = damageBreakdown.map((b) => {
               if (typeof b.value === 'string' && b.value.match(/^\d+d\d+$/)) {
                 const doubled = doubleDiceNotation(b.value);
                 return { ...b, value: doubled };
@@ -382,12 +389,20 @@
         } else {
           // console.log('No damageNotation provided for attack roll');
         }
-        
+
         // Sneak Attack follow-up for rogues with the feature
-        if (attackName && damageNotation && $character.class?.toLowerCase() === 'rogue' && $character.features?.toLowerCase?.().includes('sneak attack')) {
+        if (
+          attackName &&
+          damageNotation &&
+          $character.class?.toLowerCase() === 'rogue' &&
+          $character.features?.toLowerCase?.().includes('sneak attack')
+        ) {
           // TODO: Level scaling for sneak attack dice (3d6 for level 5)
           const sneakAttackNotation = `${damageNotation}+3d6`;
-          const sneakAttackBreakdown = [...damageBreakdown, { value: '3d6', source: 'Sneak Attack' }];
+          const sneakAttackBreakdown = [
+            ...damageBreakdown,
+            { value: '3d6', source: 'Sneak Attack' }
+          ];
           followUpActions.push({
             label: `Roll Damage + Sneak Attack (${sneakAttackNotation})`,
             notation: sneakAttackNotation,
@@ -492,6 +507,14 @@
     });
 
     guidedStrikeUsed = true;
+  }
+
+  function useInspirationReroll() {
+    if (!canUseInspiration) return;
+
+    // Spend inspiration and immediately reroll the same d20 check notation.
+    character.update((c) => ({ ...c, inspiration: false }));
+    rollDice(currentRollNotation, rollType);
   }
 
   // Auto-roll when notation is set and modal is visible
@@ -732,6 +755,13 @@
             <em>No damage is dealt on a critical miss.</em>
           </div>
         {/if}
+        {#if canUseInspiration}
+          <div class="inspiration-reroll-row">
+            <button class="btn btn-inspiration" on:click={useInspirationReroll}>
+              ⭐ Use Inspiration (Reroll d20)
+            </button>
+          </div>
+        {/if}
         {#if followUpActions.length > 0 || (hasGuidedStrike && rollType === 'attack' && !guidedStrikeUsed && channelDivinityRemaining > 0)}
           <div class="follow-up-actions">
             {#each followUpActions as action}
@@ -939,6 +969,23 @@
     cursor: not-allowed;
   }
 
+  .inspiration-reroll-row {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-inspiration {
+    background: rgba(255, 200, 0, 0.15);
+    border: 1px solid #e6b800;
+    color: var(--text-color);
+    font-weight: 600;
+  }
+
+  .btn-inspiration:hover {
+    background: rgba(255, 200, 0, 0.25);
+  }
+
   .custom-dice-selector {
     margin: 0;
     padding: 12px;
@@ -1061,7 +1108,7 @@
     font-size: 1.1rem;
     font-weight: bold;
     color: var(--roll-result);
-  } 
+  }
 
   .bonus-source {
     font-size: 0.75rem;

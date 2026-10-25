@@ -136,6 +136,14 @@ export interface RacialTraits {
   uses: Record<string, RacialTraitUses>; // Track uses of racial spells
 }
 
+export interface Money {
+  cp: number; // copper pieces
+  sp: number; // silver pieces
+  ep: number; // electrum pieces
+  gp: number; // gold pieces
+  pp: number; // platinum pieces
+}
+
 export interface Character {
   name: string;
   class: string;
@@ -166,6 +174,10 @@ export interface Character {
   classFeatures: ClassFeatures;
   racialTraits?: RacialTraits; // Optional for backwards compatibility
   activeStates?: SpellState[];
+  money?: Money; // Optional for backwards compatibility
+  conditions?: string[]; // Active standard conditions (e.g. "prone", "poisoned")
+  exhaustionLevel?: number; // 0-6
+  inspiration?: boolean; // Heroic inspiration
 }
 
 // Class Configuration Types
@@ -190,6 +202,9 @@ export interface ClassFeature {
 export interface SubclassConfig {
   name: string;
   features: ClassFeature[];
+  spellcaster?: boolean; // Subclass grants spellcasting (e.g. Arcane Trickster, Eldritch Knight)
+  spellcastingAbility?: AbilityName;
+  spellSlotProgression?: Record<number, number[]>; // character level -> [slots for spell level 1-9]
 }
 
 export interface ClassConfig {

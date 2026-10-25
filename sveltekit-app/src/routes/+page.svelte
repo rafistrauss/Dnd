@@ -1,27 +1,27 @@
 <script lang="ts">
-    let isDarkMode = false;
+  let isDarkMode = false;
 
-    function setDarkMode(enabled: boolean) {
-      isDarkMode = enabled;
-      if (enabled) {
-        document.body.classList.add('dark-mode');
-      } else {
-        document.body.classList.remove('dark-mode');
-      }
-      localStorage.setItem('dnd-dark-mode', enabled ? 'true' : 'false');
+  function setDarkMode(enabled: boolean) {
+    isDarkMode = enabled;
+    if (enabled) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
     }
+    localStorage.setItem('dnd-dark-mode', enabled ? 'true' : 'false');
+  }
 
-    function toggleDarkMode() {
-      setDarkMode(!isDarkMode);
-    }
+  function toggleDarkMode() {
+    setDarkMode(!isDarkMode);
+  }
 
-    onMount(() => {
-      // ...existing code...
-      // Dark mode preference
-      const darkPref = localStorage.getItem('dnd-dark-mode');
-      setDarkMode(darkPref === 'true');
-      // ...existing code...
-    });
+  onMount(() => {
+    // ...existing code...
+    // Dark mode preference
+    const darkPref = localStorage.getItem('dnd-dark-mode');
+    setDarkMode(darkPref === 'true');
+    // ...existing code...
+  });
   import { onMount } from 'svelte';
   import {
     character,
@@ -41,6 +41,9 @@
   import Attacks from '$lib/components/Attacks.svelte';
   import ClassFeatures from '$lib/components/ClassFeatures.svelte';
   import Notes from '$lib/components/Notes.svelte';
+  import Money from '$lib/components/Money.svelte';
+  import TurnTracker from '$lib/components/TurnTracker.svelte';
+  import Conditions from '$lib/components/Conditions.svelte';
   import RollHistory from '$lib/components/RollHistory.svelte';
   import DiceRoller from '$lib/components/DiceRoller.svelte';
   import GistModal from '$lib/components/GistModal.svelte';
@@ -54,7 +57,11 @@
 
   function getAllSpellSlots(): { level: number; available: number; total: number }[] {
     if (!$character.class) return [];
-    const progression = getSpellSlotProgression($character.class, $character.level);
+    const progression = getSpellSlotProgression(
+      $character.class,
+      $character.level,
+      $character.subclass
+    );
     const storedSlots = $character.classFeatures.spellSlotsByLevel || {};
     const result: { level: number; available: number; total: number }[] = [];
 
@@ -62,8 +69,8 @@
       if (total > 0) {
         const level = idx + 1;
         const slots = storedSlots[level] ?? [];
-        const used = slots.filter((s) => s).length;
-        result.push({ level, available: total - used, total });
+        const used = Math.min(total, slots.filter((s) => s).length);
+        result.push({ level, available: Math.max(0, total - used), total });
       }
     });
 
@@ -141,7 +148,8 @@
 
         availableFeatures.forEach((feature) => {
           if (feature.resetOn === 'short') {
-            const featureName = typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
+            const featureName =
+              typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
             const featureKey = featureName.replace(/\s+/g, '');
 
             if (feature.type === 'uses') {
@@ -183,7 +191,7 @@
 
     // Restore racial trait uses that reset on short rest (using helper function)
     resetRacialTraitUses('short');
-    
+
     // Check if any racial traits were restored for the toast message
     const racialSpells = getRacialSpellsForLevel($character.race, $character.level);
     const racialTraitsRestored = racialSpells.some(
@@ -225,12 +233,12 @@
       // Reset all spell slots
       let spellSlotsRestored = 0;
       if (c.class) {
-        const progression = getSpellSlotProgression(c.class, c.level);
+        const progression = getSpellSlotProgression(c.class, c.level, c.subclass);
         progression.forEach((total, idx) => {
           if (total > 0) {
             const level = idx + 1;
             const slots = c.classFeatures.spellSlotsByLevel?.[level] ?? [];
-            const usedSlots = slots.filter((s) => s).length;
+            const usedSlots = Math.min(total, slots.filter((s) => s).length);
             spellSlotsRestored += usedSlots;
             if (!c.classFeatures.spellSlotsByLevel) c.classFeatures.spellSlotsByLevel = {};
             c.classFeatures.spellSlotsByLevel[level] = [];
@@ -252,7 +260,8 @@
 
         let featuresRestored = false;
         availableFeatures.forEach((feature) => {
-          const featureName = typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
+          const featureName =
+            typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
           const featureKey = featureName.replace(/\s+/g, '');
 
           // Skip info and channelDivinity types - they don't store state
@@ -307,7 +316,7 @@
 
     // Restore all racial trait uses (using helper function)
     resetRacialTraitUses('long');
-    
+
     // Check if any racial traits were restored for the toast message
     const racialSpells = getRacialSpellsForLevel($character.race, $character.level);
     const racialTraitsRestored = racialSpells.some((spell) => spell.usesPerRest);
@@ -762,9 +771,12 @@
     <AbilityScores on:roll={(e) => openDiceRoller(e.detail)} />
     <Skills on:roll={(e) => openDiceRoller(e.detail)} />
     <CombatStats on:rollHitDice={handleHitDiceRoll} on:rollInitiative={handleInitiativeRoll} />
+    <TurnTracker />
+    <Conditions />
     <DamageInput />
     <Attacks on:roll={(e) => openDiceRoller(e.detail)} />
     <ClassFeatures on:roll={(e) => openDiceRoller(e.detail)} />
+    <Money />
     <Notes />
     <RollHistory />
   </main>
@@ -843,7 +855,7 @@
     --ac-enhanced-color: #007bff;
     --ac-enhanced-bg: #e9f5ff;
     --ac-enhanced-border: #b3e0ff;
-    
+
     --roll-result: #2e7d32;
     --roll-result-border: #4caf50;
     --roll-result-background: #e8f5e9;
@@ -859,8 +871,8 @@
     --card-bg-secondary: #1f1f1f; /* slightly lighter dark cards */
     --text-color: #e8e8e8; /* bright light text */
     --border-color: #2a2a2a; /* dark borders */
-    --shadow: 0 2px 8px rgba(0,0,0,0.95);
-    --hover-shadow: 0 4px 16px rgba(0,0,0,1);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+    --hover-shadow: 0 4px 16px rgba(0, 0, 0, 1);
     --spell-background: #1a2a3a; /* dark blue-gray */
     --spell-border: #3a5a7a; /* medium blue-gray */
     --target-condition-bg: #4a3a1a; /* dark amber */
@@ -874,12 +886,10 @@
     --roll-result: #81c784; /* light green */
     --roll-result-border: #4caf50; /* medium green */
     --roll-result-background: #1b2a1b; /* dark green background */
-
-
   }
 
-  :global(body.dark-mode input[type="text"]),
-  :global(body.dark-mode input[type="number"]),
+  :global(body.dark-mode input[type='text']),
+  :global(body.dark-mode input[type='number']),
   :global(body.dark-mode textarea),
   :global(body.dark-mode select) {
     background-color: #1e1e1e;
@@ -887,8 +897,8 @@
     border-color: #2a2a2a;
   }
 
-  :global(body.dark-mode input[type="text"]:focus),
-  :global(body.dark-mode input[type="number"]:focus),
+  :global(body.dark-mode input[type='text']:focus),
+  :global(body.dark-mode input[type='number']:focus),
   :global(body.dark-mode textarea:focus),
   :global(body.dark-mode select:focus) {
     background-color: #242424;

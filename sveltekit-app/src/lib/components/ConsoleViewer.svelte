@@ -8,35 +8,37 @@
   onMount(() => {
     // Capture console.log
     const originalLog = console.log;
-    console.log = function(...args) {
+    console.log = function (...args) {
       addLog('log', args);
       originalLog.apply(console, args);
     };
 
     // Capture console.error
     const originalError = console.error;
-    console.error = function(...args) {
+    console.error = function (...args) {
       addLog('error', args);
       originalError.apply(console, args);
     };
 
     // Capture console.warn
     const originalWarn = console.warn;
-    console.warn = function(...args) {
+    console.warn = function (...args) {
       addLog('warn', args);
       originalWarn.apply(console, args);
     };
 
     // Capture console.info
     const originalInfo = console.info;
-    console.info = function(...args) {
+    console.info = function (...args) {
       addLog('info', args);
       originalInfo.apply(console, args);
     };
 
     // Capture unhandled errors
     window.addEventListener('error', (event) => {
-      addLog('error', [`Uncaught Error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`]);
+      addLog('error', [
+        `Uncaught Error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`
+      ]);
     });
 
     // Capture unhandled promise rejections
@@ -53,20 +55,22 @@
   });
 
   function addLog(type: string, args: any[]) {
-    const message = args.map(arg => {
-      if (typeof arg === 'object') {
-        try {
-          return JSON.stringify(arg, null, 2);
-        } catch (e) {
-          return String(arg);
+    const message = args
+      .map((arg) => {
+        if (typeof arg === 'object') {
+          try {
+            return JSON.stringify(arg, null, 2);
+          } catch (e) {
+            return String(arg);
+          }
         }
-      }
-      return String(arg);
-    }).join(' ');
+        return String(arg);
+      })
+      .join(' ');
 
     const timestamp = new Date().toLocaleTimeString();
     logs = [...logs, { type, message, timestamp }];
-    
+
     // Keep only last 100 logs
     if (logs.length > 100) {
       logs = logs.slice(-100);
@@ -101,15 +105,11 @@
           <button on:click={toggleMinimize} class="control-btn">
             {isMinimized ? '▲' : '▼'}
           </button>
-          <button on:click={clearLogs} class="control-btn">
-            🗑️
-          </button>
-          <button on:click={toggleVisibility} class="control-btn">
-            ✕
-          </button>
+          <button on:click={clearLogs} class="control-btn"> 🗑️ </button>
+          <button on:click={toggleVisibility} class="control-btn"> ✕ </button>
         </div>
       </div>
-      
+
       {#if !isMinimized}
         <div class="console-content">
           {#if logs.length === 0}
@@ -141,18 +141,18 @@
     right: 20px;
     background: #2d2d2d;
     color: #fff;
-    border: 2px solid #4CAF50;
+    border: 2px solid #4caf50;
     border-radius: 25px;
     padding: 12px 20px;
     font-size: 16px;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     transition: all 0.3s;
   }
 
   .console-toggle:hover {
     background: #3d3d3d;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
   }
 
   .console-toggle:active {
@@ -167,9 +167,9 @@
     max-width: 600px;
     max-height: 70vh;
     background: #1e1e1e;
-    border: 2px solid #4CAF50;
+    border: 2px solid #4caf50;
     border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -185,7 +185,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #4CAF50;
+    border-bottom: 1px solid #4caf50;
   }
 
   .console-title {
@@ -212,7 +212,7 @@
 
   .control-btn:hover {
     background: #3d3d3d;
-    border-color: #4CAF50;
+    border-color: #4caf50;
   }
 
   .control-btn:active {
@@ -246,7 +246,7 @@
   }
 
   .log-entry.log {
-    border-left-color: #2196F3;
+    border-left-color: #2196f3;
     background: #1a2332;
   }
 
@@ -261,7 +261,7 @@
   }
 
   .log-entry.info {
-    border-left-color: #4CAF50;
+    border-left-color: #4caf50;
     background: #1a2d1a;
   }
 
@@ -272,7 +272,7 @@
   }
 
   .log-type {
-    color: #4CAF50;
+    color: #4caf50;
     font-weight: bold;
     margin-right: 8px;
     font-size: 11px;
@@ -287,7 +287,7 @@
   }
 
   .log-entry.info .log-type {
-    color: #2196F3;
+    color: #2196f3;
   }
 
   .log-message {

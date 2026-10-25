@@ -4,6 +4,8 @@
   import { calculateDamage, applyDamage } from '$lib/combatUtils';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
   import { collapsedStates, searchFilter } from '$lib/stores';
+  import { turnTracker } from '$lib/stores';
+  import TooltipInfo from '$lib/components/TooltipInfo.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -15,6 +17,10 @@
   // Uncanny Dodge state
   let uncannyDodge = false;
   $: hasUncannyDodge = $character?.features?.toLowerCase?.().includes('uncanny dodge');
+  // Can't use Uncanny Dodge if the reaction is already spent this turn
+  $: if ($turnTracker.reaction && uncannyDodge) {
+    uncannyDodge = false;
+  }
 
   // Common damage types for quick selection
   const commonDamageTypes = [
@@ -49,18 +55,17 @@
     force: '🌪️'
   };
 
-
   // Dynamically calculate damage when inputs change
   $: if (damageAmount >= 0 && damageType.trim()) {
-      const result = calculateDamage(damageAmount, damageType, $character);
-      let final = result.finalDamage;
-      let adjustments = [...result.adjustments];
-      if (uncannyDodge) {
-        final = Math.floor(final / 2);
-        adjustments.push('Uncanny Dodge: Halved final damage');
-      }
-      calculatedDamage = final;
-      adjustmentMessages = adjustments;
+    const result = calculateDamage(damageAmount, damageType, $character);
+    let final = result.finalDamage;
+    let adjustments = [...result.adjustments];
+    if (uncannyDodge) {
+      final = Math.floor(final / 2);
+      adjustments.push('Uncanny Dodge: Halved final damage');
+    }
+    calculatedDamage = final;
+    adjustmentMessages = adjustments;
   } else {
     calculatedDamage = 0;
     adjustmentMessages = [];
@@ -69,11 +74,17 @@
   function applyCalculatedDamage() {
     character.update((c) => applyDamage(c, calculatedDamage));
     toasts.add(`Applied ${calculatedDamage} damage to character (${damageType})`, 'info');
+    // If Uncanny Dodge was used, mark the reaction as spent this round
+    if (uncannyDodge) {
+      turnTracker.update((t) => ({ ...t, reaction: true }));
+      toasts.add('Reaction used (Uncanny Dodge)', 'info');
+    }
     // Reset form
     damageAmount = 0;
     damageType = '';
     calculatedDamage = 0;
     adjustmentMessages = [];
+    uncannyDodge = false;
   }
 
   function cancel() {
@@ -139,19 +150,27 @@
             on:click={() => (damageType = type)}
             class:active={damageType === type}
           >
-            {damageTypeEmojis[type]} {type}
+            {damageTypeEmojis[type]}
+            {type}
           </button>
         {/each}
       </div>
 
-        {#if hasUncannyDodge}
+      {#if hasUncannyDodge}
         <div class="input-field">
-          <label>
-            <input type="checkbox" bind:checked={uncannyDodge} />
-            Uncanny Dodge (When an attacker that you can see hits you with an attack roll, you can take a Reaction to halve the attack’s damage against you.)
+          <label class:disabled={$turnTracker.reaction}>
+            <input type="checkbox" bind:checked={uncannyDodge} disabled={$turnTracker.reaction} />
+            Uncanny Dodge
+            <TooltipInfo
+              tooltipContent="When an attacker that you can see hits you with an attack roll, you can take a Reaction to halve the attack’s damage against you."
+              ariaLabel="Uncanny Dodge details"
+            />
           </label>
+          {#if $turnTracker.reaction}
+            <span class="reaction-used-note">Reaction already used this turn</span>
+          {/if}
         </div>
-        {/if}
+      {/if}
 
       {#if damageAmount >= 0 && damageType.trim()}
         <div class="calculation-result">
@@ -162,7 +181,9 @@
             <div class="damage-breakdown">
               <div class="damage-row">
                 <span class="label">Original Damage:</span>
-                <span class="value">{damageAmount} {damageTypeEmojis[damageType] || ''} {damageType}</span>
+                <span class="value"
+                  >{damageAmount} {damageTypeEmojis[damageType] || ''} {damageType}</span
+                >
               </div>
               <div class="adjustments">
                 {#each adjustmentMessages as msg}
@@ -223,6 +244,18 @@
     font-weight: bold;
     font-size: 0.9rem;
     color: var(--text-color);
+  }
+
+  label.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .reaction-used-note {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: #c83c3c;
+    font-style: italic;
   }
 
   .damage-input-field {
@@ -334,7 +367,7 @@
     padding: 8px;
     background-color: var(--spell-background);
     border-radius: 4px;
-    border-left: 4px solid ;
+    border-left: 4px solid;
   }
 
   .adjustment-msg {

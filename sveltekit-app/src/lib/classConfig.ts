@@ -1,4 +1,4 @@
-import type { ClassConfig, ClassName, ClassFeature } from './types';
+import type { ClassConfig, ClassName, ClassFeature, SubclassConfig, AbilityName } from './types';
 
 export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
   paladin: {
@@ -8,15 +8,15 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     spellcastingAbility: 'charisma',
     // Half-caster: slots per spell level [1st, 2nd, 3rd, 4th, 5th] by character level
     spellSlotProgression: {
-      1:  [0, 0, 0, 0, 0],
-      2:  [2, 0, 0, 0, 0],
-      3:  [3, 0, 0, 0, 0],
-      4:  [3, 0, 0, 0, 0],
-      5:  [4, 2, 0, 0, 0],
-      6:  [4, 2, 0, 0, 0],
-      7:  [4, 3, 0, 0, 0],
-      8:  [4, 3, 0, 0, 0],
-      9:  [4, 3, 2, 0, 0],
+      1: [0, 0, 0, 0, 0],
+      2: [2, 0, 0, 0, 0],
+      3: [3, 0, 0, 0, 0],
+      4: [3, 0, 0, 0, 0],
+      5: [4, 2, 0, 0, 0],
+      6: [4, 2, 0, 0, 0],
+      7: [4, 3, 0, 0, 0],
+      8: [4, 3, 0, 0, 0],
+      9: [4, 3, 2, 0, 0],
       10: [4, 3, 2, 0, 0],
       11: [4, 3, 3, 0, 0],
       12: [4, 3, 3, 0, 0],
@@ -203,7 +203,67 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         description: 'Take no damage on successful Dex save (half on fail)',
         minLevel: 7
       }
-    ]
+    ],
+    subclasses: {
+      'arcane trickster': {
+        name: 'Arcane Trickster',
+        spellcaster: true,
+        spellcastingAbility: 'intelligence',
+        // Third-caster: slots per spell level [1st-4th] by character (rogue) level
+        spellSlotProgression: {
+          3: [2, 0, 0, 0],
+          4: [3, 0, 0, 0],
+          5: [3, 0, 0, 0],
+          6: [3, 0, 0, 0],
+          7: [4, 2, 0, 0],
+          8: [4, 2, 0, 0],
+          9: [4, 2, 0, 0],
+          10: [4, 3, 0, 0],
+          11: [4, 3, 0, 0],
+          12: [4, 3, 0, 0],
+          13: [4, 3, 2, 0],
+          14: [4, 3, 2, 0],
+          15: [4, 3, 2, 0],
+          16: [4, 3, 3, 0],
+          17: [4, 3, 3, 0],
+          18: [4, 3, 3, 0],
+          19: [4, 3, 3, 1],
+          20: [4, 3, 3, 1]
+        },
+        features: [
+          {
+            name: 'Mage Hand Legerdemain',
+            type: 'info',
+            description:
+              'Your Mage Hand is invisible and can stow/retrieve objects, pick locks, and disarm traps using your Sleight of Hand check.',
+            minLevel: 3
+          },
+          {
+            name: 'Magical Ambush',
+            type: 'info',
+            description:
+              'If you are hidden from a creature when you cast a spell on it, it has Disadvantage on any saving throw it makes against the spell this turn.',
+            minLevel: 9
+          },
+          {
+            name: 'Versatile Trickster',
+            type: 'info',
+            description:
+              'Use a bonus action to gain Advantage on attack rolls against a creature within 5 feet of your Mage Hand this turn.',
+            minLevel: 13
+          },
+          {
+            name: 'Spell Thief',
+            type: 'uses',
+            maxUses: 1,
+            resetOn: 'long',
+            description:
+              'When a creature casts a spell targeting you, use your reaction to force a save; on a failure, you steal the spell for 8 hours.',
+            minLevel: 17
+          }
+        ]
+      }
+    }
   },
 
   wizard: {
@@ -213,15 +273,15 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     spellcastingAbility: 'intelligence',
     // Full-caster: slots per spell level [1st–9th] by character level
     spellSlotProgression: {
-      1:  [2, 0, 0, 0, 0, 0, 0, 0, 0],
-      2:  [3, 0, 0, 0, 0, 0, 0, 0, 0],
-      3:  [4, 2, 0, 0, 0, 0, 0, 0, 0],
-      4:  [4, 3, 0, 0, 0, 0, 0, 0, 0],
-      5:  [4, 3, 2, 0, 0, 0, 0, 0, 0],
-      6:  [4, 3, 3, 0, 0, 0, 0, 0, 0],
-      7:  [4, 3, 3, 1, 0, 0, 0, 0, 0],
-      8:  [4, 3, 3, 2, 0, 0, 0, 0, 0],
-      9:  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+      1: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [4, 2, 0, 0, 0, 0, 0, 0, 0],
+      4: [4, 3, 0, 0, 0, 0, 0, 0, 0],
+      5: [4, 3, 2, 0, 0, 0, 0, 0, 0],
+      6: [4, 3, 3, 0, 0, 0, 0, 0, 0],
+      7: [4, 3, 3, 1, 0, 0, 0, 0, 0],
+      8: [4, 3, 3, 2, 0, 0, 0, 0, 0],
+      9: [4, 3, 3, 3, 1, 0, 0, 0, 0],
       10: [4, 3, 3, 3, 2, 0, 0, 0, 0],
       11: [4, 3, 3, 3, 2, 1, 0, 0, 0],
       12: [4, 3, 3, 3, 2, 1, 0, 0, 0],
@@ -260,15 +320,15 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     spellcastingAbility: 'wisdom',
     // Full-caster: slots per spell level [1st–9th] by character level
     spellSlotProgression: {
-      1:  [2, 0, 0, 0, 0, 0, 0, 0, 0],
-      2:  [3, 0, 0, 0, 0, 0, 0, 0, 0],
-      3:  [4, 2, 0, 0, 0, 0, 0, 0, 0],
-      4:  [4, 3, 0, 0, 0, 0, 0, 0, 0],
-      5:  [4, 3, 2, 0, 0, 0, 0, 0, 0],
-      6:  [4, 3, 3, 0, 0, 0, 0, 0, 0],
-      7:  [4, 3, 3, 1, 0, 0, 0, 0, 0],
-      8:  [4, 3, 3, 2, 0, 0, 0, 0, 0],
-      9:  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+      1: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [3, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [4, 2, 0, 0, 0, 0, 0, 0, 0],
+      4: [4, 3, 0, 0, 0, 0, 0, 0, 0],
+      5: [4, 3, 2, 0, 0, 0, 0, 0, 0],
+      6: [4, 3, 3, 0, 0, 0, 0, 0, 0],
+      7: [4, 3, 3, 1, 0, 0, 0, 0, 0],
+      8: [4, 3, 3, 2, 0, 0, 0, 0, 0],
+      9: [4, 3, 3, 3, 1, 0, 0, 0, 0],
       10: [4, 3, 3, 3, 2, 0, 0, 0, 0],
       11: [4, 3, 3, 3, 2, 1, 0, 0, 0],
       12: [4, 3, 3, 3, 2, 1, 0, 0, 0],
@@ -287,7 +347,7 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         type: 'pool',
         // These are the 2014 rules
         // maxPool: (level) => (level >= 18 ? 3 : level >= 6 ? 2 : 1),
-        // These are the 2024 rules: 
+        // These are the 2024 rules:
         maxPool: (level) => (level >= 18 ? 4 : level >= 6 ? 3 : 2),
         resetOn: 'short',
         description: 'Turn Undead or domain-specific ability',
@@ -301,7 +361,8 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         subName: (level) => (level >= 5 ? 'Improved Turn Undead' : null),
         type: 'channelDivinity',
         description: (level, wisMod = 1) => {
-          let description = 'As a Magic action, you present your Holy Symbol and censure Undead creatures. Each Undead of your choice within 30 feet of you must make a Wisdom saving throw. If the creature fails its save, it has the Frightened and Incapacitated conditions for 1 minute. For that duration, it tries to move as far from you as it can on its turns. This effect ends early on the creature if it takes any damage, if you have the Incapacitated condition, or if you die.';
+          let description =
+            'As a Magic action, you present your Holy Symbol and censure Undead creatures. Each Undead of your choice within 30 feet of you must make a Wisdom saving throw. If the creature fails its save, it has the Frightened and Incapacitated conditions for 1 minute. For that duration, it tries to move as far from you as it can on its turns. This effect ends early on the creature if it takes any damage, if you have the Incapacitated condition, or if you die.';
 
           if (level >= 5) {
             const diceCount = Math.max(1, wisMod);
@@ -505,6 +566,35 @@ export function getClassConfig(className: string): ClassConfig | null {
   return CLASS_CONFIG[key] || null;
 }
 
+export function getSubclassConfig(className: string, subclassName?: string): SubclassConfig | null {
+  if (!subclassName) return null;
+  const config = getClassConfig(className);
+  return config?.subclasses?.[subclassName] ?? null;
+}
+
+/**
+ * Whether the class (or its subclass, e.g. Arcane Trickster) grants spellcasting.
+ */
+export function isSpellcaster(className: string, subclassName?: string): boolean {
+  const config = getClassConfig(className);
+  if (config?.spellcaster) return true;
+  return !!getSubclassConfig(className, subclassName)?.spellcaster;
+}
+
+/**
+ * The spellcasting ability for the class or a spellcasting subclass.
+ */
+export function getSpellcastingAbility(
+  className: string,
+  subclassName?: string
+): AbilityName | null {
+  const config = getClassConfig(className);
+  if (config?.spellcaster && config.spellcastingAbility) return config.spellcastingAbility;
+  const subclass = getSubclassConfig(className, subclassName);
+  if (subclass?.spellcaster && subclass.spellcastingAbility) return subclass.spellcastingAbility;
+  return null;
+}
+
 export function getAvailableFeatures(
   className: string,
   level: number,
@@ -549,7 +639,15 @@ export function getSpellSlots(className: string, level: number): number {
  * Returns the number of spell slots for each spell level (indices 0–8 = spell levels 1–9)
  * at the given character level, or an empty array if the class has no spell slot progression.
  */
-export function getSpellSlotProgression(className: string, charLevel: number): number[] {
+export function getSpellSlotProgression(
+  className: string,
+  charLevel: number,
+  subclassName?: string
+): number[] {
+  const subclass = getSubclassConfig(className, subclassName);
+  if (subclass?.spellcaster && subclass.spellSlotProgression) {
+    return subclass.spellSlotProgression[charLevel] ?? [];
+  }
   const config = getClassConfig(className);
   if (!config || !config.spellcaster || !config.spellSlotProgression) return [];
   return config.spellSlotProgression[charLevel] ?? [];
@@ -558,10 +656,10 @@ export function getSpellSlotProgression(className: string, charLevel: number): n
 export function getPreparedSpellsCount(
   className: string,
   level: number,
-  abilityMod: number
+  abilityMod: number,
+  subclassName?: string
 ): number {
-  const config = getClassConfig(className);
-  if (!config || !config.spellcaster) return 0;
+  if (!isSpellcaster(className, subclassName)) return 0;
 
   return Math.max(1, abilityMod + level);
 }
@@ -569,10 +667,10 @@ export function getPreparedSpellsCount(
 export function getSpellSaveDC(
   className: string,
   abilityMod: number,
-  profBonus: number
+  profBonus: number,
+  subclassName?: string
 ): number | null {
-  const config = getClassConfig(className);
-  if (!config || !config.spellcaster) return null;
+  if (!isSpellcaster(className, subclassName)) return null;
 
   return 8 + abilityMod + profBonus;
 }

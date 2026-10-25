@@ -23,7 +23,8 @@ export function getSavingThrowInfo(
 
   // Check if the spell does half damage on a successful save
   // Match both "half damage on a successful save" and "on a successful save, ... half damage"
-  const halfDamagePattern = /half\s+(?:as\s+much\s+)?damage\s+on\s+a\s+successful(?:\s+save)?|on\s+a\s+successful(?:\s+save)?[^.]*half\s+(?:as\s+much\s+)?damage/i;
+  const halfDamagePattern =
+    /half\s+(?:as\s+much\s+)?damage\s+on\s+a\s+successful(?:\s+save)?|on\s+a\s+successful(?:\s+save)?[^.]*half\s+(?:as\s+much\s+)?damage/i;
   const halfDamageOnSave = halfDamagePattern.test(description);
 
   // Check if the spell does no damage on a successful save (pattern: "or take damage")
@@ -70,7 +71,7 @@ export function isBuffSpell(spell: Spell): boolean {
   const description = spell.description.toLowerCase();
 
   // Specific spells that are always buff/utility spells
-  const buffSpellNames = ['Divine Favor', 'Bless', 'Aid', 'Command', 'Crusader\'s Mantle'];
+  const buffSpellNames = ['Divine Favor', 'Bless', 'Aid', 'Command', "Crusader's Mantle"];
   if (buffSpellNames.includes(spell.name)) {
     return true;
   }
