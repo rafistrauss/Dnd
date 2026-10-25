@@ -129,3 +129,15 @@ test('characters without a class cannot level up or down', () => {
   levelDownCharacter();
   expect(get(character)).toEqual(before);
 });
+
+test('unlimited Rage at level 20 does not allocate an infinite uses array', () => {
+  character.update((char) => ({ ...char, class: 'barbarian', level: 19, maxHP: 176 }));
+  expect(getLevelUpPreview().classFeatureCounts.Rage.max).toBe(Infinity);
+  applyLevelUp('average');
+  expect(get(character).level).toBe(20);
+  expect(get(character).classFeatures.features.Rage).toEqual([]);
+  levelDownCharacter();
+  expect(get(character).classFeatures.features.Rage).toEqual(Array(6).fill(false));
+  setCharacterLevel(20);
+  expect(get(character).classFeatures.features.Rage).toEqual([]);
+});

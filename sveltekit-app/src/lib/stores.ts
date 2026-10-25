@@ -354,7 +354,7 @@ function syncClassFeatureResources(char: Character): Character {
           : feature.maxUses || 0;
       const usedCount = Array.isArray(currentValue) ? currentValue.filter(Boolean).length : 0;
       nextFeatures[featureKey] = Array.from(
-        { length: maxUses },
+        { length: Number.isFinite(maxUses) ? maxUses : 0 },
         (_, idx) => idx < Math.min(usedCount, maxUses)
       );
       return;
@@ -815,7 +815,7 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
           typeof feature.maxUses === 'function'
             ? feature.maxUses(newLevel, abilityMod)
             : feature.maxUses || 0;
-        nextFeatures[featureKey] = Array(maxUses).fill(false);
+        nextFeatures[featureKey] = Array(Number.isFinite(maxUses) ? maxUses : 0).fill(false);
       } else if (feature.type === 'pool') {
         const maxPool =
           typeof feature.maxPool === 'function' ? feature.maxPool(newLevel) : feature.maxPool;

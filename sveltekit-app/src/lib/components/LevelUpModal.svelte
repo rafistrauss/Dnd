@@ -195,7 +195,7 @@
             {#each Object.entries(preview.classFeatureCounts) as [name, { max }]}
               <div class="resource-item">
                 <span class="resource-icon">✓</span>
-                <span>{name}: {max}/{max}</span>
+                <span>{name}: {max === Infinity ? 'Unlimited' : `${max}/${max}`}</span>
               </div>
             {/each}
           </div>

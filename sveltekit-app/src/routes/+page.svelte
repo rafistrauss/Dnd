@@ -155,7 +155,9 @@
             if (feature.type === 'uses') {
               const maxUses =
                 typeof feature.maxUses === 'function' ? feature.maxUses(c.level) : feature.maxUses;
-              c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+              c.classFeatures.features[featureKey] = Array(
+                Number.isFinite(maxUses) ? maxUses : 0
+              ).fill(false);
               restoredItems.push(featureName);
             } else if (feature.type === 'pool') {
               const maxPool =
@@ -273,7 +275,9 @@
           if (feature.type === 'uses') {
             const maxUses =
               typeof feature.maxUses === 'function' ? feature.maxUses(c.level) : feature.maxUses;
-            c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+            c.classFeatures.features[featureKey] = Array(
+              Number.isFinite(maxUses) ? maxUses : 0
+            ).fill(false);
             featuresRestored = true;
           } else if (feature.type === 'pool') {
             const maxPool =
