@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { character, setCharacterLevel, levelDownCharacter, collapsedStates, toasts } from '$lib/stores';
+  import {
+    character,
+    setCharacterLevel,
+    levelDownCharacter,
+    collapsedStates,
+    toasts
+  } from '$lib/stores';
   import { getAvailableClasses, getAvailableSubclasses } from '$lib/classConfig';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
 
@@ -109,14 +115,14 @@
           >
             Level Up
           </button>
-                  <button
-                    type="button"
-                    class="level-down-btn"
-                    on:click={handleLevelDown}
-                    disabled={$character.level <= 1}
-                  >
-                    Level Down
-                  </button>
+          <button
+            type="button"
+            class="level-down-btn"
+            on:click={handleLevelDown}
+            disabled={!$character.class || $character.level <= 1}
+          >
+            Level Down
+          </button>
         </div>
       </div>
       <div class="form-group">
@@ -184,12 +190,14 @@
 
   .level-controls {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
   }
 
   .level-controls input {
     flex: 1;
+    min-width: 60px;
   }
 
   .level-up-btn {

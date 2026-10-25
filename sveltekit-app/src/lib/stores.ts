@@ -2,11 +2,13 @@ import { writable, derived } from 'svelte/store';
 import type { Character, RacialTraitUses, RollHistoryEntry } from './types';
 import { browser } from '$app/environment';
 import { getRacialSpellsForLevel, getRaceConfig } from './raceConfig';
-<<<<<<< HEAD
-import { getAvailableFeatures, getClassConfig, getSpellSlotProgression } from './classConfig';
+import {
+  getAvailableFeatures,
+  getClassConfig,
+  getSpellcastingAbility,
+  getSpellSlotProgression
+} from './classConfig';
 import { calculateMaxHP } from './combatUtils';
-=======
-import { getSpellSlotProgression } from './classConfig';
 
 function normalizeSpellSlotUsage(char: Character): Character {
   if (!char.classFeatures) return char;
@@ -32,7 +34,6 @@ function normalizeSpellSlotUsage(char: Character): Character {
   char.classFeatures.spellSlotsByLevel = normalized;
   return char;
 }
->>>>>>> origin/sveltekit
 
 // Toast notification store
 export interface Toast {
@@ -154,8 +155,6 @@ const initialCharacter: Character = {
   class: '',
   subclass: '',
   level: 1,
-  hpByLevel: { 1: 0 },
-  hpRolls: [],
   race: '',
   background: '',
   alignment: '',
@@ -308,7 +307,7 @@ function syncSpellSlotsForLevel(char: Character): Character {
     return char;
   }
 
-  const progression = getSpellSlotProgression(char.class, char.level);
+  const progression = getSpellSlotProgression(char.class, char.level, char.subclass);
   const previousSlots = char.classFeatures.spellSlotsByLevel || {};
   const nextSlots: Record<number, boolean[]> = {};
 
@@ -335,9 +334,10 @@ function syncClassFeatureResources(char: Character): Character {
     return char;
   }
 
-  const classConfig = getClassConfig(char.class);
-  const spellcastingAbility = classConfig?.spellcastingAbility;
-  const abilityMod = spellcastingAbility ? calculateModifier(char.abilities[spellcastingAbility]) : undefined;
+  const spellcastingAbility = getSpellcastingAbility(char.class, char.subclass);
+  const abilityMod = spellcastingAbility
+    ? calculateModifier(char.abilities[spellcastingAbility])
+    : undefined;
   const nextFeatures: Record<string, boolean[] | number> = {};
   const availableFeatures = getAvailableFeatures(char.class, char.level, char.subclass);
 
@@ -382,7 +382,10 @@ function syncLevelDerivedState(char: Character, previousLevel: number): Characte
   char.hitDice.max = char.level;
 
   if (char.level > previousLevel) {
-    char.hitDice.current = Math.min(char.hitDice.max, char.hitDice.current + (char.level - previousLevel));
+    char.hitDice.current = Math.min(
+      char.hitDice.max,
+      char.hitDice.current + (char.level - previousLevel)
+    );
   } else {
     char.hitDice.current = Math.min(char.hitDice.current, char.hitDice.max);
   }
@@ -394,7 +397,7 @@ function syncLevelDerivedState(char: Character, previousLevel: number): Characte
 
 // Load from localStorage if available
 function loadFromStorage(): Character {
-  if (!browser) return initialCharacter;
+  if (!browser) return structuredClone(initialCharacter);
 
   try {
     const saved = localStorage.getItem('dndCharacter');
@@ -476,7 +479,7 @@ function loadFromStorage(): Character {
   } catch (e) {
     console.error('Failed to load character from storage:', e);
   }
-  return initialCharacter;
+  return structuredClone(initialCharacter);
 }
 
 // Create the main character store
@@ -602,7 +605,8 @@ export function setCharacterLevel(level: number) {
     char.hpByLevel![previousLevel] = char.maxHP;
 
     if (char.class) {
-      const previousMaxHP = char.hpByLevel![previousLevel] || char.maxHP || getCalculatedHPAtLevel(char, previousLevel);
+      const previousMaxHP =
+        char.hpByLevel![previousLevel] || char.maxHP || getCalculatedHPAtLevel(char, previousLevel);
       let targetMaxHP = char.hpByLevel![nextLevel];
 
       if (targetMaxHP === undefined) {
@@ -670,27 +674,30 @@ export function getLevelUpPreview(): LevelUpPreview | null {
     const hitDieSize = parseInt(classConfig.hitDice.substring(1));
     const hpGainAverage = Math.max(1, Math.floor(hitDieSize / 2) + 1 + conMod);
 
+    const spellcastingAbility = getSpellcastingAbility(char.class, char.subclass);
+    const abilityMod = spellcastingAbility
+      ? calculateModifier(char.abilities[spellcastingAbility])
+      : undefined;
+
     // Calculate spell slots to restore
-    const currentProgression = getSpellSlotProgression(char.class, currentLevel);
-    const nextProgression = getSpellSlotProgression(char.class, newLevel);
+    const nextProgression = getSpellSlotProgression(char.class, newLevel, char.subclass);
     const spellSlotsRestored = nextProgression.reduce(
-      (sum, slots, idx) => sum + (slots > 0 ? slots : 0),
+      (sum, slots) => sum + (slots > 0 ? slots : 0),
       0
     );
 
     // Get class features
-    const currentFeatures = getAvailableFeatures(char.class, currentLevel, char.subclass);
     const nextFeatures = getAvailableFeatures(char.class, newLevel, char.subclass);
     const classFeatureCounts: { [name: string]: { current: number; max: number } } = {};
 
     nextFeatures.forEach((feature) => {
       if (feature.type === 'uses' || feature.type === 'pool') {
         const featureName =
-          typeof feature.name === 'function' ? feature.name(newLevel, conMod) : feature.name;
+          typeof feature.name === 'function' ? feature.name(newLevel, abilityMod) : feature.name;
         const maxCount =
           feature.type === 'uses'
             ? typeof feature.maxUses === 'function'
-              ? feature.maxUses(newLevel, conMod)
+              ? feature.maxUses(newLevel, abilityMod)
               : feature.maxUses
             : typeof feature.maxPool === 'function'
               ? feature.maxPool(newLevel)
@@ -744,7 +751,7 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
 
     // Calculate HP gain or use stored
     let newMaxHP: number;
-    
+
     if (hpGainMethod === 'reuse' && char.hpByLevel![newLevel]) {
       // Reuse previously stored HP for this level
       newMaxHP = char.hpByLevel![newLevel];
@@ -765,12 +772,13 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
     // Store new level's HP
     char.hpByLevel![newLevel] = newMaxHP;
 
-    // Record the HP roll if it was rolled
-    if (hpGainMethod === 'roll' && hpRollResult !== undefined) {
-      if (!char.hpRolls) {
-        char.hpRolls = [];
+    if (hpGainMethod !== 'reuse' || char.hpRolls![newLevel - 2] === undefined) {
+      const averageRoll = Math.floor(hitDieSize / 2) + 1;
+      for (let index = 0; index < newLevel - 2; index++) {
+        char.hpRolls![index] ??= averageRoll;
       }
-      char.hpRolls.push(hpRollResult);
+      char.hpRolls![newLevel - 2] =
+        hpGainMethod === 'roll' && hpRollResult !== undefined ? hpRollResult : averageRoll;
     }
 
     // Update level and derived state
@@ -778,7 +786,7 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
     syncLevelDerivedState(char, previousLevel);
 
     // Restore all spell slots
-    const nextProgression = getSpellSlotProgression(char.class, newLevel);
+    const nextProgression = getSpellSlotProgression(char.class, newLevel, char.subclass);
     const nextSlots: Record<number, boolean[]> = {};
     nextProgression.forEach((totalSlots, idx) => {
       if (totalSlots > 0) {
@@ -792,16 +800,20 @@ export function applyLevelUp(hpGainMethod: 'average' | 'roll' | 'reuse', hpRollR
     // Restore all class features
     const availableFeatures = getAvailableFeatures(char.class, newLevel, char.subclass);
     const nextFeatures: Record<string, boolean[] | number> = {};
+    const spellcastingAbility = getSpellcastingAbility(char.class, char.subclass);
+    const abilityMod = spellcastingAbility
+      ? calculateModifier(char.abilities[spellcastingAbility])
+      : undefined;
 
     availableFeatures.forEach((feature) => {
       const featureName =
-        typeof feature.name === 'function' ? feature.name(newLevel, conMod) : feature.name;
+        typeof feature.name === 'function' ? feature.name(newLevel, abilityMod) : feature.name;
       const featureKey = featureName.replace(/\s+/g, '');
 
       if (feature.type === 'uses') {
         const maxUses =
           typeof feature.maxUses === 'function'
-            ? feature.maxUses(newLevel, conMod)
+            ? feature.maxUses(newLevel, abilityMod)
             : feature.maxUses || 0;
         nextFeatures[featureKey] = Array(maxUses).fill(false);
       } else if (feature.type === 'pool') {
@@ -831,7 +843,7 @@ export function levelDownCharacter() {
     const previousLevel = char.level;
     const newLevel = previousLevel - 1;
 
-    ensureCharacterStructures(char);
+    ensureHPHistory(char);
 
     // Store current level's HP before downleveling
     char.hpByLevel![previousLevel] = char.maxHP;
@@ -935,7 +947,7 @@ export function importCharacter(file: File): Promise<Character> {
 }
 
 export function resetCharacter(): void {
-  character.set(initialCharacter);
+  character.set(structuredClone(initialCharacter));
 }
 
 export function initializeRacialTraits() {

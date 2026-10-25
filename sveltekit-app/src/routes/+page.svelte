@@ -809,10 +809,7 @@
   onCancel={handleCancelAddCondition}
 />
 
-<LevelUpModal
-  isOpen={showLevelUpModal}
-  onClose={() => (showLevelUpModal = false)}
-/>
+<LevelUpModal isOpen={showLevelUpModal} onClose={() => (showLevelUpModal = false)} />
 
 <Toast />
 

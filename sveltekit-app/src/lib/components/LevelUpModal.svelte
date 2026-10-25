@@ -15,6 +15,11 @@
   let storedHPAvailable: boolean = false;
   let storedHPValue: number = 0;
 
+  $: if (!isOpen) {
+    hpGainMethod = 'average';
+    hpRollValue = null;
+  }
+
   $: {
     if (isOpen) {
       preview = getLevelUpPreview();
@@ -27,6 +32,15 @@
     }
   }
 
+  $: maxHPAfter = preview
+    ? hpGainMethod === 'reuse' && storedHPAvailable
+      ? storedHPValue
+      : preview.maxHPCurrent +
+        (hpGainMethod === 'roll' && hpRollValue !== null
+          ? Math.max(1, hpRollValue + preview.conMod)
+          : preview.hpGainAverage)
+    : 0;
+
   function rollForHPGain() {
     if (!$character.class) return;
 
@@ -34,7 +48,7 @@
     if (!classConfig) return;
 
     isRolling = true;
-    const result = rollFromNotation(classConfig.hitDice);
+    const result = rollFromNotation(`1${classConfig.hitDice}`);
     hpRollValue = result.rolls[0]; // Just the die roll, not total
     hpRollModifier = preview?.conMod ?? 0;
     isRolling = false;
@@ -78,7 +92,10 @@
     <div
       class="modal-content"
       on:click={(e) => e.stopPropagation()}
-      on:keydown={(e) => e.stopPropagation()}
+      on:keydown={(e) => {
+        handleKeydown(e);
+        e.stopPropagation();
+      }}
       role="dialog"
       aria-labelledby="level-up-title"
       aria-modal="true"
@@ -106,11 +123,11 @@
             </div>
             <div class="hp-row highlight">
               <span class="label">New Max HP:</span>
-              <span class="value">{preview.maxHPAfter}</span>
+              <span class="value">{maxHPAfter}</span>
             </div>
             <div class="hp-row">
               <span class="label">Current HP will be restored to:</span>
-              <span class="value">{preview.maxHPAfter}</span>
+              <span class="value">{maxHPAfter}</span>
             </div>
           </div>
 
