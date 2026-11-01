@@ -27,7 +27,7 @@
     getAlternateDamageForDamagedTarget
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
-  import { getSpellSlotProgression } from '$lib/classConfig';
+  import { getSpellSlotProgression, getAvailableFeatures } from '$lib/classConfig';
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
@@ -178,12 +178,19 @@
     turnTracker.update((t) => (t[slot] ? t : { ...t, [slot]: true }));
   }
 
+  function hasPotentCantrip(): boolean {
+    return getAvailableFeatures($character.class, $character.level, $character.subclass).some(
+      (f) => f.name === 'Potent Cantrip'
+    );
+  }
+
   // Support racial trait spell usage and user override
   function rollAttack(attack: Attack, useRacialTraitOverride?: boolean) {
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
     let attackCount = 1;
+    let potentCantrip = false;
     const damageBreakdown: Array<{ value: number | string; source: string }> = []; // Track damage bonuses separately
 
     if (attack.spellRef) {
@@ -191,6 +198,7 @@
       if (spell) {
         isSpellAttack = requiresSpellAttackRoll(spell);
         attackCount = getSpellAttackCount(spell, attack.castAtLevel);
+        potentCantrip = spell.level === 0 && isSpellAttack && hasPotentCantrip();
 
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
@@ -218,6 +226,8 @@
               (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
             damageToRoll = getScaledSpellDamage(attack, spell);
           }
+        } else if (hasPotentCantrip() && attack.targetSucceededSave && getSavingThrowInfo(spell)) {
+          applyHalfDamage = true;
         }
       }
     } else {
@@ -315,6 +325,7 @@
       attackName: attack.name,
       applyHalfDamage,
       attackCount,
+      potentCantrip,
       bonusBreakdown,
       damageBreakdown,
       rollType: 'attack',
@@ -390,6 +401,13 @@
             }
           }
           // Remove spell.damageType usage (type error fix)
+        } else if (
+          hasPotentCantrip() &&
+          !isHealing &&
+          attack.targetSucceededSave &&
+          getSavingThrowInfo(spell)
+        ) {
+          applyHalfDamage = true;
         }
       }
     } else {

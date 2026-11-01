@@ -20,6 +20,7 @@
   export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
   export let mastery: string | undefined = undefined; // Weapon mastery property name
   export let attackCount = 1; // Number of separate attack rolls (e.g., Scorching Ray rays), each rolled individually
+  export let potentCantrip = false; // Evoker Potent Cantrip: offer half damage on a missed cantrip attack
   export let greatWeaponFighting = false; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
 
   // Compute a contextual mastery note based on the mastery type and character stats
@@ -152,7 +153,9 @@
     label: string;
     notation: string;
     breakdown?: Array<{ value: number | string; source: string }>;
+    half?: boolean;
   }> = [];
+  let potentHalf = false;
   let isCriticalSuccess = false;
   let isCriticalFail = false;
   let guidedStrikeUsed = false;
@@ -368,6 +371,7 @@
     followUpActions = [];
     isCriticalSuccess = false;
     isCriticalFail = false;
+    if (type !== 'damage') potentHalf = false;
 
     // DON'T clear bonus breakdown - it should be set by the caller before calling this function
     // (either from rollAttack/rollDamage in Attacks.svelte or from follow-up action click)
@@ -395,7 +399,7 @@
       let resultTotal = adjustedRoll.resultTotal;
       let resultString = adjustedRoll.resultString;
       // If applyHalfDamage is true, halve the result (rounded down)
-      if (applyHalfDamage) {
+      if (applyHalfDamage || potentHalf) {
         resultTotal = Math.floor(resultTotal / 2);
         resultString = resultString + ' (halved)';
       }
@@ -458,6 +462,15 @@
           // console.log('Follow-up actions after setup:', followUpActions);
         } else {
           // console.log('No damageNotation provided for attack roll');
+        }
+
+        if (potentCantrip && damageNotation && !isCriticalSuccess) {
+          followUpActions.push({
+            label: `Missed: Roll Half Damage (Potent Cantrip)`,
+            notation: damageNotation,
+            breakdown: damageBreakdown,
+            half: true
+          });
         }
 
         // Sneak Attack follow-up for rogues with the feature
@@ -936,6 +949,7 @@
                 class="btn btn-follow-up"
                 on:click={() => {
                   bonusBreakdown = action.breakdown || [];
+                  potentHalf = !!action.half;
                   rollDice(action.notation, 'damage');
                 }}
               >
