@@ -580,10 +580,18 @@ export function getClassConfig(className: string): ClassConfig | null {
   return CLASS_CONFIG[key] || null;
 }
 
+function findSubclass(config: ClassConfig, subclassName?: string): SubclassConfig | null {
+  if (!subclassName || !config.subclasses) return null;
+  const wanted = subclassName.trim().toLowerCase();
+  const key = Object.keys(config.subclasses).find(
+    (k) => k.toLowerCase() === wanted || config.subclasses![k].name.toLowerCase() === wanted
+  );
+  return key ? config.subclasses[key] : null;
+}
+
 export function getSubclassConfig(className: string, subclassName?: string): SubclassConfig | null {
-  if (!subclassName) return null;
   const config = getClassConfig(className);
-  return config?.subclasses?.[subclassName] ?? null;
+  return config ? findSubclass(config, subclassName) : null;
 }
 
 /**
@@ -622,8 +630,9 @@ export function getAvailableFeatures(
   );
 
   // If subclass is specified, add its features
-  if (subclassName && config.subclasses && config.subclasses[subclassName]) {
-    const subclassFeatures = config.subclasses[subclassName].features.filter(
+  const subclass = findSubclass(config, subclassName);
+  if (subclass) {
+    const subclassFeatures = subclass.features.filter(
       (feature) => !feature.minLevel || feature.minLevel <= level
     );
     return [...classFeatures, ...subclassFeatures];
