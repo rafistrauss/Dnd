@@ -460,7 +460,20 @@
     return spells.find((s) => s.name === name);
   }
 
+  function hasSpellSlotAvailable(char: any, level: number): boolean {
+    if (!level) return true; // cantrips don't use slots
+    if (!char.class) return false;
+    const total =
+      getSpellSlotProgression(char.class, char.level, char.subclass)[level - 1] || 0;
+    const stored = char.classFeatures?.spellSlotsByLevel?.[level] ?? [];
+    for (let i = 0; i < total; i++) {
+      if (!stored[i]) return true;
+    }
+    return false;
+  }
+
   function checkAndConsumeSpellSlot(level: number): boolean {
+    if (!level) return true; // cantrips don't use slots
     if (!$character.class) return false;
 
     const progression = getSpellSlotProgression(
@@ -1153,7 +1166,7 @@
                 {#if requiresSpellAttackRoll(spell)}
                   <!-- Spell requires attack roll (e.g., Guiding Bolt, Eldritch Blast) -->
                   {#if !useRacialTraitMap[attack.id]}
-                    {#if $character.classFeatures && $character.classFeatures.spellSlotsByLevel && $character.classFeatures.spellSlotsByLevel[spell.level]?.some((slot) => !slot)}
+                    {#if hasSpellSlotAvailable($character, spell.level)}
                       <button on:click={() => rollAttack(attack, false)} class="btn btn-primary"
                         >Roll Attack (Spell Slot)</button
                       >
