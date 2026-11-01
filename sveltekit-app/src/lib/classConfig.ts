@@ -310,7 +310,21 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         description: 'Cast one 1st-level and one 2nd-level spell at will',
         minLevel: 18
       }
-    ]
+    ],
+    subclasses: {
+      evoker: {
+        name: 'Evoker',
+        features: [
+          {
+            name: 'Potent Cantrip',
+            type: 'info',
+            description:
+              "When you cast a damaging cantrip at a creature and you miss with the attack roll or the target succeeds on the saving throw, the target takes half the cantrip's damage (if any) but suffers no additional effect from the cantrip.",
+            minLevel: 3
+          }
+        ]
+      }
+    }
   },
 
   cleric: {

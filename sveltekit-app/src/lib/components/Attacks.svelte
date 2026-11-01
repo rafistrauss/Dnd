@@ -23,6 +23,7 @@
     isBuffSpell,
     extractSpellEffectBonuses,
     requiresSpellAttackRoll,
+    getSpellAttackCount,
     getAlternateDamageForDamagedTarget
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
@@ -182,12 +183,14 @@
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
+    let attackCount = 1;
     const damageBreakdown: Array<{ value: number | string; source: string }> = []; // Track damage bonuses separately
 
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
       if (spell) {
         isSpellAttack = requiresSpellAttackRoll(spell);
+        attackCount = getSpellAttackCount(spell, attack.castAtLevel);
 
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
@@ -311,6 +314,7 @@
       damageNotation: damageToRoll,
       attackName: attack.name,
       applyHalfDamage,
+      attackCount,
       bonusBreakdown,
       damageBreakdown,
       rollType: 'attack',
@@ -463,8 +467,7 @@
   function hasSpellSlotAvailable(char: any, level: number): boolean {
     if (!level) return true; // cantrips don't use slots
     if (!char.class) return false;
-    const total =
-      getSpellSlotProgression(char.class, char.level, char.subclass)[level - 1] || 0;
+    const total = getSpellSlotProgression(char.class, char.level, char.subclass)[level - 1] || 0;
     const stored = char.classFeatures?.spellSlotsByLevel?.[level] ?? [];
     for (let i = 0; i < total; i++) {
       if (!stored[i]) return true;

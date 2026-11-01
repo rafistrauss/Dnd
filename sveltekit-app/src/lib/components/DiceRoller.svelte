@@ -19,6 +19,7 @@
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
   export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
   export let mastery: string | undefined = undefined; // Weapon mastery property name
+  export let attackCount = 1; // Number of separate attack rolls (e.g., Scorching Ray rays), each rolled individually
   export let greatWeaponFighting = false; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
 
   // Compute a contextual mastery note based on the mastery type and character stats
@@ -347,6 +348,13 @@
     };
   });
 
+  let currentAttackIndex = 1;
+
+  function rollNextAttack() {
+    currentAttackIndex += 1;
+    rollDice(lastRolledNotation, 'attack');
+  }
+
   function rollDice(
     notation: string,
     type: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'
@@ -638,6 +646,7 @@
     isCriticalFail = false;
     guidedStrikeUsed = false;
     gwfSummary = '';
+    currentAttackIndex = 1;
     setTimeout(() => rollDice(notation, rollType), 200);
   }
 
@@ -647,6 +656,8 @@
     notation = '';
     damageNotation = '';
     attackName = '';
+    attackCount = 1;
+    currentAttackIndex = 1;
     mastery = undefined;
     lastRolledNotation = '';
     rollResult = null;
@@ -697,7 +708,8 @@
         {#if attackName}
           {attackName}
           {#if rollType === 'attack'}
-            - Attack Roll{/if}
+            - Attack Roll{#if attackCount > 1}
+              (Ray {currentAttackIndex} of {attackCount}){/if}{/if}
           {#if rollType === 'damage'}
             - Damage Roll{/if}
           {#if rollType === 'healing'}
@@ -907,6 +919,13 @@
           <div class="inspiration-reroll-row">
             <button class="btn btn-inspiration" on:click={useInspirationReroll}>
               ⭐ Use Inspiration (Reroll d20)
+            </button>
+          </div>
+        {/if}
+        {#if attackCount > 1 && currentAttackIndex < attackCount}
+          <div class="follow-up-actions">
+            <button class="btn btn-follow-up" on:click={rollNextAttack}>
+              Roll Attack for Ray {currentAttackIndex + 1} of {attackCount}
             </button>
           </div>
         {/if}
