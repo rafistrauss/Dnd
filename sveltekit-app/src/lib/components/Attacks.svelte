@@ -23,10 +23,11 @@
     isBuffSpell,
     extractSpellEffectBonuses,
     requiresSpellAttackRoll,
+    getSpellAttackCount,
     getAlternateDamageForDamagedTarget
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
-  import { getSpellSlotProgression } from '$lib/classConfig';
+  import { getSpellSlotProgression, getAvailableFeatures } from '$lib/classConfig';
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
@@ -177,17 +178,27 @@
     turnTracker.update((t) => (t[slot] ? t : { ...t, [slot]: true }));
   }
 
+  function hasPotentCantrip(char: any = $character): boolean {
+    return getAvailableFeatures(char.class, char.level, char.subclass).some(
+      (f) => f.name === 'Potent Cantrip'
+    );
+  }
+
   // Support racial trait spell usage and user override
   function rollAttack(attack: Attack, useRacialTraitOverride?: boolean) {
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
+    let attackCount = 1;
+    let potentCantrip = false;
     const damageBreakdown: Array<{ value: number | string; source: string }> = []; // Track damage bonuses separately
 
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
       if (spell) {
         isSpellAttack = requiresSpellAttackRoll(spell);
+        attackCount = getSpellAttackCount(spell, attack.castAtLevel);
+        potentCantrip = spell.level === 0 && isSpellAttack && hasPotentCantrip();
 
         if (spell.level > 0) {
           const castLevel = attack.castAtLevel || spell.level;
@@ -215,6 +226,8 @@
               (savingThrow?.halfDamageOnSave && attack.targetSucceededSave) || false;
             damageToRoll = getScaledSpellDamage(attack, spell);
           }
+        } else if (hasPotentCantrip() && attack.targetSucceededSave && getSavingThrowInfo(spell)) {
+          applyHalfDamage = true;
         }
       }
     } else {
@@ -311,6 +324,8 @@
       damageNotation: damageToRoll,
       attackName: attack.name,
       applyHalfDamage,
+      attackCount,
+      potentCantrip,
       bonusBreakdown,
       damageBreakdown,
       rollType: 'attack',
@@ -322,14 +337,14 @@
     });
   }
 
-  function rollDamage(attack: Attack) {
+  function rollDamage(attack: Attack, potentHalf = false) {
     if (!attack.damage) {
       toasts.add(`${attack.name}: No damage specified`, 'error');
       return;
     }
 
     let damageToRoll = attack.damage;
-    let applyHalfDamage = false;
+    let applyHalfDamage = potentHalf;
     const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
     let damageType = attack.damageType || '';
 
@@ -386,6 +401,13 @@
             }
           }
           // Remove spell.damageType usage (type error fix)
+        } else if (
+          hasPotentCantrip() &&
+          !isHealing &&
+          attack.targetSucceededSave &&
+          getSavingThrowInfo(spell)
+        ) {
+          applyHalfDamage = true;
         }
       }
     } else {
@@ -463,8 +485,7 @@
   function hasSpellSlotAvailable(char: any, level: number): boolean {
     if (!level) return true; // cantrips don't use slots
     if (!char.class) return false;
-    const total =
-      getSpellSlotProgression(char.class, char.level, char.subclass)[level - 1] || 0;
+    const total = getSpellSlotProgression(char.class, char.level, char.subclass)[level - 1] || 0;
     const stored = char.classFeatures?.spellSlotsByLevel?.[level] ?? [];
     for (let i = 0; i < total; i++) {
       if (!stored[i]) return true;
@@ -1024,7 +1045,9 @@
                           (Spell Save DC: {getSpellSaveDC($character, $character.abilities)})
                         </span>
                       {/if}
-                      {#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
+                      {#if attack.targetSucceededSave && spell.level === 0 && hasPotentCantrip($character)}
+                        <span class="scaled-damage">(Half damage - Potent Cantrip)</span>
+                      {:else if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
                         <span class="scaled-damage">(Half damage)</span>
                       {:else if attack.targetSucceededSave && savingThrow.noDamageOnSave}
                         <span class="scaled-damage">(No damage)</span>
@@ -1217,6 +1240,14 @@
                       >Cast Spell</button
                     >
                   {/if}
+                {/if}
+                {#if spell.level === 0 && attack.damage && attack.damage.trim() !== '' && !isHealingSpell(spell) && hasPotentCantrip($character)}
+                  <button
+                    on:click={() => rollDamage(attack, true)}
+                    class="btn btn-secondary"
+                    title="Evoker Potent Cantrip: half damage on a miss or successful save"
+                    >Roll ½ Damage (Potent Cantrip)</button
+                  >
                 {/if}
                 {#if !requiresSpellAttackRoll(spell) && !isBuffSpell(spell)}
                   <!-- Damage/healing spells with saving throws or no attack, or control spells -->

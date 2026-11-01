@@ -63,6 +63,17 @@ export function requiresSpellAttackRoll(spell: Spell): boolean {
 }
 
 /**
+ * Number of separate attack rolls a spell requires when cast (e.g., Scorching Ray
+ * makes one ranged spell attack per ray: 3 rays, +1 per slot level above 2nd).
+ */
+export function getSpellAttackCount(spell: Spell, castLevel?: number): number {
+  if (spell.name === 'Scorching Ray') {
+    return 3 + Math.max(0, (castLevel || spell.level) - spell.level);
+  }
+  return 1;
+}
+
+/**
  * Check if a spell is a buff spell (provides bonuses but doesn't deal damage directly)
  * @param spell The spell to analyze
  * @returns true if the spell is a buff spell
