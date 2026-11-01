@@ -178,8 +178,8 @@
     turnTracker.update((t) => (t[slot] ? t : { ...t, [slot]: true }));
   }
 
-  function hasPotentCantrip(): boolean {
-    return getAvailableFeatures($character.class, $character.level, $character.subclass).some(
+  function hasPotentCantrip(char: any = $character): boolean {
+    return getAvailableFeatures(char.class, char.level, char.subclass).some(
       (f) => f.name === 'Potent Cantrip'
     );
   }
@@ -337,14 +337,14 @@
     });
   }
 
-  function rollDamage(attack: Attack) {
+  function rollDamage(attack: Attack, potentHalf = false) {
     if (!attack.damage) {
       toasts.add(`${attack.name}: No damage specified`, 'error');
       return;
     }
 
     let damageToRoll = attack.damage;
-    let applyHalfDamage = false;
+    let applyHalfDamage = potentHalf;
     const bonusBreakdown: Array<{ value: number | string; source: string }> = [];
     let damageType = attack.damageType || '';
 
@@ -1045,7 +1045,9 @@
                           (Spell Save DC: {getSpellSaveDC($character, $character.abilities)})
                         </span>
                       {/if}
-                      {#if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
+                      {#if attack.targetSucceededSave && spell.level === 0 && hasPotentCantrip($character)}
+                        <span class="scaled-damage">(Half damage - Potent Cantrip)</span>
+                      {:else if attack.targetSucceededSave && savingThrow.halfDamageOnSave}
                         <span class="scaled-damage">(Half damage)</span>
                       {:else if attack.targetSucceededSave && savingThrow.noDamageOnSave}
                         <span class="scaled-damage">(No damage)</span>
@@ -1238,6 +1240,14 @@
                       >Cast Spell</button
                     >
                   {/if}
+                {/if}
+                {#if spell.level === 0 && attack.damage && attack.damage.trim() !== '' && !isHealingSpell(spell) && hasPotentCantrip($character)}
+                  <button
+                    on:click={() => rollDamage(attack, true)}
+                    class="btn btn-secondary"
+                    title="Evoker Potent Cantrip: half damage on a miss or successful save"
+                    >Roll ½ Damage (Potent Cantrip)</button
+                  >
                 {/if}
                 {#if !requiresSpellAttackRoll(spell) && !isBuffSpell(spell)}
                   <!-- Damage/healing spells with saving throws or no attack, or control spells -->
