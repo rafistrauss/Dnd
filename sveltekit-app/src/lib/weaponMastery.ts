@@ -1,4 +1,18 @@
 // Weapon Mastery Properties (D&D 2024 PHB)
+import type { Attack, Character } from './types';
+
+export function getAttackMastery(
+  char: Pick<Character, 'weaponMasteries'>,
+  attack: Pick<Attack, 'name' | 'mastery'>
+): WeaponMasteryName | undefined {
+  if (!char.weaponMasteries) return attack.mastery;
+  return char.weaponMasteries.some((weapon) => {
+    const escaped = weapon.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return escaped && new RegExp(`\\b${escaped}\\b`, 'i').test(attack.name);
+  })
+    ? attack.mastery
+    : undefined;
+}
 
 export type WeaponMasteryName =
   | 'Cleave'

@@ -1,4 +1,4 @@
-import type { AbilityName } from './types';
+import type { AbilityName, Ruleset } from './types';
 
 export interface RacialSpell {
   name: string;
@@ -16,6 +16,11 @@ export interface RacialTrait {
   spellcastingAbility?: AbilityName;
   componentsRequired?: boolean; // Default false for racial spells
   resistances?: string[];
+  minLevel?: number;
+  usesKey?: string;
+  usesPerRest?: number | ((proficiencyBonus: number) => number);
+  restType?: 'short' | 'long';
+  bonusAction?: boolean;
 }
 
 export interface RaceConfig {
@@ -24,6 +29,34 @@ export interface RaceConfig {
 }
 
 export const RACE_CONFIG: Record<string, RaceConfig> = {
+  goliath: {
+    name: 'Goliath',
+    traits: [
+      {
+        name: 'Giant Ancestry',
+        description:
+          'Choose your giant ancestry. You can use its benefit a number of times equal to your Proficiency Bonus. Recover all uses on a Long Rest.',
+        usesKey: 'GiantAncestry',
+        usesPerRest: (proficiencyBonus) => proficiencyBonus,
+        restType: 'long'
+      },
+      {
+        name: 'Large Form',
+        minLevel: 5,
+        description:
+          'As a Bonus Action, become Large for up to 10 minutes. You need enough space. Gain Advantage on Strength checks and +10 feet of Speed.',
+        usesKey: 'LargeForm',
+        usesPerRest: 1,
+        restType: 'long',
+        bonusAction: true
+      },
+      {
+        name: 'Powerful Build',
+        description:
+          'Gain Advantage on checks to end the Grappled condition. Count as one size larger for carrying capacity.'
+      }
+    ]
+  },
   githyanki: {
     name: 'Githyanki',
     traits: [
@@ -70,8 +103,31 @@ export const RACE_CONFIG: Record<string, RaceConfig> = {
   }
 };
 
-export function getRaceConfig(race: string): RaceConfig | null {
+export const GIANT_ANCESTRIES: Record<string, string> = {
+  cloud: "Cloud's Jaunt: teleport up to 30 feet as a Bonus Action.",
+  fire: "Fire's Burn: add 1d10 Fire damage after an attack hits and deals damage.",
+  frost:
+    "Frost's Chill: add 1d6 Cold damage and reduce Speed by 10 feet until your next turn after an attack hits and deals damage.",
+  hill: "Hill's Tumble: after an attack hits and deals damage, knock a Large or smaller target Prone.",
+  stone:
+    "Stone's Endurance: use a Reaction to reduce incoming damage by 1d12 + Constitution modifier.",
+  storm:
+    "Storm's Thunder: use a Reaction after a creature within 60 feet damages you to deal 1d8 Thunder damage to it."
+};
+
+export function getRacialTraitsForLevel(
+  race: string,
+  level: number,
+  ruleset?: Ruleset
+): RacialTrait[] {
+  return (getRaceConfig(race, ruleset)?.traits ?? []).filter(
+    (trait) => level >= (trait.minLevel ?? 1)
+  );
+}
+
+export function getRaceConfig(race: string, ruleset: Ruleset = '2024'): RaceConfig | null {
   const normalizedRace = race.toLowerCase().trim();
+  if (normalizedRace === 'goliath' && ruleset === '2014') return null;
   return RACE_CONFIG[normalizedRace] || null;
 }
 

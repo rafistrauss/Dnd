@@ -104,8 +104,9 @@ export function featMatchesClass(
   ) {
     return false;
   }
-  const features = getAvailableFeatures(char.class, level, char.subclass).map((feature) =>
-    (typeof feature.name === 'function' ? feature.name(level) : feature.name).toLowerCase()
+  const features = getAvailableFeatures(char.class, level, char.subclass, char.ruleset).map(
+    (feature) =>
+      (typeof feature.name === 'function' ? feature.name(level) : feature.name).toLowerCase()
   );
   if (feat.requiredFeatures?.some((name) => !features.includes(name.toLowerCase()))) return false;
   const prerequisite = feat.prerequisite ?? '';

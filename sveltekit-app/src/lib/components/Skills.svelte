@@ -9,6 +9,8 @@
   } from '$lib/stores';
   import { SKILL_ABILITIES } from '$lib/types';
   import type { SkillName } from '$lib/types';
+  import { hasRemarkableAthlete } from '$lib/classConfig';
+  import { getArmorByName } from '$lib/armorData';
   import SectionHeader from '$lib/components/SectionHeader.svelte';
 
   const dispatch = createEventDispatcher();
@@ -35,7 +37,7 @@
   ];
 
   // Compute all skill modifiers reactively
-  $: skillModifiers = {};
+  $: skillModifiers = {} as Record<SkillName, number>;
   $: skillProficiencies = $character.skillProficiencies;
   $: proficiencyBonus = $character.proficiencyBonus;
   $: abilityMods = $abilityModifiers;
@@ -65,7 +67,15 @@
       bonusBreakdown.push({ value: profBonus, source: 'proficiency' });
     }
 
-    dispatch('roll', { notation, rollType: 'check', bonusBreakdown });
+    dispatch('roll', {
+      notation,
+      attackName: skills.find(({ key }) => key === skill)?.label,
+      rollType: 'check',
+      bonusBreakdown,
+      advantage: skill === 'athletics' && hasRemarkableAthlete($character),
+      disadvantage:
+        skill === 'stealth' && !!getArmorByName($character.armorName ?? '')?.stealthDisadvantage
+    });
   }
 
   function toggleCollapse() {
@@ -97,13 +107,13 @@
             disabled={!$isEditMode}
             id={key}
             on:change={(e) => {
-              console.log('Skill proficiency changed:', key, e.target.checked);
+              const checked = e.currentTarget.checked;
               character.update((c) => {
                 return {
                   ...c,
                   skillProficiencies: {
                     ...c.skillProficiencies,
-                    [key]: e.target.checked
+                    [key]: checked
                   }
                 };
               });
@@ -116,6 +126,12 @@
           <span class="skill-modifier"
             >{skillModifiers[key] >= 0 ? '+' : ''}{skillModifiers[key]}</span
           >
+          {#if key === 'athletics' && hasRemarkableAthlete($character)}
+            <span title="Remarkable Athlete">Advantage</span>
+          {/if}
+          {#if key === 'stealth' && getArmorByName($character.armorName ?? '')?.stealthDisadvantage}
+            <span title={$character.armorName}>Disadvantage</span>
+          {/if}
           <button class="roll-btn" on:click={() => rollSkill(key)}>Roll</button>
         </div>
       {/each}

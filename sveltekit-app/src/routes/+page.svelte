@@ -31,10 +31,12 @@
     importCharacter,
     searchFilter,
     toasts,
-    resetRacialTraitUses
+    resetRacialTraitUses,
+    applySecondWindHealing
   } from '$lib/stores';
   import { getClassConfig, getAvailableFeatures, getSpellSlotProgression } from '$lib/classConfig';
   import { getRacialSpellsForLevel } from '$lib/raceConfig';
+  import { restoreClassResources } from '$lib/classResources';
   import CharacterInfo from '$lib/components/CharacterInfo.svelte';
   import AbilityScores from '$lib/components/AbilityScores.svelte';
   import CombatStats from '$lib/components/CombatStats.svelte';
@@ -95,10 +97,13 @@
   let diceRollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
   let diceMastery: string | undefined = undefined;
   let diceGreatWeaponFighting = false;
+  let diceAdvantage = false;
+  let diceDisadvantage = false;
   let diceAttackCount = 1;
   let dicePotentCantrip = false;
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
+  let isSecondWindRoll = false;
   let hitDiceCountToDecrement = 1;
   let showRestMenu = false;
 
@@ -139,47 +144,12 @@
     const restoredItems: string[] = [];
 
     character.update((c) => {
-      // Restore hit dice (up to half of max)
-      const hitDiceBefore = c.hitDice.current;
-      c.hitDice.current = Math.min(
-        c.hitDice.max,
-        c.hitDice.current + Math.max(1, Math.floor(c.hitDice.max / 2))
-      );
-      const hitDiceRestored = c.hitDice.current - hitDiceBefore;
-      if (hitDiceRestored > 0) {
-        restoredItems.push(`${hitDiceRestored} hit ${hitDiceRestored === 1 ? 'die' : 'dice'}`);
-      }
-
       // Reset features that recharge on short rest - check all available features
       if (c.class) {
-        const availableFeatures = getAvailableFeatures(c.class, c.level, c.subclass);
         if (!c.classFeatures.features) {
           c.classFeatures.features = {};
         }
-
-        availableFeatures.forEach((feature) => {
-          if (feature.resetOn === 'short') {
-            const featureName =
-              typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
-            const featureKey = featureName.replace(/\s+/g, '');
-
-            if (feature.type === 'uses') {
-              const maxUses =
-                typeof feature.maxUses === 'function' ? feature.maxUses(c.level) : feature.maxUses;
-              c.classFeatures.features[featureKey] = Array(
-                Number.isFinite(maxUses) ? maxUses : 0
-              ).fill(false);
-              restoredItems.push(featureName);
-            } else if (feature.type === 'pool') {
-              const maxPool =
-                typeof feature.maxPool === 'function' ? feature.maxPool(c.level) : feature.maxPool;
-              if (maxPool !== undefined) {
-                c.classFeatures.features[featureKey] = maxPool;
-                restoredItems.push(featureName);
-              }
-            }
-          }
-        });
+        restoredItems.push(...restoreClassResources(c, 'short'));
       }
 
       // Restore condition abilities that reset on short rest
@@ -266,41 +236,10 @@
 
       // Reset all class features - iterate through available features, not just existing ones
       if (c.class) {
-        const availableFeatures = getAvailableFeatures(c.class, c.level, c.subclass);
         if (!c.classFeatures.features) {
           c.classFeatures.features = {};
         }
-
-        let featuresRestored = false;
-        availableFeatures.forEach((feature) => {
-          const featureName =
-            typeof feature.name === 'function' ? feature.name(c.level) : feature.name;
-          const featureKey = featureName.replace(/\s+/g, '');
-
-          // Skip info and channelDivinity types - they don't store state
-          // 'info' features are passive, 'channelDivinity' features consume from the Channel Divinity pool
-          if (feature.type === 'info' || feature.type === 'channelDivinity') {
-            return;
-          }
-
-          if (feature.type === 'uses') {
-            const maxUses =
-              typeof feature.maxUses === 'function' ? feature.maxUses(c.level) : feature.maxUses;
-            c.classFeatures.features[featureKey] = Array(
-              Number.isFinite(maxUses) ? maxUses : 0
-            ).fill(false);
-            featuresRestored = true;
-          } else if (feature.type === 'pool') {
-            const maxPool =
-              typeof feature.maxPool === 'function' ? feature.maxPool(c.level) : feature.maxPool;
-            if (maxPool !== undefined) {
-              c.classFeatures.features[featureKey] = maxPool;
-              featuresRestored = true;
-            }
-          }
-        });
-
-        if (featuresRestored) {
+        if (restoreClassResources(c, 'long').length) {
           restoredItems.push('all class features');
         }
       }
@@ -333,8 +272,7 @@
     resetRacialTraitUses('long');
 
     // Check if any racial traits were restored for the toast message
-    const racialSpells = getRacialSpellsForLevel($character.race, $character.level);
-    const racialTraitsRestored = racialSpells.some((spell) => spell.usesPerRest);
+    const racialTraitsRestored = Object.keys($character.racialTraits?.uses ?? {}).length > 0;
     if (racialTraitsRestored) {
       restoredItems.push('racial traits');
     }
@@ -354,7 +292,12 @@
     const classConfig = $character.class ? getClassConfig($character.class) : null;
     if (!classConfig) return null;
 
-    const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
+    const features = getAvailableFeatures(
+      $character.class,
+      $character.level,
+      $character.subclass,
+      $character.ruleset
+    );
     // The key is stored without spaces, so we need to match it
     return features.find((f) => {
       const featureName = typeof f.name === 'function' ? f.name($character.level) : f.name;
@@ -378,6 +321,9 @@
           attackCount?: number;
           potentCantrip?: boolean;
           critThreshold?: number;
+          advantage?: boolean;
+          disadvantage?: boolean;
+          secondWind?: boolean;
         }
   ) {
     // Reset notation first to ensure Svelte sees a change even if same value
@@ -390,10 +336,13 @@
     diceRollType = 'other';
     diceMastery = undefined;
     diceGreatWeaponFighting = false;
+    diceAdvantage = false;
+    diceDisadvantage = false;
     diceAttackCount = 1;
     dicePotentCantrip = false;
     diceCritThreshold = 20;
     isHitDiceRoll = false;
+    isSecondWindRoll = false;
 
     // Set all values together to ensure they update simultaneously
     if (typeof detail === 'string') {
@@ -411,6 +360,9 @@
       diceAttackCount = detail.attackCount || 1;
       dicePotentCantrip = !!detail.potentCantrip;
       diceCritThreshold = detail.critThreshold ?? 20;
+      diceAdvantage = !!detail.advantage;
+      diceDisadvantage = !!detail.disadvantage;
+      isSecondWindRoll = !!detail.secondWind;
     }
     showDiceRoller = true;
   }
@@ -419,6 +371,9 @@
     const { notation, count, bonusBreakdown } = event.detail;
     diceNotation = '';
     isHitDiceRoll = true;
+    isSecondWindRoll = false;
+    diceAdvantage = false;
+    diceDisadvantage = false;
     hitDiceCountToDecrement = count || 1;
 
     setTimeout(() => {
@@ -433,22 +388,16 @@
   }
 
   function handleInitiativeRoll(event: CustomEvent) {
-    const { notation, bonusBreakdown } = event.detail;
-    diceNotation = '';
-
-    setTimeout(() => {
-      diceNotation = notation;
-      diceDamageNotation = '';
-      diceAttackName = 'Initiative';
-      diceBonusBreakdown = bonusBreakdown || [];
-      diceRollType = 'check';
-    }, 0);
-
-    showDiceRoller = true;
+    openDiceRoller({ ...event.detail, attackName: 'Initiative', rollType: 'check' });
   }
 
   function handleDiceRollerClose() {
     showDiceRoller = false;
+    if (isSecondWindRoll && diceRollerComponent) {
+      const total = diceRollerComponent.getLastRollTotal();
+      if (total !== null) applySecondWindHealing(total);
+      isSecondWindRoll = false;
+    }
 
     // If this was a hit dice roll, decrement the hit dice and add HP
     if (isHitDiceRoll && diceRollerComponent) {
@@ -827,6 +776,8 @@
   rollType={diceRollType}
   mastery={diceMastery}
   greatWeaponFighting={diceGreatWeaponFighting}
+  advantage={diceAdvantage}
+  disadvantage={diceDisadvantage}
   attackCount={diceAttackCount}
   potentCantrip={dicePotentCantrip}
   critThreshold={diceCritThreshold}

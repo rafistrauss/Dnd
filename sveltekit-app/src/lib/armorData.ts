@@ -4,6 +4,7 @@ export interface ArmorInfo {
   type: 'light' | 'medium' | 'heavy' | 'none';
   baseAC: number;
   maxDexBonus?: number; // undefined = unlimited
+  stealthDisadvantage?: boolean;
 }
 
 export const ARMOR_LIST: ArmorInfo[] = [
@@ -11,22 +12,22 @@ export const ARMOR_LIST: ArmorInfo[] = [
   { name: 'Unarmored', type: 'none', baseAC: 10 },
 
   // Light Armor (full DEX bonus)
-  { name: 'Padded', type: 'light', baseAC: 11 },
+  { name: 'Padded', type: 'light', baseAC: 11, stealthDisadvantage: true },
   { name: 'Leather', type: 'light', baseAC: 11 },
   { name: 'Studded Leather', type: 'light', baseAC: 12 },
 
   // Medium Armor (max +2 DEX)
   { name: 'Hide', type: 'medium', baseAC: 12, maxDexBonus: 2 },
   { name: 'Chain Shirt', type: 'medium', baseAC: 13, maxDexBonus: 2 },
-  { name: 'Scale Mail', type: 'medium', baseAC: 14, maxDexBonus: 2 },
+  { name: 'Scale Mail', type: 'medium', baseAC: 14, maxDexBonus: 2, stealthDisadvantage: true },
   { name: 'Breastplate', type: 'medium', baseAC: 14, maxDexBonus: 2 },
-  { name: 'Half Plate', type: 'medium', baseAC: 15, maxDexBonus: 2 },
+  { name: 'Half Plate', type: 'medium', baseAC: 15, maxDexBonus: 2, stealthDisadvantage: true },
 
   // Heavy Armor (no DEX bonus)
-  { name: 'Ring Mail', type: 'heavy', baseAC: 14, maxDexBonus: 0 },
-  { name: 'Chain Mail', type: 'heavy', baseAC: 16, maxDexBonus: 0 },
-  { name: 'Splint', type: 'heavy', baseAC: 17, maxDexBonus: 0 },
-  { name: 'Plate', type: 'heavy', baseAC: 18, maxDexBonus: 0 }
+  { name: 'Ring Mail', type: 'heavy', baseAC: 14, maxDexBonus: 0, stealthDisadvantage: true },
+  { name: 'Chain Mail', type: 'heavy', baseAC: 16, maxDexBonus: 0, stealthDisadvantage: true },
+  { name: 'Splint', type: 'heavy', baseAC: 17, maxDexBonus: 0, stealthDisadvantage: true },
+  { name: 'Plate', type: 'heavy', baseAC: 18, maxDexBonus: 0, stealthDisadvantage: true }
 ];
 
 export function getArmorByName(name: string): ArmorInfo | undefined {

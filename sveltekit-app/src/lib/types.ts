@@ -231,6 +231,9 @@ export interface Character {
   inspiration?: boolean; // Heroic inspiration
   greatWeaponMaster?: boolean; // Great Weapon Master feat (tracked separately from Great Weapon Fighting)
   greatWeaponFighting?: boolean; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
+  weaponMasteries?: string[];
+  giantAncestry?: string;
+  originFeats?: string[];
 }
 
 // Class Configuration Types
@@ -245,6 +248,7 @@ export interface ClassFeature {
   maxUses?: number | ((level: number, abilityMod?: number) => number);
   maxPool?: number | ((level: number) => number);
   resetOn?: ResetType;
+  shortRestRecovery?: number;
   description: string | ((level: number, abilityMod?: number) => string);
   minLevel?: number;
   rollable?: boolean;
