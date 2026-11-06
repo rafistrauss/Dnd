@@ -61,7 +61,7 @@ curl -o static/data/spells.json https://gist.githubusercontent.com/dmcb/4b67869f
 ```
 
 ### Update Feats Data
-Note: the 2024 SRD 5.2 Fighting Style feats (Archery, Defense, Great Weapon Fighting, Two-Weapon Fighting) are not in Open5e and were added by hand; re-add them after regenerating.
+Note: the 2024 Fighting Style feats (Archery, Defense, Great Weapon Fighting, Two-Weapon Fighting) use source `PHB` and are not in Open5e; they were added by hand, so re-add them after regenerating.
 
 Fetch from Open5e API and format:
 ```bash
