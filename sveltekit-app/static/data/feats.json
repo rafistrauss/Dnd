@@ -478,5 +478,37 @@
     "name": "Woodcraft Training",
     "description": "You have learned to survive in the wilds, a useful skill for almost any adventurer. You gain the following benefits:\n\n• You gain proficiency with the herbalism kit, navigator's kit, a simple ranged weapon, or a martial ranged weapon.\n• You gain two exploration knacks of your choice from the ranger class.",
     "source": "https://a5esrd.com/a5esrd"
+  },
+  {
+    "id": "archery",
+    "classes": ["fighter", "paladin", "ranger"],
+    "name": "Archery",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "You gain a +2 bonus to attack rolls you make with ranged weapons.",
+    "source": "PHB"
+  },
+  {
+    "id": "defense",
+    "classes": ["fighter", "paladin", "ranger"],
+    "name": "Defense",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "While you are wearing Light, Medium, or Heavy armor, you gain a +1 bonus to Armor Class.",
+    "source": "PHB"
+  },
+  {
+    "id": "great-weapon-fighting",
+    "classes": ["fighter", "paladin", "ranger"],
+    "name": "Great Weapon Fighting",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "When you roll a 1 or 2 on a damage die for an attack you make with a Melee weapon that you are holding with two hands, you can treat the roll as a 3. The weapon must have the Two-Handed or Versatile property to gain this benefit.",
+    "source": "PHB"
+  },
+  {
+    "id": "two-weapon-fighting",
+    "classes": ["fighter", "paladin", "ranger"],
+    "name": "Two-Weapon Fighting",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "When you make an extra attack as a result of using a weapon with the Light property, you can add your ability modifier to the damage of that attack if you aren't already adding it to the damage.",
+    "source": "PHB"
   }
 ]
