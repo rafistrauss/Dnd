@@ -71,16 +71,21 @@
       : lockedAbilities.length
         ? []
         : (selectedFeat.abilityIncrease?.abilities ?? []);
-  $: if (improvement === 'feat' && lockedAbilities.length === 1 && selectedFeat) {
-    const required = getRequiredAbilityIncrease(selectedFeat, $character.abilities) ?? 0;
-    abilityIncreases = required ? { [lockedAbilities[0]]: required } : {};
-  }
+  $: requiredFeatIncrease = selectedFeat
+    ? (getRequiredAbilityIncrease(selectedFeat, $character.abilities) ?? 0)
+    : 0;
+  $: effectiveAbilityIncreases =
+    lockedAbilities.length === 1
+      ? requiredFeatIncrease
+        ? { [lockedAbilities[0]]: requiredFeatIncrease }
+        : {}
+      : abilityIncreases;
   $: clearUnavailableFeat(availableFeats, featSource);
   $: choices = {
     ...(earnsImprovement
       ? {
           improvement,
-          abilityIncreases,
+          abilityIncreases: effectiveAbilityIncreases,
           ...(improvement === 'feat'
             ? {
                 ruleset,
@@ -371,7 +376,7 @@
               {#each ABILITY_NAMES as ability}
                 <label for={`level-up-${ability}`}>
                   {ability} ({$character.abilities[ability]} → {$character.abilities[ability] +
-                    (abilityIncreases[ability] ?? 0)})
+                    (effectiveAbilityIncreases[ability] ?? 0)})
                 </label>
                 <input
                   id={`level-up-${ability}`}
@@ -379,7 +384,7 @@
                   min="0"
                   max={Math.max(0, Math.min(2, 20 - $character.abilities[ability]))}
                   disabled={editableAbilities !== null && !editableAbilities.includes(ability)}
-                  value={abilityIncreases[ability] ?? 0}
+                  value={effectiveAbilityIncreases[ability] ?? 0}
                   on:input={(event) => {
                     abilityIncreases = {
                       ...abilityIncreases,
