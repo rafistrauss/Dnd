@@ -21,6 +21,8 @@
   } from '$lib/advancement';
   import type { LevelUpPreview } from '$lib/stores';
 
+  const DEFAULT_FEAT_SOURCE = 'PHB';
+
   export let isOpen = false;
   export let onClose: () => void = () => {};
 
@@ -36,7 +38,7 @@
   let feats: Feat[] = [];
   let featSearch = '';
   let featId = '';
-  let featSource = '';
+  let featSource = DEFAULT_FEAT_SOURCE;
   let ruleset: Ruleset = '2024';
   let customFeatName = '';
   let customFeatDescription = '';
@@ -109,7 +111,7 @@
     improvement = 'asi';
     abilityIncreases = {};
     featId = '';
-    featSource = '';
+    featSource = DEFAULT_FEAT_SOURCE;
     featSearch = '';
     customFeatName = '';
     customFeatDescription = '';
@@ -349,10 +351,14 @@
                 below and update proficiencies, attacks, spells, or other feat effects on your
                 sheet.
               </p>
-              <label class="radio-label">
-                <input type="checkbox" bind:checked={featConfirmed} />
-                I have checked the prerequisites and any manual effects with my DM.
-              </label>
+              {#if featId}
+                <label class="radio-label">
+                  <input type="checkbox" bind:checked={featConfirmed} />
+                  I have checked the prerequisites and any manual effects with my DM.
+                </label>
+              {:else}
+                <p role="status">Choose a feat to continue.</p>
+              {/if}
             {:else}
               <p>Add +2 to one ability or +1 to two abilities, to a maximum score of 20.</p>
             {/if}
