@@ -33,7 +33,7 @@ This directory contains pre-fetched D&D 5e content data used by the character sh
 ## Feats (feats.json)
 
 - **Source**: [Open5e API](https://api.open5e.com/feats/)
-- **Total Feats**: 78
+- **Total Feats**: 80
 - **Coverage**: Various D&D 5e sources including SRD, Level Up Advanced 5e, Tome of Heroes
 - **Format**: JSON array of feat objects
 
@@ -48,6 +48,23 @@ This directory contains pre-fetched D&D 5e content data used by the character sh
 }
 ```
 
+Optional metadata used by the level-up dialog and combat calculations (all optional; feats without it are treated as manual):
+
+```json
+{
+  "category": "origin | general | fighting-style | epic-boon",
+  "ruleset": "2014 | 2024",
+  "minLevel": 4,
+  "abilityRequirements": [{ "abilities": ["strength"], "min": 13 }],
+  "abilityIncrease": { "abilities": ["strength"], "amount": 1, "max": 20 },
+  "requiredFeatures": ["Fighting Style"],
+  "repeatable": false,
+  "effects": [{ "type": "heavyWeaponMasteryDamage" }, { "type": "hewBonusAttack" }]
+}
+```
+
+`abilityRequirements` entries are any-of lists; every entry must be met. `effects` are applied automatically by the sheet.
+
 ## Usage
 
 These files are loaded by the `dndData.ts` utility module and made available to the character sheet components through the WikidotImport modal.
@@ -61,7 +78,7 @@ curl -o static/data/spells.json https://gist.githubusercontent.com/dmcb/4b67869f
 ```
 
 ### Update Feats Data
-Note: the 2024 Fighting Style feats (Archery, Defense, Great Weapon Fighting, Two-Weapon Fighting) use source `PHB` and are not in Open5e; they were added by hand, so re-add them after regenerating.
+Note: the `PHB` entries (2024 Fighting Style feats, 2024 and 2014 Great Weapon Master) are not in Open5e and were added by hand, so re-add them after regenerating.
 
 Fetch from Open5e API and format:
 ```bash
