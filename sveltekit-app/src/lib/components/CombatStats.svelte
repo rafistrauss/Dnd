@@ -8,7 +8,7 @@
     isEditMode,
     syncCurrentLevelHP
   } from '$lib/stores';
-  import { getClassConfig } from '$lib/classConfig';
+  import { getClassConfig, hasRemarkableAthlete } from '$lib/classConfig';
   import {
     getSpellSaveDC,
     getACBreakdown,
@@ -124,7 +124,11 @@
     }
 
     // Dispatch event to open dice roller
-    dispatch('rollInitiative', { notation, bonusBreakdown });
+    dispatch('rollInitiative', {
+      notation,
+      bonusBreakdown,
+      advantage: hasRemarkableAthlete($character)
+    });
   }
 
   function toggleCollapse() {
@@ -241,9 +245,13 @@
             on:click={rollInitiative}
             class="btn btn-primary roll-initiative-btn use-enabled"
             title="Roll Initiative"
+            aria-label="Roll Initiative"
           >
             🎲
           </button>
+          {#if hasRemarkableAthlete($character)}
+            <span title="Remarkable Athlete">Advantage</span>
+          {/if}
         </div>
       </div>
       <div class="stat-box">

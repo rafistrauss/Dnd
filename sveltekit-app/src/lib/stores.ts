@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import type { Character, LevelUpChoices, RacialTraitUses, RollHistoryEntry } from './types';
 import {
   getAdvancedAbilities,
@@ -6,7 +6,7 @@ import {
   validateLevelUpChoices
 } from './advancement';
 import { browser } from '$app/environment';
-import { getRacialSpellsForLevel, getRaceConfig } from './raceConfig';
+import { getRacialSpellsForLevel, getRaceConfig, getRacialTraitsForLevel } from './raceConfig';
 import {
   getAvailableFeatures,
   getClassConfig,
@@ -344,7 +344,12 @@ function syncClassFeatureResources(char: Character): Character {
     ? calculateModifier(char.abilities[spellcastingAbility])
     : undefined;
   const nextFeatures: Record<string, boolean[] | number> = {};
-  const availableFeatures = getAvailableFeatures(char.class, char.level, char.subclass);
+  const availableFeatures = getAvailableFeatures(
+    char.class,
+    char.level,
+    char.subclass,
+    char.ruleset
+  );
 
   availableFeatures.forEach((feature) => {
     const featureName =
@@ -548,6 +553,31 @@ function loadTurnState(): TurnState {
 
 export const turnTracker = writable<TurnState>(loadTurnState());
 
+export function applySecondWindHealing(total: number): boolean {
+  const char = get(character);
+  const uses = char.classFeatures.features.SecondWind;
+  if (
+    char.class.toLowerCase() !== 'fighter' ||
+    !Number.isFinite(total) ||
+    !Array.isArray(uses) ||
+    !uses.some((used) => !used) ||
+    get(turnTracker).bonusAction
+  ) {
+    toasts.add('Second Wind requires an unused Bonus Action and a remaining use.', 'error');
+    return false;
+  }
+  character.update((current) => {
+    const remaining = current.classFeatures.features.SecondWind;
+    if (Array.isArray(remaining)) remaining[remaining.findIndex((used) => !used)] = true;
+    return {
+      ...current,
+      currentHP: Math.min(current.maxHP, current.currentHP + Math.max(0, total))
+    };
+  });
+  turnTracker.update((turn) => ({ ...turn, bonusAction: true }));
+  return true;
+}
+
 if (browser) {
   turnTracker.subscribe((value) => {
     try {
@@ -699,8 +729,18 @@ export function getLevelUpPreview(choices: LevelUpChoices = {}): LevelUpPreview 
     );
 
     // Get class features
-    const nextFeatures = getAvailableFeatures(char.class, newLevel, subclass);
-    const previousFeatures = getAvailableFeatures(char.class, currentLevel, char.subclass);
+    const nextFeatures = getAvailableFeatures(
+      char.class,
+      newLevel,
+      subclass,
+      choices.ruleset ?? char.ruleset
+    );
+    const previousFeatures = getAvailableFeatures(
+      char.class,
+      currentLevel,
+      char.subclass,
+      char.ruleset
+    );
     const classFeatureCounts: { [name: string]: { current: number; max: number } } = {};
 
     nextFeatures.forEach((feature) => {
@@ -836,7 +876,12 @@ export function applyLevelUp(
     char.classFeatures.spellSlots = nextSlots[1] || [];
 
     // Restore all class features
-    const availableFeatures = getAvailableFeatures(char.class, newLevel, char.subclass);
+    const availableFeatures = getAvailableFeatures(
+      char.class,
+      newLevel,
+      char.subclass,
+      char.ruleset
+    );
     const nextFeatures: Record<string, boolean[] | number> = {};
     const spellcastingAbility = getSpellcastingAbility(char.class, char.subclass);
     const abilityMod = spellcastingAbility
@@ -1026,6 +1071,25 @@ export function initializeRacialTraits() {
       char.racialTraits!.uses = {};
     }
     const racialSpells = getRacialSpellsForLevel(char.race, char.level);
+    const traits = getRacialTraitsForLevel(char.race, char.level, char.ruleset);
+    for (const trait of traits) {
+      if (!trait.usesKey || !trait.usesPerRest || !trait.restType) continue;
+      const maxUses =
+        typeof trait.usesPerRest === 'function'
+          ? trait.usesPerRest(char.proficiencyBonus)
+          : trait.usesPerRest;
+      const saved = char.racialTraits.uses[trait.usesKey];
+      const currentUses = typeof saved === 'number' ? saved : (saved?.currentUses ?? maxUses);
+      char.racialTraits.uses[trait.usesKey] = {
+        currentUses: Math.max(0, Math.min(currentUses, maxUses)),
+        maxUses,
+        restType: trait.restType
+      };
+    }
+    const config = getRaceConfig(char.race, char.ruleset);
+    for (const trait of config?.traits ?? []) {
+      if (trait.usesKey && !traits.includes(trait)) delete char.racialTraits.uses[trait.usesKey];
+    }
     // Initialize uses for spells that have limited uses
     racialSpells.forEach((spell) => {
       if (spell.usesPerRest !== undefined && spell.restType) {

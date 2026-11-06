@@ -4,6 +4,7 @@
   import { base } from '$app/paths';
   import { character, rollHistory, abilityModifiers } from '$lib/stores';
   import { getAvailableFeatures } from '$lib/classConfig';
+  import { getD20Result } from '$lib/diceUtils';
   import { firstDiceCount, applyMinimumDieResult, doubleDice } from '$lib/greatWeapon';
   import { MASTERY_MAP } from '$lib/weaponMastery';
   import type { WeaponMasteryName } from '$lib/weaponMastery';
@@ -24,6 +25,8 @@
   export let attackCount = 1; // Number of separate attack rolls (e.g., Scorching Ray rays), each rolled individually
   export let potentCantrip = false; // Evoker Potent Cantrip: offer half damage on a missed cantrip attack
   export let greatWeaponFighting = false; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
+  export let advantage = false;
+  export let disadvantage = false;
 
   // Compute a contextual mastery note based on the mastery type and character stats
   $: masteryNote = (() => {
@@ -202,7 +205,12 @@
   // Check if character has Guided Strike and Channel Divinity uses
   $: hasGuidedStrike = (() => {
     if (!$character.class) return false;
-    const features = getAvailableFeatures($character.class, $character.level, $character.subclass);
+    const features = getAvailableFeatures(
+      $character.class,
+      $character.level,
+      $character.subclass,
+      $character.ruleset
+    );
     return features.some(
       (f) => f.name === 'Guided Strike' || f.subFeatures?.some((sf) => sf.name === 'Guided Strike')
     );
@@ -367,7 +375,9 @@
     currentRollNotation = notation;
 
     // Set the dice notation before throwing
-    diceBox.diceToRoll = notation;
+    const rollTwoD20 =
+      advantage !== disadvantage && type === 'check' && /^1d20(?:[+-]\d+)?$/i.test(notation);
+    diceBox.diceToRoll = rollTwoD20 ? notation.replace(/^1d20/i, '2d20') : notation;
 
     // before_roll callback - return null for random results
     const beforeRoll = (notationObj: any) => {
@@ -378,7 +388,16 @@
     // after_roll callback - handle the result
     const afterRoll = (notationObj: any) => {
       // console.log('After roll:', notationObj);
-      const adjustedRoll = applyGreatWeaponFighting(notationObj);
+      const adjustedRoll = rollTwoD20
+        ? {
+            ...notationObj,
+            ...getD20Result(
+              notationObj.result,
+              notationObj.constant || 0,
+              advantage ? 'advantage' : 'disadvantage'
+            )
+          }
+        : applyGreatWeaponFighting(notationObj);
       let resultTotal = adjustedRoll.resultTotal;
       let resultString = adjustedRoll.resultString;
       // If applyHalfDamage is true, halve the result (rounded down)
@@ -864,6 +883,9 @@
           {/if}
         </div>
         <div class="result-total">{rollResult.resultTotal}</div>
+        {#if advantage !== disadvantage && rollType === 'check'}
+          <p>{rollResult.resultString}</p>
+        {/if}
         <div class="result-details">
           <!-- {#if rollResult.resultString}
             <p>{rollResult.resultString}</p>

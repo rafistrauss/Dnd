@@ -164,7 +164,7 @@
   const EFFECT_LABELS: Record<FeatEffect['type'], string> = {
     heavyWeaponMasteryDamage:
       'Adds your proficiency bonus to damage when a Heavy weapon hits as part of the Attack action',
-    hewBonusAttack: 'Adds a Hew (Bonus Action) attack button for melee weapons'
+    hewBonusAttack: 'Adds a Hew (Bonus Action) option in each melee weapon attack-context menu'
   };
 
   function groupFeats(list: Feat[]) {
@@ -352,9 +352,9 @@
                 {/if}
               {/if}
               <p>
-                Only selected ability increases are applied automatically. Record other choices
-                below and update proficiencies, attacks, spells, or other feat effects on your
-                sheet.
+                Ability increases and the effects listed above apply automatically. Record other
+                choices below. Update proficiencies, attacks, spells, and other feat effects on your
+                sheet. For Hew, track the critical-hit or kill trigger and use the same weapon.
               </p>
               {#if featId}
                 <label class="radio-label">

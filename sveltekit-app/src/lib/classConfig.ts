@@ -1,4 +1,11 @@
-import type { ClassConfig, ClassName, ClassFeature, SubclassConfig, AbilityName } from './types';
+import type {
+  ClassConfig,
+  ClassName,
+  ClassFeature,
+  SubclassConfig,
+  AbilityName,
+  Ruleset
+} from './types';
 
 export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
   paladin: {
@@ -632,25 +639,115 @@ export function getSpellcastingAbility(
 export function getAvailableFeatures(
   className: string,
   level: number,
-  subclassName?: string
+  subclassName?: string,
+  ruleset: Ruleset = '2024'
 ): ClassFeature[] {
   const config = getClassConfig(className);
   if (!config) return [];
 
-  const classFeatures = config.features.filter(
+  let definitions = config.features;
+  let subclassDefinitions = findSubclass(config, subclassName)?.features ?? [];
+  if (className.toLowerCase() === 'fighter' && ruleset === '2024') {
+    definitions = config.features.map((feature) =>
+      feature.name === 'Second Wind'
+        ? {
+            ...feature,
+            maxUses: (level: number) => (level >= 10 ? 4 : level >= 4 ? 3 : 2),
+            resetOn: 'long' as const,
+            shortRestRecovery: 1,
+            description:
+              'As a Bonus Action, regain 1d10 + Fighter level HP. Recover one use on a Short Rest and all uses on a Long Rest.'
+          }
+        : feature
+    );
+    definitions = [
+      ...definitions,
+      {
+        name: 'Weapon Mastery',
+        type: 'info',
+        minLevel: 1,
+        description: (level) =>
+          `Choose ${getFighterMasteryCount(level)} weapon types for mastery. After a Long Rest, you can replace one choice.`
+      },
+      {
+        name: 'Tactical Mind',
+        type: 'info',
+        minLevel: 2,
+        rollable: true,
+        rollFormula: '1d10',
+        description:
+          'After a failed ability check, add 1d10. Spend one Second Wind use only if the check then succeeds. Mark that use in Second Wind.'
+      },
+      {
+        name: 'Extra Attack',
+        type: 'info',
+        minLevel: 5,
+        description: (level) =>
+          `Make ${level >= 20 ? 4 : level >= 11 ? 3 : 2} attacks when you take the Attack action on your turn.`
+      },
+      {
+        name: 'Tactical Shift',
+        type: 'info',
+        minLevel: 5,
+        description:
+          'When you use Second Wind as a Bonus Action, you can move up to half your Speed without Opportunity Attacks.'
+      }
+    ];
+    if (subclassName?.toLowerCase() === 'champion') {
+      subclassDefinitions = subclassDefinitions.map((feature) => {
+        if (feature.name === 'Remarkable Athlete')
+          return {
+            ...feature,
+            minLevel: 3,
+            description:
+              'You have Advantage on Initiative and Strength (Athletics) checks. After a critical hit, you can move up to half your Speed without Opportunity Attacks.'
+          };
+        if (feature.name === 'Additional Fighting Style') return { ...feature, minLevel: 7 };
+        return feature;
+      });
+      subclassDefinitions = [
+        ...subclassDefinitions,
+        {
+          name: 'Heroic Warrior',
+          type: 'info',
+          minLevel: 10,
+          description: 'During combat, gain Heroic Inspiration when you start your turn without it.'
+        }
+      ];
+    }
+  }
+  const classFeatures = definitions.filter(
     (feature) => !feature.minLevel || feature.minLevel <= level
   );
 
   // If subclass is specified, add its features
   const subclass = findSubclass(config, subclassName);
   if (subclass) {
-    const subclassFeatures = subclass.features.filter(
+    const subclassFeatures = subclassDefinitions.filter(
       (feature) => !feature.minLevel || feature.minLevel <= level
     );
     return [...classFeatures, ...subclassFeatures];
   }
 
   return classFeatures;
+}
+
+export function getFighterMasteryCount(level: number): number {
+  return level >= 16 ? 6 : level >= 10 ? 5 : level >= 4 ? 4 : 3;
+}
+
+export function hasRemarkableAthlete(char: {
+  class: string;
+  subclass?: string;
+  level: number;
+  ruleset?: Ruleset;
+}): boolean {
+  return (
+    char.ruleset !== '2014' &&
+    char.class.toLowerCase() === 'fighter' &&
+    char.subclass?.toLowerCase() === 'champion' &&
+    char.level >= 3
+  );
 }
 
 export function getAvailableSubclasses(className: string): { id: string; name: string }[] {

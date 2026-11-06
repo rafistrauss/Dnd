@@ -15,7 +15,7 @@
   import SectionHeader from '$lib/components/SectionHeader.svelte';
   import SpellReorderModal from '$lib/components/SpellReorderModal.svelte';
   import type { Attack, Spell, ConditionAbility } from '$lib/types';
-  import { WEAPON_MASTERIES, MASTERY_MAP } from '$lib/weaponMastery';
+  import { WEAPON_MASTERIES, MASTERY_MAP, getAttackMastery } from '$lib/weaponMastery';
   import { loadSpells } from '$lib/dndData';
   import {
     getSavingThrowInfo,
@@ -227,7 +227,7 @@
   }
 
   function hasPotentCantrip(char: any = $character): boolean {
-    return getAvailableFeatures(char.class, char.level, char.subclass).some(
+    return getAvailableFeatures(char.class, char.level, char.subclass, char.ruleset).some(
       (f) => f.name === 'Potent Cantrip'
     );
   }
@@ -383,7 +383,7 @@
       bonusBreakdown,
       damageBreakdown,
       rollType: 'attack',
-      mastery: attack.mastery,
+      mastery: getAttackMastery($character, attack),
       greatWeaponFighting: qualifiesForGreatWeaponFighting($character, attack)
     });
   }
@@ -514,7 +514,7 @@
       applyHalfDamage,
       bonusBreakdown,
       damageType,
-      mastery: attack.mastery,
+      mastery: getAttackMastery($character, attack),
       rollType: 'damage',
       greatWeaponFighting: qualifiesForGreatWeaponFighting($character, attack)
     });
@@ -1218,19 +1218,18 @@
                 ></textarea>
               </div>
             {/if}
-            {#if attack.mastery}
-              {@const mastery = MASTERY_MAP[attack.mastery]}
+            {@const masteryName = getAttackMastery($character, attack)}
+            {#if masteryName}
+              {@const mastery = MASTERY_MAP[masteryName]}
               <div class="mastery-info">
-                <span class="mastery-badge mastery-{attack.mastery.toLowerCase()}"
-                  >{attack.mastery}</span
-                >
+                <span class="mastery-badge mastery-{masteryName.toLowerCase()}">{masteryName}</span>
                 <span class="mastery-summary">
-                  {#if attack.mastery === 'Graze'}
+                  {#if masteryName === 'Graze'}
                     On miss → deal <strong>{grazeDamage()}</strong>
                     {attack.damageType || 'damage'} (ability mod)
-                  {:else if attack.mastery === 'Topple'}
+                  {:else if masteryName === 'Topple'}
                     On hit → CON save DC <strong>{toppleDC()}</strong> or Prone
-                  {:else if attack.mastery === 'Cleave'}
+                  {:else if masteryName === 'Cleave'}
                     On hit → deal <strong>{cleaveDamage()}</strong>
                     {attack.damageType || 'damage'} to adjacent creature
                   {:else}

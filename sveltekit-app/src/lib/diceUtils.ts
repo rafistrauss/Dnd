@@ -7,6 +7,19 @@ export interface RollResult {
   notation: string;
 }
 
+export function getD20Result(
+  rolls: number[],
+  modifier: number,
+  mode: 'advantage' | 'disadvantage'
+) {
+  const kept = mode === 'advantage' ? Math.max(...rolls) : Math.min(...rolls);
+  return {
+    result: [kept],
+    resultTotal: kept + modifier,
+    resultString: `${mode === 'advantage' ? 'Advantage' : 'Disadvantage'} (${rolls.join(', ')}), keep ${kept}${modifier >= 0 ? '+' : ''}${modifier}`
+  };
+}
+
 export function parseDiceNotation(notation: string): {
   count: number;
   sides: number;

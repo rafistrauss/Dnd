@@ -2,7 +2,14 @@
   import { createEventDispatcher } from 'svelte';
   import SlotCheckbox from './SlotCheckbox.svelte';
   import RacialTraits from './RacialTraits.svelte';
-  import { character, abilityModifiers, searchFilter, collapsedStates, toasts } from '$lib/stores';
+  import {
+    character,
+    abilityModifiers,
+    searchFilter,
+    collapsedStates,
+    toasts,
+    turnTracker
+  } from '$lib/stores';
   import { afterUpdate } from 'svelte';
   import {
     getClassConfig,
@@ -13,6 +20,7 @@
     isSpellcaster,
     getSpellcastingAbility
   } from '$lib/classConfig';
+  import { getFighterMasteryCount } from '$lib/classConfig';
   import { rollDice } from '$lib/diceUtils';
   import SectionHeader from './SectionHeader.svelte';
 
@@ -24,8 +32,15 @@
     ? getSpellcastingAbility($character.class, $character.subclass)
     : null;
   $: features = $character.class
-    ? getAvailableFeatures($character.class, $character.level, $character.subclass)
+    ? getAvailableFeatures(
+        $character.class,
+        $character.level,
+        $character.subclass,
+        $character.ruleset
+      )
     : [];
+  $: secondWindUses = $character.classFeatures.features.SecondWind;
+  $: secondWindAvailable = Array.isArray(secondWindUses) && secondWindUses.some((used) => !used);
   // Derive available spell levels and their max slot counts from class config
   $: availableSpellLevels = (() => {
     if (!isCaster || !$character.class) return [];
@@ -100,7 +115,9 @@
         !Array.isArray(c.classFeatures.features[featureKey]) ||
         c.classFeatures.features[featureKey].length !== maxUses
       ) {
-        c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+        const saved = c.classFeatures.features[featureKey];
+        const used = Array.isArray(saved) ? saved.filter(Boolean).length : 0;
+        c.classFeatures.features[featureKey] = Array.from({ length: maxUses }, (_, i) => i < used);
       }
       return c;
     });
@@ -192,7 +209,8 @@
     dispatch('roll', {
       notation: formula,
       attackName: getFeatureName(feature),
-      rollType: 'other'
+      rollType: 'other',
+      secondWind: getFeatureName(feature) === 'Second Wind'
     });
   }
 
@@ -468,41 +486,49 @@
                         index={i}
                         on:change={(e) => {
                           character.update((c) => {
-                            if (!c.classFeatures.features[featureKey]) {
+                            if (!Array.isArray(c.classFeatures.features[featureKey])) {
                               c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
                             }
-                            c.classFeatures.features[featureKey][i] = e.detail.checked;
+                            const uses = c.classFeatures.features[featureKey];
+                            if (Array.isArray(uses)) uses[i] = e.detail.checked;
                             return c;
                           });
                         }}
                       />
                     {/each}
                   </div>
-                  <div class="uses-actions-row">
-                    <button
-                      on:click={() => {
-                        character.update((c) => {
-                          if (!c.classFeatures.features[featureKey]) {
-                            c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+                  {#if featureName !== 'Second Wind'}
+                    <div class="uses-actions-row">
+                      <button
+                        on:click={() => {
+                          character.update((c) => {
+                            if (!c.classFeatures.features[featureKey]) {
+                              c.classFeatures.features[featureKey] = Array(maxUses).fill(false);
+                            }
+                            const arr = c.classFeatures.features[featureKey] as boolean[];
+                            // Find first unused slot and mark it as used
+                            const firstUnused = arr.findIndex((u) => !u);
+                            if (firstUnused !== -1) {
+                              arr[firstUnused] = true;
+                            }
+                            return c;
+                          });
+                          if (featureName === 'Action Surge') {
+                            turnTracker.update((turn) => ({ ...turn, action: false }));
                           }
-                          const arr = c.classFeatures.features[featureKey] as boolean[];
-                          // Find first unused slot and mark it as used
-                          const firstUnused = arr.findIndex((u) => !u);
-                          if (firstUnused !== -1) {
-                            arr[firstUnused] = true;
-                          }
-                          return c;
-                        });
-                      }}
-                      disabled={usesArr.filter((u) => !u).length <= 0}
-                      class="btn btn-primary use-enabled"
-                    >
-                      Use {featureName}
-                    </button>
-                  </div>
+                        }}
+                        disabled={usesArr.filter((u) => !u).length <= 0}
+                        class="btn btn-primary use-enabled"
+                      >
+                        Use {featureName}
+                      </button>
+                    </div>
+                  {/if}
                   <div class="uses-info">
                     <span class="reset-info"
-                      >Resets on {feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}</span
+                      >{feature.shortRestRecovery
+                        ? `Recover ${feature.shortRestRecovery} use on a Short Rest; all uses on a Long Rest`
+                        : `Resets on ${feature.resetOn === 'short' ? 'Short Rest' : 'Long Rest'}`}</span
                     >
                   </div>
                 {/if}
@@ -530,11 +556,76 @@
               </div>
             {/if}
 
+            {#if featureName === 'Weapon Mastery'}
+              <label for="weapon-mastery-choices">Mastered weapon types (one per line)</label>
+              <textarea
+                id="weapon-mastery-choices"
+                value={($character.weaponMasteries ?? []).join('\n')}
+                on:change={(event) => {
+                  const weapons = [
+                    ...new Set(
+                      event.currentTarget.value
+                        .split('\n')
+                        .map((weapon) => weapon.trim())
+                        .filter(Boolean)
+                    )
+                  ];
+                  if (weapons.length > getFighterMasteryCount($character.level)) {
+                    toasts.add(
+                      `Choose no more than ${getFighterMasteryCount($character.level)} weapon types.`,
+                      'error'
+                    );
+                    event.currentTarget.value = ($character.weaponMasteries ?? []).join('\n');
+                    return;
+                  }
+                  character.update((char) => ({ ...char, weaponMasteries: weapons }));
+                }}
+              ></textarea>
+              <p>
+                {($character.weaponMasteries ?? []).length}/{getFighterMasteryCount(
+                  $character.level
+                )} weapon types selected.
+              </p>
+            {/if}
+
             {#if feature.rollable && getRollFormula(feature)}
               <div class="feature-roll">
-                <button class="btn btn-primary use-enabled" on:click={() => rollFeature(feature)}>
-                  Roll {featureName} ({getRollFormula(feature)})
+                <button
+                  class="btn btn-primary use-enabled"
+                  disabled={(featureName === 'Second Wind' &&
+                    ($turnTracker.bonusAction || !secondWindAvailable)) ||
+                    (featureName === 'Tactical Mind' && !secondWindAvailable)}
+                  on:click={() => rollFeature(feature)}
+                >
+                  {featureName === 'Second Wind' ? 'Use' : 'Roll'}
+                  {featureName} ({getRollFormula(feature)})
                 </button>
+                {#if featureName === 'Second Wind'}
+                  <p>
+                    Roll, then close the dice dialog to apply healing and spend one use and your
+                    Bonus Action.
+                  </p>
+                {/if}
+                {#if featureName === 'Tactical Mind'}
+                  <button
+                    class="btn btn-primary use-enabled"
+                    disabled={!secondWindAvailable}
+                    on:click={() => {
+                      if (!secondWindAvailable) {
+                        toasts.add('No Second Wind uses remain.', 'error');
+                        return;
+                      }
+                      character.update((char) => {
+                        const uses = char.classFeatures.features.SecondWind;
+                        if (Array.isArray(uses)) {
+                          const index = uses.findIndex((used) => !used);
+                          if (index >= 0) uses[index] = true;
+                        }
+                        return char;
+                      });
+                    }}>Check succeeded: spend one Second Wind use</button
+                  >
+                {/if}
               </div>
             {/if}
           </div>
