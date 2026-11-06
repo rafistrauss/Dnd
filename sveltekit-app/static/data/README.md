@@ -33,7 +33,7 @@ This directory contains pre-fetched D&D 5e content data used by the character sh
 ## Feats (feats.json)
 
 - **Source**: [Open5e API](https://api.open5e.com/feats/)
-- **Total Feats**: 74
+- **Total Feats**: 78
 - **Coverage**: Various D&D 5e sources including SRD, Level Up Advanced 5e, Tome of Heroes
 - **Format**: JSON array of feat objects
 
@@ -61,6 +61,8 @@ curl -o static/data/spells.json https://gist.githubusercontent.com/dmcb/4b67869f
 ```
 
 ### Update Feats Data
+Note: the 2024 Fighting Style feats (Archery, Defense, Great Weapon Fighting, Two-Weapon Fighting) use source `PHB` and are not in Open5e; they were added by hand, so re-add them after regenerating.
+
 Fetch from Open5e API and format:
 ```bash
 curl -s 'https://api.open5e.com/feats/?limit=100' | node -e "
