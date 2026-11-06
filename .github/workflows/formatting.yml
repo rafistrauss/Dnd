@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - master
-      - sveltekit
 
 jobs:
   formatting:
@@ -15,6 +14,19 @@ jobs:
       - name: Install bun
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies
-        run: cd sveltekit-app && bun install
-      - name: Build app
+        run: cd sveltekit-app && bun install --frozen-lockfile
+      - name: Check formatting
         run: cd sveltekit-app && bun run lint
+
+  test-build:
+    name: Test and build SvelteKit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sveltekit-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+      - run: bun run build

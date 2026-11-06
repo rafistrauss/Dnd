@@ -1,75 +1,47 @@
-# D&D 5e Character Sheet - SvelteKit
+# D&D 5e Character Sheet
 
-A fully functional D&D 5th Edition character sheet built with SvelteKit, featuring class/subclass support, dice rolling, and integration with dnd5e.wikidot.com for importing spells, feats, and items.
+This directory contains the only application in the repository.
+SvelteKit builds a static site for GitHub Pages.
 
-## Creating a project
+## Development
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+From this directory, install the locked dependencies:
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun install --frozen-lockfile
 ```
 
-## Building
-
-To create a production version of your app:
+Start the development server:
 
 ```sh
-npm run build
+bun run dev
 ```
 
-You can preview the production build with `npm run preview`.
+## Checks and builds
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```sh
+bun run test
+bun run check
+bun run lint
+bun run build
+bun run preview
+```
+
+The test script runs both Vitest and Bun tests.
+The build uses `/Dnd` as its production base path.
+PR previews use `BASE_PATH=/Dnd/pr-{number}`.
 
 ## Features
 
-### Browse & Add D&D Content
+- Character classes, subclasses, racial traits, and spell slots.
+- Level-up choices, ability score improvements, and feats for the 2014 and 2024 rules.
+- Weapon mastery, attack contexts, Great Weapon Fighting, Great Weapon Master, and critical hits.
+- 3D dice, roll history, combat resources, conditions, and inspiration.
+- JSON import and export, browser storage, and optional GitHub Gist storage.
+- A printable character sheet at `/print/`.
 
-Click the **"📚 Import from D&D Wiki"** button to browse and add spells and feats to your character:
+The content importer reads the local spell and feat catalogs in `static/data/`.
+See [the catalog documentation](static/data/README.md) for data sources and update commands.
 
-1. **Spells**:
-   - Browse a library of pre-loaded spells
-   - Filter by spell level (Cantrip through Level 9)
-   - Search by name, school, or description
-   - View full spell details before adding
-   - Adds to your prepared spells list
-
-2. **Feats**:
-   - Browse all available feats
-   - Search by name or description
-   - View prerequisites and benefits
-   - Adds to your character's features section
-
-**Note**: The spell/feat data is fetched during development and stored locally. To update or add more content, run:
-
-```bash
-npm run fetch-data
-```
-
-This will fetch the latest data from dnd5e.wikidot.com and update the local JSON files.
-
-### Other Features
-
-- **Subclass Support**: Choose from various subclasses (War Domain Cleric, Champion Fighter, etc.)
-- **Dice Rolling**: Integrated dice roller with proper D&D notation support
-- **Data Persistence**: Auto-save to localStorage
-- **GitHub Gist Integration**: Save/load characters to the cloud
-- **Import/Export**: JSON file support for sharing characters
-
-See [FEATURES.md](FEATURES.md) for complete feature list.
+See [FEATURES.md](FEATURES.md) for feature details.
+See [the repository README](../README.md) for branch and deployment rules.

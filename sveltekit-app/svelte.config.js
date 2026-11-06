@@ -15,8 +15,8 @@ const config = {
       strict: true
     }),
     paths: {
-      // Set base path for GitHub Pages (will be /Dnd or repo name)
-      base: process.env.NODE_ENV === 'production' ? '/Dnd' : ''
+      // Preview deployments use a PR-specific subdirectory on GitHub Pages.
+      base: process.env.NODE_ENV === 'production' ? (process.env.BASE_PATH ?? '/Dnd') : ''
     }
   }
 };

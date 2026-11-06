@@ -1,116 +1,94 @@
 # D&D Character Sheet
 
-A mobile-friendly web application for managing your D&D 5e character sheet with dice rolling capabilities.
+A mobile-friendly D&D 5e character sheet built with SvelteKit.
 
-## Features
+**Live application:** https://rafistrauss.github.io/Dnd/
 
-- ✅ **Mobile-Responsive Design** - Works perfectly on phones, tablets, and desktop
-- 💾 **Local Storage** - Automatically saves your character data in your browser
-- 📤 **Export/Import** - Save character sheets as JSON files and import them later
-- 🎲 **3D Dice Rolling** - Realistic physics-based 3D dice with sound effects using [sarahRosannaBusch/dice](https://github.com/sarahRosannaBusch/dice)
-- ⚔️ **Attack Management** - Add and manage multiple attacks with custom modifiers
-- 📊 **Auto-Calculations** - Automatically calculates modifiers, saves, and skill bonuses
+## Application
 
-## How to Use
+`sveltekit-app/` contains the only application. The repository no longer contains the standalone HTML and JavaScript application.
 
-### Basic Setup
+The sheet supports character advancement, feats, spell slots, racial traits, weapon mastery, combat resources, 3D dice, and printable sheets.
+Character data stays in browser storage unless you export it or save it to a GitHub Gist.
 
-1. Open `index.html` in your web browser
-2. Fill in your character information (name, class, level, race, etc.)
-3. Enter your ability scores - modifiers are calculated automatically
-4. Set your proficiency bonus (updates automatically based on level)
-5. Check the boxes for proficient saves and skills
+## Development
 
-### Rolling Dice
+Use Bun for dependencies and scripts.
 
-- Click any "Roll" button next to abilities, saves, or skills
-- Watch realistic 3D dice roll with physics simulation
-- Hear authentic dice rolling sound effects
-- Results appear after the dice settle
-- For attacks, roll separately for attack and damage with appropriate dice
+```sh
+cd sveltekit-app
+bun install --frozen-lockfile
+bun run dev
+```
 
-### Managing Attacks
+Open the local URL that Vite shows.
 
-1. Click "Add Attack" to create a new attack entry
-2. Fill in the attack name, bonus, damage dice (e.g., "2d6+3"), and damage type
-3. Use "Roll Attack" for attack rolls and "Roll Damage" for damage rolls
-4. Remove attacks with the "Remove" button
+## Checks and builds
 
-### Saving Your Character
+Run these commands from `sveltekit-app/`:
 
-- **Save** - Stores character in browser's local storage (persists between sessions)
-- **Export** - Downloads character as a JSON file for backup
-- **Import** - Load a previously exported character file
+```sh
+bun run test
+bun run check
+bun run lint
+bun run build
+```
 
-## GitHub Pages Deployment
+`bun run test` runs the component tests with Vitest and the advancement tests with Bun.
+`bun run build` creates the static site in `sveltekit-app/build/`.
+`bun run preview` serves that build locally.
 
-This repository is configured with automatic deployment to GitHub Pages using GitHub Actions.
+## Branches
 
-### ⚠️ Required Setup (First Time Only)
+| Branch                       | Purpose                                                                             |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| `master`                     | The default branch and the only source for production deployments.                  |
+| Short-lived feature branches | Changes proposed through pull requests into `master`.                               |
+| `gh-pages`                   | Generated production files and PR previews. No application development occurs here. |
 
-**Before PR previews will work, you must configure GitHub Pages:**
+Create feature branches from `master`.
+Target `master` with every new pull request.
+After a pull request merges, delete its feature branch.
+Do not use `sveltekit` as a separate development or release branch.
 
-1. **First, deploy the main site to gh-pages:**
-   - Go to **Actions** tab
-   - Click on "Manual Deploy to GitHub Pages" workflow
-   - Click "Run workflow" → select "master" branch → "Run workflow"
-   - Wait for the workflow to complete
+Until the old `sveltekit` branch is deleted, do not push to it.
+Its historical deployment workflow can still overwrite production.
 
-2. **Then configure GitHub Pages:**
-   - Go to **Settings** → **Pages**
-   - Under "Build and deployment" → "Source", select **Deploy from a branch**
-   - Under "Branch", select **gh-pages** and **/ (root)**
-   - Click **Save**
-   - Wait a few minutes for GitHub to build and deploy
+The consolidation combines the live `sveltekit` version at `9778d2b` with the `master` version at `e048233`.
+It preserves the level-up features from `sveltekit` and the print, weapon mastery, and combat fixes from `master`.
+The Git history retains both branches.
+Use a merge commit for the consolidation pull request to preserve this ancestry.
 
-After these steps, both the root site and PR previews will work from the gh-pages branch.
+Before deleting an older branch, compare its changes with `master`.
+Retarget an open pull request to `master` only if its changes remain necessary.
+Close superseded pull requests before deleting their branches.
 
-### Automatic Deployment
+## GitHub Pages
 
-Once configured, deployments happen automatically:
+The deployment workflow builds `sveltekit-app/` after a push to `master`.
+It publishes the build to the root of `gh-pages`.
+For a manual deployment, run **Deploy to GitHub Pages** from `master`.
+The workflow refuses production deployments from other branches.
 
-- **Main Branch**: Automatically deploys to `https://{username}.github.io/{repository}/`
-- **Pull Requests**: Each PR gets a preview deployment at `https://{username}.github.io/{repository}/pr-{number}/`
+The repository Pages configuration uses **Deploy from a branch**, with `gh-pages` and `/ (root)`.
+The deployment and preview workflows serialize writes to `gh-pages`.
+Production deployments preserve existing PR previews.
 
-(Replace `{username}` and `{repository}` with your GitHub username and repository name)
+Pull requests into `master` receive a preview at `https://rafistrauss.github.io/Dnd/pr-{number}/`.
+Each preview uses its own base path.
+The preview workflow deletes the preview after the pull request closes.
 
-### PR Preview Workflow
+## Source layout
 
-When you create or update a pull request:
-1. GitHub Actions deploys your PR to a unique subdirectory
-2. A bot comment is posted on the PR with the preview link
-3. The preview updates automatically when you push new commits
-4. The preview is cleaned up when the PR is closed
+- `sveltekit-app/src/routes/`: application routes, including the print sheet.
+- `sveltekit-app/src/lib/`: character state, rules, and Svelte components.
+- `sveltekit-app/static/`: spell data, feat data, images, and dice assets.
+- `sveltekit-app/src/test/`: Vitest component and combat tests.
+- `sveltekit-app/tests/`: Bun advancement, feat, and deployment tests.
+- `.github/workflows/`: formatting, tests, builds, production deployment, and PR previews.
 
-## Mobile Tips
-
-- The app is optimized for touch interactions
-- Portrait and landscape orientations are supported
-- All form fields are touch-friendly sized
-- Modal dialogs work well on mobile screens
-
-## Browser Compatibility
-
-Works on all modern browsers:
-- Chrome/Edge
-- Firefox
-- Safari
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-## Data Privacy
-
-- All character data is stored locally in your browser
-- No data is sent to any server
-- Export your characters regularly as backup
-
-## Customization
-
-Feel free to modify:
-- Color scheme in `styles.css` (`:root` variables)
-- Add more fields in `index.html`
-- Extend functionality in `app.js`
+See [the application documentation](sveltekit-app/README.md) for feature details.
 
 ## License
 
 Free to use and modify for personal use.
-

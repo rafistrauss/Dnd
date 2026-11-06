@@ -129,17 +129,6 @@ When adding new gameplay features:
 ✅ **DO** add `use-enabled` to resource counters and checkboxes
 ✅ **DO** test in both Edit and Use modes
 
-## Legacy Support
-
-The CSS also includes legacy support for specific IDs commonly used during gameplay:
-- `#currentHP`
-- `#tempHP`
-- `#hpAdjust`
-- `#hitDiceCurrent`
-- Roll buttons (automatically enabled via CSS selectors)
-
-However, for new components, always explicitly use the `use-enabled` class instead of relying on ID-based rules.
-
 ## Summary
 
 **The golden rule**: If a player needs to click it, check it, or change it during active gameplay (not just during character setup), it needs the `use-enabled` class.

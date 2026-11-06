@@ -9,9 +9,14 @@
   {
     "id": "archery",
     "name": "Archery",
-    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "category": "fighting-style",
+    "ruleset": "2024",
+    "requiredFeatures": [
+      "Fighting Style"
+    ],
+    "prerequisite": "Prerequisite: Fighting Style feature",
     "description": "You gain a +2 bonus to attack rolls you make with ranged weapons.",
-    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
+    "source": "PHB"
   },
   {
     "id": "athletic",
@@ -34,6 +39,9 @@
   },
   {
     "id": "boundless-reserves",
+    "requiredFeatures": [
+      "Ki"
+    ],
     "name": "Boundless Reserves",
     "prerequisite": "*Wisdom 13 or higher and the Ki class feature*",
     "description": "You have learned to harness your inner vitality to replenish your ki. You gain the following benefits:\n\n• * Increase your Wisdom score by 1, to a maximum of 20.\n• * When you start your turn and have no ki points remaining, you can use a reaction to spend one Hit Die. Roll the die and add your Constitution modifier to it. You regain expended ki points equal to up to half the total (minimum of 1). You can never have more ki points than the maximum for your level. Hit Dice spent using this feat can't be used to regain hit points during a short rest. You regain spent Hit Dice as normal.",
@@ -85,9 +93,14 @@
   {
     "id": "defense",
     "name": "Defense",
-    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "category": "fighting-style",
+    "ruleset": "2024",
+    "requiredFeatures": [
+      "Fighting Style"
+    ],
+    "prerequisite": "Prerequisite: Fighting Style feature",
     "description": "While you are wearing Light, Medium, or Heavy armor, you gain a +1 bonus to Armor Class.",
-    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
+    "source": "PHB"
   },
   {
     "id": "deflector",
@@ -177,9 +190,60 @@
   {
     "id": "great-weapon-fighting",
     "name": "Great Weapon Fighting",
-    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "category": "fighting-style",
+    "ruleset": "2024",
+    "requiredFeatures": [
+      "Fighting Style"
+    ],
+    "prerequisite": "Prerequisite: Fighting Style feature",
     "description": "When you roll a 1 or 2 on a damage die for an attack you make with a Melee weapon that you are holding with two hands, you can treat the roll as a 3. The weapon must have the Two-Handed or Versatile property to gain this benefit.",
-    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
+    "source": "PHB"
+  },
+  {
+    "id": "great-weapon-master",
+    "name": "Great Weapon Master",
+    "category": "general",
+    "ruleset": "2024",
+    "minLevel": 4,
+    "abilityRequirements": [
+      {
+        "abilities": [
+          "strength"
+        ],
+        "min": 13
+      }
+    ],
+    "abilityIncrease": {
+      "abilities": [
+        "strength"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    "effects": [
+      {
+        "type": "heavyWeaponMasteryDamage"
+      },
+      {
+        "type": "hewBonusAttack"
+      }
+    ],
+    "prerequisite": "Prerequisite: Level 4+, Strength 13+",
+    "description": "General feat.\n\n• Ability Score Increase: increase your Strength by 1, to a maximum of 20.\n• Heavy Weapon Mastery: when you hit with a Heavy weapon as part of the Attack action on your turn, the attack deals extra damage equal to your Proficiency Bonus.\n• Hew: immediately after you score a Critical Hit with a Melee weapon or reduce a creature to 0 Hit Points with one, you can make one attack with the same weapon as a Bonus Action.",
+    "source": "PHB"
+  },
+  {
+    "id": "great-weapon-master-2014",
+    "name": "Great Weapon Master",
+    "category": "general",
+    "ruleset": "2014",
+    "effects": [
+      {
+        "type": "hewBonusAttack"
+      }
+    ],
+    "description": "2014 version; there is no ability score increase and no automatic damage bonus.\n\n• On your turn, when you score a Critical Hit with a melee weapon or reduce a creature to 0 hit points with one, you can make one melee weapon attack as a Bonus Action.\n• Before you make a melee attack with a Heavy weapon you are proficient with, you can take a -5 penalty to the attack roll. If it hits, add +10 to the damage (apply this manually).",
+    "source": "PHB"
   },
   {
     "id": "guarded-warrior",
@@ -397,6 +461,9 @@
   },
   {
     "id": "sorcerous-vigor",
+    "requiredFeatures": [
+      "Sorcery Points"
+    ],
     "name": "Sorcerous Vigor",
     "prerequisite": "*Charisma 13 or higher and the Sorcery Points class feature*",
     "description": "When your magical reserves are low, you can call on your lifeforce to fuel your magic.\n\n• * Increase your Charisma score by 1, to a maximum of 20.\n• * When you start your turn and have no sorcery points remaining, you can use a reaction to spend one Hit Die. Roll the die and add your Constitution modifier to it. You regain expended sorcery points equal to up to half the total (minimum of 1). You can never have more sorcery points than the maximum for your level. Hit Dice spent using this feat can't be used to regain hit points during a short rest. You regain spent Hit Dice as normal.",
@@ -482,9 +549,14 @@
   {
     "id": "two-weapon-fighting",
     "name": "Two-Weapon Fighting",
-    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "category": "fighting-style",
+    "ruleset": "2024",
+    "requiredFeatures": [
+      "Fighting Style"
+    ],
+    "prerequisite": "Prerequisite: Fighting Style feature",
     "description": "When you make an extra attack as a result of using a weapon with the Light property, you can add your ability modifier to the damage of that attack if you aren't already adding it to the damage.",
-    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
+    "source": "PHB"
   },
   {
     "id": "weapons-specialist",
