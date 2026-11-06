@@ -28,6 +28,7 @@
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
   import { getSpellSlotProgression, getAvailableFeatures } from '$lib/classConfig';
+  import { getCriticalThreshold, isHeavyWeapon, isMeleeWeapon } from '$lib/featMechanics';
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
@@ -51,6 +52,13 @@
 
   // Returns false (and warns) if the attack's action-economy slot is unavailable
   function checkContext(attack: Attack): boolean {
+    if (
+      getContext(attack) === 'hew' &&
+      (!hasGreatWeaponMaster($character) || !isMeleeWeapon(attack))
+    ) {
+      toasts.add('Hew requires Great Weapon Master and a melee weapon.', 'error');
+      return false;
+    }
     const reason = contextBlockedReason(getContext(attack), $turnTracker);
     if (reason) toasts.add(`${attack.name}: ${reason}`, 'error');
     return !reason;
@@ -366,6 +374,7 @@
     consumeActionEconomy(attack);
     dispatch('roll', {
       notation,
+      critThreshold: getCriticalThreshold($character, attack),
       damageNotation: damageToRoll,
       attackName: attack.name,
       applyHalfDamage,
@@ -982,7 +991,22 @@
                   {/each}
                 </select>
               </div>
-              {#if $isEditMode || attack.twoHanded || attack.versatile || attack.heavy}
+              {#if $isEditMode}
+                <div class="attack-field">
+                  <label for="attack-weapon-type-{attack.id}">Weapon</label>
+                  <select
+                    id="attack-weapon-type-{attack.id}"
+                    value={isMeleeWeapon(attack) ? 'melee' : 'ranged'}
+                    on:change={(event) =>
+                      (attack.weaponType =
+                        event.currentTarget.value === 'ranged' ? 'ranged' : 'melee')}
+                  >
+                    <option value="melee">Melee</option>
+                    <option value="ranged">Ranged</option>
+                  </select>
+                </div>
+              {/if}
+              {#if $isEditMode || attack.twoHanded || attack.versatile || isHeavyWeapon(attack)}
                 <div class="attack-field attack-field-properties">
                   <span class="attack-field-label">Properties</span>
                   <div class="weapon-properties">
@@ -1003,7 +1027,12 @@
                       Versatile
                     </label>
                     <label class="property-label">
-                      <input type="checkbox" bind:checked={attack.heavy} disabled={!$isEditMode} />
+                      <input
+                        type="checkbox"
+                        checked={isHeavyWeapon(attack)}
+                        on:change={(event) => (attack.heavy = event.currentTarget.checked)}
+                        disabled={!$isEditMode}
+                      />
                       Heavy
                     </label>
                   </div>
@@ -1321,15 +1350,18 @@
             {/if}
             {#if !attack.spellRef}
               <!-- Non-spell attacks always show both buttons -->
-              {#if attack.heavy && hasGreatWeaponMaster($character)}
+              {#if hasGreatWeaponMaster($character)}
                 <select
                   class="attack-context"
+                  class:use-enabled={!$isEditMode}
                   aria-label="Attack context"
                   bind:value={attackContexts[attack.id]}
                   title="Heavy Weapon Mastery only applies to the Attack action"
                 >
                   {#each ATTACK_CONTEXTS as c}
-                    <option value={c.value}>{c.label}</option>
+                    {#if c.value !== 'hew' || isMeleeWeapon(attack)}
+                      <option value={c.value}>{c.label}</option>
+                    {/if}
                   {/each}
                 </select>
               {/if}

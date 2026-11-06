@@ -4,28 +4,30 @@ on:
   push:
     branches:
       - master
-      - main
-      - sveltekit
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Install dependencies
-        run: cd sveltekit-app && bun install
+        run: cd sveltekit-app && bun install --frozen-lockfile
 
       - name: Build SvelteKit app
         run: cd sveltekit-app && bun run build
@@ -37,5 +39,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./sveltekit-app/build
-          keep_files: false
-          exclude_assets: '.github'
+          keep_files: true
+          exclude_assets: ".github"

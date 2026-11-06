@@ -1,6 +1,10 @@
 // Great Weapon Fighting, Great Weapon Master (Heavy Weapon Mastery / Hew) and critical-hit helpers (2024 rules)
 
-import type { Attack } from './types';
+import { getAdvancementFeats } from './featUtils';
+import { hasFeatEffect, isHeavyWeapon, isMeleeWeapon } from './featMechanics';
+import type { Attack, Character } from './types';
+
+export { addFlatDamage } from './featMechanics';
 
 export type AttackContext = 'attackAction' | 'opportunity' | 'hew' | 'other';
 
@@ -11,7 +15,7 @@ export const ATTACK_CONTEXTS: Array<{ value: AttackContext; label: string }> = [
   { value: 'other', label: 'Other' }
 ];
 
-interface FeatSource {
+interface FeatSource extends Pick<Character, 'advancements' | 'ruleset'> {
   features?: string;
   greatWeaponFighting?: boolean;
   greatWeaponMaster?: boolean;
@@ -22,37 +26,37 @@ export function hasGreatWeaponFighting(char: FeatSource): boolean {
 }
 
 export function hasGreatWeaponMaster(char: FeatSource): boolean {
-  return !!char.greatWeaponMaster || /\bgreat weapon master\b/i.test(char.features || '');
+  return (
+    hasFeatEffect(char, 'hewBonusAttack') ||
+    !!char.greatWeaponMaster ||
+    /\bgreat weapon master\b/i.test(char.features || '')
+  );
 }
 
 /** GWF: melee weapon held in two hands with the Two-Handed or Versatile property. */
 export function qualifiesForGreatWeaponFighting(
   char: FeatSource,
-  attack: Pick<Attack, 'twoHanded' | 'versatile' | 'spellRef'>
+  attack: Partial<Pick<Attack, 'twoHanded' | 'versatile' | 'spellRef' | 'weaponType' | 'name'>>
 ): boolean {
-  return !attack.spellRef && hasGreatWeaponFighting(char) && !!attack.twoHanded;
+  return isMeleeWeapon(attack) && hasGreatWeaponFighting(char) && !!attack.twoHanded;
 }
 
 /** Heavy Weapon Mastery: Heavy weapon hit made as part of the Attack action. */
 export function heavyWeaponMasteryBonus(
   char: FeatSource & { proficiencyBonus?: number },
-  attack: Pick<Attack, 'heavy' | 'spellRef'>,
+  attack: Partial<Pick<Attack, 'name' | 'heavy' | 'spellRef' | 'weaponProperties'>>,
   context: AttackContext
 ): number {
-  if (attack.spellRef || !attack.heavy || context !== 'attackAction') return 0;
-  if (!hasGreatWeaponMaster(char)) return 0;
+  if (!isHeavyWeapon(attack) || context !== 'attackAction') return 0;
+  const recordedMaster = getAdvancementFeats(char).some(
+    (feat) => feat.name === 'Great Weapon Master'
+  );
+  if (recordedMaster) {
+    if (!hasFeatEffect(char, 'heavyWeaponMasteryDamage')) return 0;
+  } else if (char.ruleset === '2014' || !hasGreatWeaponMaster(char)) {
+    return 0;
+  }
   return Math.max(0, char.proficiencyBonus || 0);
-}
-
-/** Adds a flat bonus to the first dice term's modifier ("2d6+4" + 2 -> "2d6+6"). */
-export function addFlatDamage(notation: string, bonus: number): string {
-  if (!bonus) return notation;
-  const match = notation.match(/^(\s*\d+d\d+)\s*([+-]\s*\d+)?(?!\d*d)/i);
-  if (!match) return `${notation}+${bonus}`;
-  const existing = match[2] ? parseInt(match[2].replace(/\s+/g, '')) : 0;
-  const total = existing + bonus;
-  const mod = total === 0 ? '' : `${total > 0 ? '+' : ''}${total}`;
-  return `${match[1]}${mod}${notation.slice(match[0].length)}`;
 }
 
 /** Doubles dice counts only; flat modifiers are untouched. */

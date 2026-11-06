@@ -61,7 +61,7 @@ export const WEAPON_MASTERIES: WeaponMastery[] = [
     trigger: 'on-hit',
     summary: 'On hit → target speed −10 ft until your next turn',
     description:
-      'If you hit a creature with this weapon, the target\'s Speed is reduced by 10 feet until the start of your next turn.'
+      "If you hit a creature with this weapon, the target's Speed is reduced by 10 feet until the start of your next turn."
   },
   {
     name: 'Topple',

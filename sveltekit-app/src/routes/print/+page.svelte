@@ -74,7 +74,11 @@
       <div class="char-title">
         <h1>{$character.name || 'Unnamed Character'}</h1>
         <div class="char-meta">
-          <span>{capitalize($character.class)}{$character.subclass ? ` (${capitalize($character.subclass)})` : ''} · Level {$character.level}</span>
+          <span
+            >{capitalize($character.class)}{$character.subclass
+              ? ` (${capitalize($character.subclass)})`
+              : ''} · Level {$character.level}</span
+          >
           <span>{$character.race}</span>
           <span>{$character.background}</span>
           <span>{$character.alignment}</span>
@@ -82,7 +86,9 @@
       </div>
       <div class="header-stats">
         <div class="stat-box">
-          <span class="stat-val">{$character.proficiencyBonus >= 0 ? '+' : ''}{$character.proficiencyBonus}</span>
+          <span class="stat-val"
+            >{$character.proficiencyBonus >= 0 ? '+' : ''}{$character.proficiencyBonus}</span
+          >
           <span class="stat-label">Prof. Bonus</span>
         </div>
         <div class="stat-box">
@@ -130,7 +136,8 @@
               </span>
               <span class="row-val">{fmt(skillMod(key))}</span>
               <span class="row-label">{label}</span>
-              <span class="row-ability">({SKILL_ABILITIES[key].substring(0, 3).toUpperCase()})</span>
+              <span class="row-ability">({SKILL_ABILITIES[key].substring(0, 3).toUpperCase()})</span
+              >
             </div>
           {/each}
         </section>
@@ -173,7 +180,24 @@
         <div class="hit-dice-row">
           <div class="hit-dice-box">
             <span class="combat-label">Hit Dice</span>
-            <span class="combat-val">{$character.hitDice.current}/{$character.hitDice.max}d{$character.class ? ({ barbarian: 12, fighter: 10, paladin: 10, ranger: 10, rogue: 8, monk: 8, cleric: 8, druid: 8, bard: 8, warlock: 8, wizard: 6, sorcerer: 6 }[$character.class.toLowerCase()] ?? 8) : 8}</span>
+            <span class="combat-val"
+              >{$character.hitDice.current}/{$character.hitDice.max}d{$character.class
+                ? ({
+                    barbarian: 12,
+                    fighter: 10,
+                    paladin: 10,
+                    ranger: 10,
+                    rogue: 8,
+                    monk: 8,
+                    cleric: 8,
+                    druid: 8,
+                    bard: 8,
+                    warlock: 8,
+                    wizard: 6,
+                    sorcerer: 6
+                  }[$character.class.toLowerCase()] ?? 8)
+                : 8}</span
+            >
           </div>
           {#if $character.exhaustionLevel && $character.exhaustionLevel > 0}
             <div class="hit-dice-box">
@@ -208,9 +232,9 @@
               {/each}
             </tbody>
           </table>
-          {#if $character.attacks.some(a => a.notes)}
+          {#if $character.attacks.some((a) => a.notes)}
             <div class="attack-notes">
-              {#each $character.attacks.filter(a => a.notes) as atk}
+              {#each $character.attacks.filter((a) => a.notes) as atk}
                 <div class="attack-note-line"><strong>{atk.name}:</strong> {atk.notes}</div>
               {/each}
             </div>
@@ -228,11 +252,26 @@
           <section class="box-section money-section">
             <h3 class="section-title">Currency</h3>
             <div class="money-row">
-              <div class="coin-box"><span class="coin-val">{$character.money.pp}</span><span class="coin-label">PP</span></div>
-              <div class="coin-box"><span class="coin-val">{$character.money.gp}</span><span class="coin-label">GP</span></div>
-              <div class="coin-box"><span class="coin-val">{$character.money.ep}</span><span class="coin-label">EP</span></div>
-              <div class="coin-box"><span class="coin-val">{$character.money.sp}</span><span class="coin-label">SP</span></div>
-              <div class="coin-box"><span class="coin-val">{$character.money.cp}</span><span class="coin-label">CP</span></div>
+              <div class="coin-box">
+                <span class="coin-val">{$character.money.pp}</span><span class="coin-label">PP</span
+                >
+              </div>
+              <div class="coin-box">
+                <span class="coin-val">{$character.money.gp}</span><span class="coin-label">GP</span
+                >
+              </div>
+              <div class="coin-box">
+                <span class="coin-val">{$character.money.ep}</span><span class="coin-label">EP</span
+                >
+              </div>
+              <div class="coin-box">
+                <span class="coin-val">{$character.money.sp}</span><span class="coin-label">SP</span
+                >
+              </div>
+              <div class="coin-box">
+                <span class="coin-val">{$character.money.cp}</span><span class="coin-label">CP</span
+                >
+              </div>
             </div>
           </section>
         {/if}
@@ -334,7 +373,7 @@
     border: 2px solid #7b3f00;
     border-radius: 6px;
     padding: 20px 24px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   }
 
   /* ---- Header ---- */
@@ -506,13 +545,15 @@
   }
 
   /* ---- Combat stats ---- */
-  .combat-row, .hp-row {
+  .combat-row,
+  .hp-row {
     display: flex;
     gap: 8px;
     margin-bottom: 10px;
   }
 
-  .combat-box, .hp-box {
+  .combat-box,
+  .hp-box {
     flex: 1;
     display: flex;
     flex-direction: column;
