@@ -7,6 +7,13 @@
     "source": "https://a5esrd.com/a5esrd"
   },
   {
+    "id": "archery",
+    "name": "Archery",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "You gain a +2 bonus to attack rolls you make with ranged weapons.",
+    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
+  },
+  {
     "id": "athletic",
     "name": "Athletic",
     "description": "Your enhanced physical training grants you the following benefits:\n\n• Your Strength or Dexterity score increases by 1, to a maximum of 20.\n• When you are prone, standing up uses only 5 feet of your movement (instead of half).\n• Your speed is not halved from climbing.\n• You can make a running long jump or a running high jump after moving 5 feet on foot (instead of 10 feet).",
@@ -74,6 +81,13 @@
     "prerequisite": "Prerequisite: 8th level or higher",
     "description": "Your natural talent or skill makes you lethal with a ranged weapon.\n\n• You gain proficiency with the Farshot Stance and Ricochet maneuvers, and do not have to spend exertion to activate them.\n• Cover does not grant your targets an AC bonus when you make attacks against them with a ranged weapon.\n• Before making an attack with a ranged weapon you are proficient with, you may choose to forgo your proficiency bonus on the attack roll, applying twice your proficiency bonus to damage instead.",
     "source": "https://a5esrd.com/a5esrd"
+  },
+  {
+    "id": "defense",
+    "name": "Defense",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "While you are wearing Light, Medium, or Heavy armor, you gain a +1 bonus to Armor Class.",
+    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
   },
   {
     "id": "deflector",
@@ -159,6 +173,13 @@
     "prerequisite": "Prerequisite: Strength 13 or higher",
     "description": "You've developed the skills necessary to hold your own in close-quarters grappling. You gain the following benefits:\n\n• You have advantage on attack rolls against a creature you are grappling.\n• You can use your action to try to pin a creature grappled by you. The creature makes a Strength or Dexterity saving throw against your maneuver DC. On a failure, you and the creature are both restrained until the grapple ends.",
     "source": "http://dnd.wizards.com/articles/features/systems-reference-document-srd"
+  },
+  {
+    "id": "great-weapon-fighting",
+    "name": "Great Weapon Fighting",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "When you roll a 1 or 2 on a damage die for an attack you make with a Melee weapon that you are holding with two hands, you can treat the roll as a 3. The weapon must have the Two-Handed or Versatile property to gain this benefit.",
+    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
   },
   {
     "id": "guarded-warrior",
@@ -457,6 +478,13 @@
     "name": "Thespian",
     "description": "Your mastery of the dramatic arts is useful both on and off the stage.\n\n• Raise your Charisma attribute by 1, up to the attribute cap of 20.\n• When adopting another persona, gain advantage on Deception and Performance checks.\n• You may perfectly mimic the voice or sounds of another creature. A creature with a reason to be suspicious may attempt a Wisdom (Insight) check opposed by your Charisma (Deception) to see through your ruse.",
     "source": "https://a5esrd.com/a5esrd"
+  },
+  {
+    "id": "two-weapon-fighting",
+    "name": "Two-Weapon Fighting",
+    "prerequisite": "Prerequisite: Fighting Style Feature",
+    "description": "When you make an extra attack as a result of using a weapon with the Light property, you can add your ability modifier to the damage of that attack if you aren't already adding it to the damage.",
+    "source": "https://media.wizards.com/2025/downloads/dnd/SRD_CC_v5.2.pdf"
   },
   {
     "id": "weapons-specialist",
