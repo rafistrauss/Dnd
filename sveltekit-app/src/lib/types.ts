@@ -60,6 +60,7 @@ export interface Attack {
   damageType: string;
   twoHanded?: boolean;
   versatile?: boolean;
+  heavy?: boolean; // Heavy property (enables Great Weapon Master's Heavy Weapon Mastery)
   spellRef?: string; // canonical spell name
   infoNotes?: string; // Range, Duration, Components, etc.
   generalNotes?: string; // summary/effects
@@ -179,6 +180,7 @@ export interface Character {
   conditions?: string[]; // Active standard conditions (e.g. "prone", "poisoned")
   exhaustionLevel?: number; // 0-6
   inspiration?: boolean; // Heroic inspiration
+  greatWeaponMaster?: boolean; // Great Weapon Master feat (tracked separately from Great Weapon Fighting)
   greatWeaponFighting?: boolean; // Great Weapon Fighting style: treat 1s and 2s as 3s on marked weapon damage dice
 }
 
