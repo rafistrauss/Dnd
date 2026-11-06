@@ -749,7 +749,7 @@
           gistMode = 'save';
           showGistModal = true;
         }}
-        class="btn btn-secondary"
+        class="btn btn-secondary use-enabled"
       >
         Save to Gist
       </button>
@@ -758,12 +758,12 @@
           gistMode = 'load';
           showGistModal = true;
         }}
-        class="btn btn-secondary"
+        class="btn btn-secondary use-enabled"
       >
         Load from Gist
       </button>
-      <button on:click={handleExport} class="btn btn-secondary">Export JSON</button>
-      <button on:click={handleImport} class="btn btn-secondary">Import JSON</button>
+      <button on:click={handleExport} class="btn btn-secondary use-enabled">Export JSON</button>
+      <button on:click={handleImport} class="btn btn-secondary use-enabled">Import JSON</button>
       <input
         type="file"
         bind:this={fileInput}
