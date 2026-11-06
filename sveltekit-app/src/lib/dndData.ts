@@ -2,6 +2,7 @@
 // Data is pre-fetched and stored in static/data/
 
 import { resolve } from '$app/paths';
+import type { FeatMetadata } from './types';
 
 export interface Spell {
   name: string;
@@ -21,7 +22,7 @@ export interface Spell {
   higherLevelSlot?: string;
 }
 
-export interface Feat {
+export interface Feat extends FeatMetadata {
   id: string;
   name: string;
   prerequisite?: string;

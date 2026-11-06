@@ -68,6 +68,8 @@ export interface Attack {
   notes?: string; // for non-spell attacks
   source?: 'racial' | 'class' | 'custom'; // source of the attack/spell
   racialTraitName?: string; // name of the racial trait (e.g., "Githyanki Psionics")
+  weaponType?: 'melee' | 'ranged'; // inferred from the weapon name when unset
+  weaponProperties?: string[]; // lowercase weapon properties, e.g. 'heavy'; inferred from the name when unset
 }
 
 export interface Spell {
@@ -144,10 +146,28 @@ export interface Money {
   pp: number; // platinum pieces
 }
 
+export type Ruleset = '2014' | '2024';
+
+export type FeatCategory = 'origin' | 'general' | 'fighting-style' | 'epic-boon';
+
+// Mechanics the sheet applies automatically; anything else is recorded as text only.
+export type FeatEffect = { type: 'heavyWeaponMasteryDamage' } | { type: 'hewBonusAttack' };
+
+export interface FeatMetadata {
+  category?: FeatCategory;
+  ruleset?: Ruleset;
+  minLevel?: number;
+  abilityRequirements?: { abilities: AbilityName[]; min: number }[]; // each entry is any-of
+  abilityIncrease?: { abilities: AbilityName[]; amount: number; max: number };
+  repeatable?: boolean;
+  effects?: FeatEffect[];
+}
+
 export interface LevelUpChoices {
   improvement?: 'asi' | 'feat';
+  ruleset?: Ruleset;
   abilityIncreases?: Partial<Record<AbilityName, number>>;
-  feat?: {
+  feat?: FeatMetadata & {
     id?: string;
     name: string;
     description: string;
@@ -173,6 +193,7 @@ export interface Character {
   name: string;
   class: string;
   subclass?: string;
+  ruleset?: Ruleset;
   level: number;
   hpByLevel?: Record<number, number>;
   hpRolls?: number[];

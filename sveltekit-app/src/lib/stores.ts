@@ -777,6 +777,7 @@ export function applyLevelUp(
     const previousSubclass = char.subclass;
     char.abilities = getAdvancedAbilities(char.abilities, choices);
     if (choices.subclass) char.subclass = choices.subclass;
+    if (choices.ruleset) char.ruleset = choices.ruleset;
     const conMod = calculateModifier(char.abilities.constitution);
     const conDelta = conMod - oldConMod;
     const hitDieSize = parseInt(classConfig.hitDice.substring(1));

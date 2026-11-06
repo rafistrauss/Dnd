@@ -1,6 +1,11 @@
 import { getAvailableSubclasses, getClassConfig } from './classConfig';
 import type { Abilities, AbilityName, Character, LevelUpChoices } from './types';
-import { featMatchesClass, getFeatSource } from './featUtils';
+import {
+  featMatchesClass,
+  getCharacterRuleset,
+  getFeatSource,
+  getRequiredAbilityIncrease
+} from './featUtils';
 
 export const ABILITY_NAMES: AbilityName[] = [
   'strength',
@@ -40,6 +45,31 @@ export function getAdvancedAbilities(abilities: Abilities, choices: LevelUpChoic
     }
   }
   return next;
+}
+
+// Catalog feats with structured metadata dictate exactly which score increases they grant.
+function getFeatIncreaseError(
+  char: Character,
+  choices: LevelUpChoices,
+  points: number
+): string | null {
+  const feat = choices.feat;
+  if (!feat?.category) return null;
+  const required = getRequiredAbilityIncrease(feat, char.abilities);
+  if (required === null) {
+    return points ? `${feat.name} does not grant an ability score increase.` : null;
+  }
+  const allowed = feat.abilityIncrease!.abilities;
+  const increases = choices.abilityIncreases ?? {};
+  if (
+    ABILITY_NAMES.some((ability) => (increases[ability] ?? 0) > 0 && !allowed.includes(ability))
+  ) {
+    return `${feat.name} can only increase ${allowed.join(' or ')}.`;
+  }
+  if (points !== required) {
+    return `${feat.name} grants +${required} to ${allowed.join(' or ')} (maximum ${feat.abilityIncrease!.max}).`;
+  }
+  return null;
 }
 
 export function validateLevelUpChoices(char: Character, choices: LevelUpChoices): string | null {
@@ -84,14 +114,26 @@ export function validateLevelUpChoices(char: Character, choices: LevelUpChoices)
       ) {
         return 'Choose a feat from the selected source.';
       }
+      const feat = {
+        ...choices.feat,
+        id: choices.feat.id ?? '',
+        source: choices.feat.source ?? ''
+      };
       if (
         !featMatchesClass(
-          { ...choices.feat, id: choices.feat.id ?? '', source: choices.feat.source ?? '' },
-          { ...char, subclass: choices.subclass || char.subclass },
-          level
+          feat,
+          {
+            ...char,
+            subclass: choices.subclass || char.subclass,
+            ruleset: choices.ruleset ?? getCharacterRuleset(char)
+          },
+          level,
+          [feat]
         )
       )
         return 'Choose a feat available to your class.';
+      const featIncrease = getFeatIncreaseError(char, choices, points);
+      if (featIncrease) return featIncrease;
     }
     if (points > 2) return 'Allocate no more than 2 ability score points.';
   } else if (choices.improvement || choices.feat || points) {

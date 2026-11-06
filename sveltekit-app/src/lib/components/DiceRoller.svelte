@@ -14,6 +14,7 @@
   export let attackName = ''; // Optional attack name for context
   export let applyHalfDamage = false; // If true, halve the result after rolling
   export let bonusBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown of bonuses by source
+  export let critThreshold = 20; // Lowest d20 result that counts as a critical hit on attack rolls
   export let rollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other'; // Type of roll
   export let damageBreakdown: Array<{ value: number | string; source: string }> = []; // Breakdown specifically for damage rolls
 
@@ -25,7 +26,8 @@
   let currentRollNotation = ''; // Track the notation actually used for the current roll
 
   $: isD20Notation = /(^|[+\-])\d*d20(?!\d)/i.test(currentRollNotation);
-  $: canUseInspiration = !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
+  $: canUseInspiration =
+    !!rollResult && rollType === 'check' && isD20Notation && !!$character.inspiration;
 
   // Export function to get last roll total
   export function getLastRollTotal(): number | null {
@@ -348,7 +350,7 @@
       if (type === 'attack') {
         if (notationObj.result && notationObj.result.length > 0) {
           const firstDie = notationObj.result[0];
-          isCriticalSuccess = firstDie === 20;
+          isCriticalSuccess = firstDie >= Math.min(critThreshold, 20);
           isCriticalFail = firstDie === 1;
 
           // TODO: Play sounds for crit/fail

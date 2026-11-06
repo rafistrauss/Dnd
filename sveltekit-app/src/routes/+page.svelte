@@ -90,6 +90,7 @@
   let diceApplyHalfDamage = false;
   let diceBonusBreakdown: Array<{ value: number | string; source: string }> = [];
   let diceDamageBreakdown: Array<{ value: number | string; source: string }> = [];
+  let diceCritThreshold = 20;
   let diceRollType: 'attack' | 'damage' | 'check' | 'save' | 'other' = 'other';
   let diceRollerComponent: any;
   let isHitDiceRoll = false;
@@ -362,6 +363,7 @@
           bonusBreakdown?: Array<{ value: number | string; source: string }>;
           damageBreakdown?: Array<{ value: number | string; source: string }>;
           rollType?: 'attack' | 'damage' | 'check' | 'save' | 'other';
+          critThreshold?: number;
         }
   ) {
     // Reset notation first to ensure Svelte sees a change even if same value
@@ -372,6 +374,7 @@
     diceBonusBreakdown = [];
     diceDamageBreakdown = [];
     diceRollType = 'other';
+    diceCritThreshold = 20;
     isHitDiceRoll = false;
 
     // Set all values together to ensure they update simultaneously
@@ -385,6 +388,7 @@
       diceBonusBreakdown = detail.bonusBreakdown || [];
       diceDamageBreakdown = detail.damageBreakdown || [];
       diceRollType = detail.rollType || 'other';
+      diceCritThreshold = detail.critThreshold ?? 20;
     }
     showDiceRoller = true;
   }
@@ -795,6 +799,7 @@
   bonusBreakdown={diceBonusBreakdown}
   damageBreakdown={diceDamageBreakdown}
   rollType={diceRollType}
+  critThreshold={diceCritThreshold}
   visible={showDiceRoller}
   on:close={handleDiceRollerClose}
 />

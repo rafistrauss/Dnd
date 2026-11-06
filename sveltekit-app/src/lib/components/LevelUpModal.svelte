@@ -5,8 +5,14 @@
   import { getClassConfig, isSpellcaster } from '$lib/classConfig';
   import { loadFeats, searchFeats } from '$lib/dndData';
   import type { Feat } from '$lib/dndData';
-  import { filterLevelUpFeats, getFeatSources } from '$lib/featUtils';
-  import type { AbilityName, LevelUpChoices } from '$lib/types';
+  import {
+    FEAT_CATEGORY_LABELS,
+    filterLevelUpFeats,
+    getCharacterRuleset,
+    getFeatSources,
+    getRequiredAbilityIncrease
+  } from '$lib/featUtils';
+  import type { AbilityName, FeatEffect, LevelUpChoices, Ruleset } from '$lib/types';
   import {
     ABILITY_NAMES,
     gainsAbilityImprovement,
@@ -31,6 +37,7 @@
   let featSearch = '';
   let featId = '';
   let featSource = '';
+  let ruleset: Ruleset = '2024';
   let customFeatName = '';
   let customFeatDescription = '';
   let featConfirmed = false;
@@ -46,10 +53,26 @@
   $: featSources = getFeatSources(feats);
   $: availableFeats = filterLevelUpFeats(
     feats,
-    { ...$character, subclass: subclass || $character.subclass },
+    { ...$character, ruleset, subclass: subclass || $character.subclass },
     featSource
   );
   $: selectedFeat = availableFeats.find((feat) => feat.id === featId);
+  $: featGroups = groupFeats(searchFeats(availableFeats, featSearch));
+  $: lockedAbilities =
+    improvement === 'feat' && selectedFeat?.abilityIncrease?.abilities.length === 1
+      ? selectedFeat.abilityIncrease.abilities
+      : [];
+  // Catalog feats fix which scores they may raise; null leaves every score editable.
+  $: editableAbilities =
+    improvement !== 'feat' || !selectedFeat?.category
+      ? null
+      : lockedAbilities.length
+        ? []
+        : (selectedFeat.abilityIncrease?.abilities ?? []);
+  $: if (improvement === 'feat' && lockedAbilities.length === 1 && selectedFeat) {
+    const required = getRequiredAbilityIncrease(selectedFeat, $character.abilities) ?? 0;
+    abilityIncreases = required ? { [lockedAbilities[0]]: required } : {};
+  }
   $: clearUnavailableFeat(availableFeats, featSource);
   $: choices = {
     ...(earnsImprovement
@@ -58,6 +81,7 @@
           abilityIncreases,
           ...(improvement === 'feat'
             ? {
+                ruleset,
                 feat:
                   featId === 'custom'
                     ? {
@@ -79,6 +103,7 @@
   $: hpRollModifier = preview?.conMod ?? 0;
 
   $: if (!isOpen) {
+    ruleset = getCharacterRuleset($character);
     hpGainMethod = 'average';
     hpRollValue = null;
     improvement = 'asi';
@@ -127,6 +152,21 @@
     const result = rollFromNotation(`1${classConfig.hitDice}`);
     hpRollValue = result.rolls[0]; // Just the die roll, not total
     isRolling = false;
+  }
+
+  const EFFECT_LABELS: Record<FeatEffect['type'], string> = {
+    heavyWeaponMasteryDamage:
+      'Adds your proficiency bonus to damage when a Heavy weapon hits as part of the Attack action',
+    hewBonusAttack: 'Adds a Hew (Bonus Action) attack button for melee weapons'
+  };
+
+  function groupFeats(list: Feat[]) {
+    const groups = new Map<string, Feat[]>();
+    for (const feat of list) {
+      const label = FEAT_CATEGORY_LABELS[feat.category ?? ''] ?? 'Other Feats';
+      groups.set(label, [...(groups.get(label) ?? []), feat]);
+    }
+    return [...groups].map(([label, feats]) => ({ label, feats }));
   }
 
   function clearUnavailableFeat(available: Feat[], source: string) {
@@ -253,6 +293,11 @@
                   material is not substituted with SRD or third-party feats.
                 </p>
               {/if}
+              <label for="level-up-ruleset">Ruleset</label>
+              <select id="level-up-ruleset" bind:value={ruleset}>
+                <option value="2024">2024 rules</option>
+                <option value="2014">2014 rules</option>
+              </select>
               <label for="level-up-feat-search">Search feats</label>
               <input id="level-up-feat-search" type="search" bind:value={featSearch} />
               <label for="level-up-feat">Feat</label>
@@ -268,8 +313,12 @@
                 {#if featSource === 'custom'}
                   <option value="custom">Custom feat</option>
                 {/if}
-                {#each searchFeats(availableFeats, featSearch) as feat}
-                  <option value={feat.id}>{feat.name}</option>
+                {#each featGroups as group}
+                  <optgroup label={group.label}>
+                    {#each group.feats as feat}
+                      <option value={feat.id}>{feat.name}</option>
+                    {/each}
+                  </optgroup>
                 {/each}
               </select>
               {#if featId === 'custom'}
@@ -279,8 +328,21 @@
                 <textarea id="level-up-feat-description" bind:value={customFeatDescription}
                 ></textarea>
               {:else if selectedFeat}
+                {#if selectedFeat.category}
+                  <p>
+                    {FEAT_CATEGORY_LABELS[selectedFeat.category]?.replace(/s$/, '')}
+                    {#if selectedFeat.ruleset}({selectedFeat.ruleset} rules){/if}
+                  </p>
+                {/if}
                 {#if selectedFeat.prerequisite}<p>{selectedFeat.prerequisite}</p>{/if}
                 <p class="choice-description">{selectedFeat.description}</p>
+                {#if selectedFeat.effects?.length}
+                  <p>
+                    Applied automatically: {selectedFeat.effects
+                      .map((effect) => EFFECT_LABELS[effect.type])
+                      .join('; ')}.
+                  </p>
+                {/if}
               {/if}
               <p>
                 Only selected ability increases are applied automatically. Record other choices
@@ -310,6 +372,7 @@
                   type="number"
                   min="0"
                   max={Math.max(0, Math.min(2, 20 - $character.abilities[ability]))}
+                  disabled={editableAbilities !== null && !editableAbilities.includes(ability)}
                   value={abilityIncreases[ability] ?? 0}
                   on:input={(event) => {
                     abilityIncreases = {
