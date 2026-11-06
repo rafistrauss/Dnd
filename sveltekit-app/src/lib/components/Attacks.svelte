@@ -26,6 +26,15 @@
   } from '$lib/spellUtils';
   import { getSpellSaveDC, getSpellcastingModifier } from '$lib/combatUtils';
   import { getSpellSlotProgression } from '$lib/classConfig';
+  import {
+    addFlatDamage,
+    canMakeHewAttack,
+    getCriticalThreshold,
+    getHeavyWeaponMasteryBonus,
+    hasFeatEffect,
+    isHeavyWeapon,
+    isMeleeWeapon
+  } from '$lib/featMechanics';
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
@@ -80,6 +89,33 @@
 
   // Track target selection for targetable spells (default to 'self')
   let spellTargets: Record<string, 'self' | 'other'> = {};
+
+  // Whether a weapon attack is made as part of the Attack action (needed by Heavy Weapon Mastery)
+  let attackActionFlags: Record<string, boolean> = {};
+
+  function isAttackAction(attack: Attack, context: AttackContext = {}): boolean {
+    return !context.hew && attackActionFlags[attack.id] !== false;
+  }
+
+  function setWeaponProperty(attack: Attack, property: string, enabled: boolean) {
+    character.update((c) => {
+      const target = c.attacks.find((a) => a.id === attack.id);
+      if (!target) return c;
+      const current = new Set(target.weaponProperties ?? (isHeavyWeapon(target) ? ['heavy'] : []));
+      if (enabled) current.add(property);
+      else current.delete(property);
+      target.weaponProperties = [...current];
+      return c;
+    });
+  }
+
+  function setWeaponType(attack: Attack, weaponType: 'melee' | 'ranged') {
+    character.update((c) => {
+      const target = c.attacks.find((a) => a.id === attack.id);
+      if (target) target.weaponType = weaponType;
+      return c;
+    });
+  }
 
   // Track reorder modal state
   let showReorderModal = false;
@@ -160,8 +196,12 @@
 
   // Mark the appropriate action-economy slot as used on the turn tracker.
   // Weapon attacks use your Action; spells use their casting time (action/bonusAction/reaction).
-  function consumeActionEconomy(attack: Attack) {
-    let slot: 'action' | 'bonusAction' | 'reaction' = 'action';
+  interface AttackContext {
+    hew?: boolean; // bonus-action attack granted by Hew
+  }
+
+  function consumeActionEconomy(attack: Attack, context: AttackContext = {}) {
+    let slot: 'action' | 'bonusAction' | 'reaction' = context.hew ? 'bonusAction' : 'action';
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
       const actionType = (spell?.actionType || '').toLowerCase();
@@ -174,7 +214,11 @@
   }
 
   // Support racial trait spell usage and user override
-  function rollAttack(attack: Attack, useRacialTraitOverride?: boolean) {
+  function rollAttack(
+    attack: Attack,
+    useRacialTraitOverride?: boolean,
+    context: AttackContext = {}
+  ) {
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
@@ -255,6 +299,16 @@
       }
     }
 
+    if (!attack.spellRef && damageToRoll) {
+      const mastery = getHeavyWeaponMasteryBonus($character, attack, {
+        attackAction: isAttackAction(attack, context)
+      });
+      if (mastery) {
+        damageToRoll = addFlatDamage(damageToRoll, mastery);
+        damageBreakdown.push({ value: mastery, source: 'Heavy Weapon Mastery' });
+      }
+    }
+
     // Build bonus breakdown for attack roll
     const bonusBreakdown: Array<{ value: number; source: string }> = [];
 
@@ -301,9 +355,13 @@
     } else if (debugForceD20Mode === 'd1') {
       notation += `@1`;
     }
-    consumeActionEconomy(attack);
+    if (context.hew && $turnTracker.bonusAction) {
+      toasts.add('Bonus action already used this turn', 'info');
+    }
+    consumeActionEconomy(attack, context);
     dispatch('roll', {
       notation,
+      critThreshold: getCriticalThreshold($character, attack),
       damageNotation: damageToRoll,
       attackName: attack.name,
       applyHalfDamage,
@@ -417,6 +475,16 @@
             damageToRoll = newDamage;
           }
         }
+      }
+    }
+
+    if (!attack.spellRef) {
+      const mastery = getHeavyWeaponMasteryBonus($character, attack, {
+        attackAction: isAttackAction(attack)
+      });
+      if (mastery) {
+        damageToRoll = addFlatDamage(damageToRoll, mastery);
+        bonusBreakdown.push({ value: mastery, source: 'Heavy Weapon Mastery' });
       }
     }
 
@@ -847,6 +915,32 @@
                 />
               </div>
             {/if}
+            {#if $isEditMode && !attack.spellRef}
+              <div class="attack-field">
+                <label for="attack-weapon-type-{attack.id}">Weapon</label>
+                <select
+                  id="attack-weapon-type-{attack.id}"
+                  value={isMeleeWeapon(attack) ? 'melee' : 'ranged'}
+                  on:change={(event) =>
+                    setWeaponType(
+                      attack,
+                      event.currentTarget.value === 'ranged' ? 'ranged' : 'melee'
+                    )}
+                >
+                  <option value="melee">Melee</option>
+                  <option value="ranged">Ranged</option>
+                </select>
+                <label class="radio-label">
+                  <input
+                    type="checkbox"
+                    checked={isHeavyWeapon(attack)}
+                    on:change={(event) =>
+                      setWeaponProperty(attack, 'heavy', event.currentTarget.checked)}
+                  />
+                  Heavy
+                </label>
+              </div>
+            {/if}
             <div class="attack-field">
               <label for="attack-type-{attack.id}">Type</label>
               <input
@@ -1144,6 +1238,28 @@
                 <button on:click={() => rollDamage(attack)} class="btn btn-secondary"
                   >Roll Damage</button
                 >
+              {/if}
+              {#if canMakeHewAttack($character, attack)}
+                <button
+                  on:click={() => rollAttack(attack, false, { hew: true })}
+                  class="btn btn-secondary"
+                  title="After a critical hit or reducing a creature to 0 HP with this melee weapon, make one attack with it as a Bonus Action"
+                  >Hew (Bonus Action)</button
+                >
+              {/if}
+              {#if isHeavyWeapon(attack) && hasFeatEffect($character, 'heavyWeaponMasteryDamage')}
+                <label class="radio-label">
+                  <input
+                    type="checkbox"
+                    checked={attackActionFlags[attack.id] !== false}
+                    on:change={(event) =>
+                      (attackActionFlags = {
+                        ...attackActionFlags,
+                        [attack.id]: event.currentTarget.checked
+                      })}
+                  />
+                  Attack action (Heavy Weapon Mastery +{$character.proficiencyBonus || 0} damage)
+                </label>
               {/if}
             {/if}
           </div>

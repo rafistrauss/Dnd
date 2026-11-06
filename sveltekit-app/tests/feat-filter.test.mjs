@@ -22,12 +22,17 @@ const char = {
 
 test('source selection is required and PHB never includes SRD or third-party entries', () => {
   expect(filterLevelUpFeats(catalog, char, '')).toEqual([]);
-  expect(filterLevelUpFeats(catalog, char, 'PHB')).toEqual([]);
+  const phb = filterLevelUpFeats(catalog, char, 'PHB');
+  expect(phb.length).toBeGreaterThan(0);
+  expect(phb.every((feat) => feat.source === 'PHB')).toBe(true);
   const feats = [
     { id: 'phb', name: 'PHB example', source: "Player's Handbook", description: '' },
     ...catalog
   ];
-  expect(filterLevelUpFeats(feats, char, 'phb').map((feat) => feat.id)).toEqual(['phb']);
+  expect(filterLevelUpFeats(feats, char, 'phb').map((feat) => feat.id)).toContain('phb');
+  expect(filterLevelUpFeats(feats, char, 'phb').every((feat) => feat.source !== advanced)).toBe(
+    true
+  );
   expect(getFeatSources(catalog).map((source) => source.id)).toContain('PHB');
   expect(filterLevelUpFeats(catalog, char, heroes).every((feat) => feat.source === heroes)).toBe(
     true

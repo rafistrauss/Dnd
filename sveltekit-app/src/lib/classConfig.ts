@@ -47,6 +47,12 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
         minLevel: 1
       },
       {
+        name: 'Fighting Style',
+        type: 'info',
+        description: 'Gain a Fighting Style feat of your choice',
+        minLevel: 2
+      },
+      {
         name: 'Divine Smite',
         type: 'spellSlot',
         description: 'Expend spell slot to deal extra radiant damage',
@@ -69,6 +75,12 @@ export const CLASS_CONFIG: Record<ClassName, ClassConfig> = {
     hitDice: 'd10',
     spellcaster: false,
     features: [
+      {
+        name: 'Fighting Style',
+        type: 'info',
+        description: 'Gain a Fighting Style feat of your choice',
+        minLevel: 1
+      },
       {
         name: 'Second Wind',
         type: 'uses',

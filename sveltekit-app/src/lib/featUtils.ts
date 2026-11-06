@@ -1,6 +1,6 @@
 import { getAvailableFeatures, getSpellSlotProgression } from './classConfig';
 import type { Feat } from './dndData';
-import type { Character } from './types';
+import type { AbilityName, Character, FeatMetadata, Ruleset } from './types';
 
 const SOURCE_LABELS: Record<string, string> = {
   'https://a5esrd.com/a5esrd': 'Level Up: Advanced 5e',
@@ -24,8 +24,80 @@ export function getFeatSources(feats: Feat[]): { id: string; name: string }[] {
   return [...sources].map((id) => ({ id, name: SOURCE_LABELS[id] ?? id }));
 }
 
-export function featMatchesClass(feat: Feat, char: Character, level: number): boolean {
+export const DEFAULT_RULESET: Ruleset = '2024';
+
+export const FEAT_CATEGORY_LABELS: Record<string, string> = {
+  origin: 'Origin Feats',
+  general: 'General Feats',
+  'fighting-style': 'Fighting Style Feats',
+  'epic-boon': 'Epic Boon Feats'
+};
+
+type FeatLike = Pick<Feat, 'name'> & FeatMetadata;
+
+export function getCharacterRuleset(char: Pick<Character, 'ruleset'>): Ruleset {
+  return char.ruleset ?? DEFAULT_RULESET;
+}
+
+// Feats recorded through level-up advancements, in the order they were taken.
+export function getAdvancementFeats(char: Character): FeatLike[] {
+  return Object.keys(char.advancements ?? {})
+    .map(Number)
+    .sort((a, b) => a - b)
+    .flatMap((level) => {
+      const choices = char.advancements![level].choices;
+      return choices.improvement === 'feat' && choices.feat ? [choices.feat] : [];
+    });
+}
+
+// Fighting styles chosen before level-up tracking (or typed by hand) only exist in the free-text
+// features field, so they are matched by name.
+export function getKnownFeatNames(char: Character, catalog: Feat[] = []): Set<string> {
+  const names = new Set(getAdvancementFeats(char).map((feat) => feat.name.trim().toLowerCase()));
+  for (const feat of catalog) {
+    if (feat.category !== 'fighting-style') continue;
+    const escaped = feat.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`\\b${escaped}\\b`, 'i').test(char.features ?? '')) {
+      names.add(feat.name.toLowerCase());
+    }
+  }
+  return names;
+}
+
+export function meetsAbilityRequirements(feat: FeatMetadata, char: Character): boolean {
+  return (feat.abilityRequirements ?? []).every((requirement) =>
+    requirement.abilities.some(
+      (ability: AbilityName) => (char.abilities?.[ability] ?? 0) >= requirement.min
+    )
+  );
+}
+
+export function getRequiredAbilityIncrease(
+  feat: FeatMetadata,
+  abilities: Character['abilities']
+): number | null {
+  const increase = feat.abilityIncrease;
+  if (!increase) return null;
+  const room = increase.abilities.reduce(
+    (total, ability) => total + Math.max(0, increase.max - abilities[ability]),
+    0
+  );
+  return Math.min(increase.amount, room);
+}
+
+export function featMatchesClass(
+  feat: Feat,
+  char: Character,
+  level: number,
+  catalog: Feat[] = []
+): boolean {
   if (!char.class) return false;
+  if (feat.ruleset && feat.ruleset !== getCharacterRuleset(char)) return false;
+  if (feat.minLevel && level < feat.minLevel) return false;
+  if (!meetsAbilityRequirements(feat, char)) return false;
+  if (!feat.repeatable && getKnownFeatNames(char, catalog).has(feat.name.trim().toLowerCase())) {
+    return false;
+  }
   if (
     feat.classes?.length &&
     !feat.classes.some((className) => className.toLowerCase() === char.class.toLowerCase())
@@ -57,6 +129,7 @@ export function filterLevelUpFeats(
   if (!source) return [];
   return feats.filter(
     (feat) =>
-      getFeatSource(feat.source) === getFeatSource(source) && featMatchesClass(feat, char, level)
+      getFeatSource(feat.source) === getFeatSource(source) &&
+      featMatchesClass(feat, char, level, feats)
   );
 }
