@@ -120,6 +120,7 @@
           const featureName = getFeatureName(feature);
           const featureKey = featureName.replace(/\s+/g, '');
           const maxUses = getMaxUses(feature);
+          if (!Number.isFinite(maxUses)) return;
           const arr = $character.classFeatures.features[featureKey];
           if (!Array.isArray(arr) || arr.length !== maxUses) {
             ensureCorrectUsesArray(featureKey, maxUses);
@@ -452,7 +453,9 @@
             {#if feature.type === 'uses'}
               {@const maxUses = getMaxUses(feature)}
               {@const usesArr = (
-                Array.isArray(featureData) ? featureData : Array(maxUses).fill(false)
+                Array.isArray(featureData)
+                  ? featureData
+                  : Array(Number.isFinite(maxUses) ? maxUses : 0).fill(false)
               ) as boolean[]}
               <div class="uses-tracker">
                 {#if maxUses === Infinity}
