@@ -4,6 +4,7 @@
   import { base } from '$app/paths';
   import { character, rollHistory, abilityModifiers } from '$lib/stores';
   import { getAvailableFeatures } from '$lib/classConfig';
+  import { firstDiceCount, applyMinimumDieResult, doubleDice } from '$lib/greatWeapon';
   import { MASTERY_MAP } from '$lib/weaponMastery';
   import type { WeaponMasteryName } from '$lib/weaponMastery';
 
@@ -522,11 +523,7 @@
 
   // Helper function to double dice for critical hits
   function doubleDiceNotation(notation: string): string {
-    // Parse notation like "2d6+3" or "1d8+2d4+5"
-    return notation.replace(/(\d+)d(\d+)/g, (match, count, sides) => {
-      const doubledCount = parseInt(count) * 2;
-      return `${doubledCount}d${sides}`;
-    });
+    return doubleDice(notation);
   }
 
   function resetDice() {
@@ -606,25 +603,17 @@
       return result;
     }
 
-    const normalizedNotation = currentRollNotation.replace(/\s+/g, '');
-    const diceMatch = normalizedNotation.match(/(?:^|[+(\-])(\d*)d(\d+)/i);
-    if (!diceMatch) {
+    const count = firstDiceCount(currentRollNotation);
+    if (!count) {
       gwfSummary = '';
       return result;
     }
 
-    const count = parseInt(diceMatch[1] || '1');
-    const newResult = [...result.result];
-    let totalAdjustment = 0;
-    let adjusted = false;
-
-    for (let i = 0; i < count && i < newResult.length; i++) {
-      if (newResult[i] === 1 || newResult[i] === 2) {
-        totalAdjustment += 3 - newResult[i];
-        newResult[i] = 3;
-        adjusted = true;
-      }
-    }
+    const { rolls: newResult, adjustment: totalAdjustment } = applyMinimumDieResult(
+      result.result,
+      count
+    );
+    const adjusted = totalAdjustment > 0;
 
     if (!adjusted) {
       gwfSummary = '';

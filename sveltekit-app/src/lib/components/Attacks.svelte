@@ -31,7 +31,42 @@
 
   // Debug mode: 'normal' (random), 'd20' (force 20), 'd1' (force 1)
   let debugForceD20Mode: 'normal' | 'd20' | 'd1' = 'normal';
-  $: hasGreatWeaponFightingFeat = /\bgreat weapon fighting\b/i.test($character.features || '');
+  import {
+    ATTACK_CONTEXTS,
+    contextBlockedReason,
+    heavyWeaponMasteryBonus,
+    addFlatDamage,
+    qualifiesForGreatWeaponFighting,
+    hasGreatWeaponMaster,
+    slotForContext,
+    type AttackContext
+  } from '$lib/greatWeapon';
+
+  // Per-attack action context (determines whether Heavy Weapon Mastery applies)
+  let attackContexts: Record<string, AttackContext> = {};
+  $: for (const a of $character.attacks) {
+    if (!attackContexts[a.id]) attackContexts[a.id] = 'attackAction';
+  }
+  const getContext = (attack: Attack): AttackContext => attackContexts[attack.id] || 'attackAction';
+
+  // Returns false (and warns) if the attack's action-economy slot is unavailable
+  function checkContext(attack: Attack): boolean {
+    const reason = contextBlockedReason(getContext(attack), $turnTracker);
+    if (reason) toasts.add(`${attack.name}: ${reason}`, 'error');
+    return !reason;
+  }
+
+  // Applies situational Great Weapon Master damage without touching the stored weapon damage
+  function applyHeavyWeaponMastery(
+    attack: Attack,
+    notation: string,
+    breakdown: Array<{ value: number | string; source: string }>
+  ): string {
+    const bonus = heavyWeaponMasteryBonus($character, attack, getContext(attack));
+    if (!bonus) return notation;
+    breakdown.push({ value: bonus, source: 'Great Weapon Master' });
+    return addFlatDamage(notation, bonus);
+  }
 
   // Computed: Get all abilities from active conditions
   $: conditionAbilities = $character.activeStates
@@ -167,6 +202,11 @@
   // Weapon attacks use your Action; spells use their casting time (action/bonusAction/reaction).
   function consumeActionEconomy(attack: Attack) {
     let slot: 'action' | 'bonusAction' | 'reaction' = 'action';
+    if (!attack.spellRef) {
+      const ctxSlot = slotForContext(getContext(attack));
+      if (!ctxSlot) return;
+      slot = ctxSlot;
+    }
     if (attack.spellRef) {
       const spell = getSpellByName(attack.spellRef);
       const actionType = (spell?.actionType || '').toLowerCase();
@@ -186,6 +226,7 @@
 
   // Support racial trait spell usage and user override
   function rollAttack(attack: Attack, useRacialTraitOverride?: boolean) {
+    if (!attack.spellRef && !checkContext(attack)) return;
     let damageToRoll = attack.damage;
     let applyHalfDamage = false;
     let isSpellAttack = false;
@@ -272,6 +313,10 @@
       }
     }
 
+    if (!attack.spellRef && damageToRoll) {
+      damageToRoll = applyHeavyWeaponMastery(attack, damageToRoll, damageBreakdown);
+    }
+
     // Build bonus breakdown for attack roll
     const bonusBreakdown: Array<{ value: number; source: string }> = [];
 
@@ -330,14 +375,12 @@
       damageBreakdown,
       rollType: 'attack',
       mastery: attack.mastery,
-      greatWeaponFighting:
-        !attack.spellRef &&
-        (!!$character.greatWeaponFighting || hasGreatWeaponFightingFeat) &&
-        !!attack.twoHanded
+      greatWeaponFighting: qualifiesForGreatWeaponFighting($character, attack)
     });
   }
 
   function rollDamage(attack: Attack, potentHalf = false) {
+    if (!attack.spellRef && !checkContext(attack)) return;
     if (!attack.damage) {
       toasts.add(`${attack.name}: No damage specified`, 'error');
       return;
@@ -451,6 +494,10 @@
       }
     }
 
+    if (!attack.spellRef) {
+      damageToRoll = applyHeavyWeaponMastery(attack, damageToRoll, bonusBreakdown);
+    }
+
     consumeActionEconomy(attack);
     dispatch('roll', {
       notation: damageToRoll,
@@ -460,10 +507,7 @@
       damageType,
       mastery: attack.mastery,
       rollType: 'damage',
-      greatWeaponFighting:
-        !attack.spellRef &&
-        (!!$character.greatWeaponFighting || hasGreatWeaponFightingFeat) &&
-        !!attack.twoHanded
+      greatWeaponFighting: qualifiesForGreatWeaponFighting($character, attack)
     });
   }
 
@@ -938,7 +982,7 @@
                   {/each}
                 </select>
               </div>
-              {#if $isEditMode || attack.twoHanded || attack.versatile}
+              {#if $isEditMode || attack.twoHanded || attack.versatile || attack.heavy}
                 <div class="attack-field attack-field-properties">
                   <span class="attack-field-label">Properties</span>
                   <div class="weapon-properties">
@@ -957,6 +1001,10 @@
                         disabled={!$isEditMode}
                       />
                       Versatile
+                    </label>
+                    <label class="property-label">
+                      <input type="checkbox" bind:checked={attack.heavy} disabled={!$isEditMode} />
+                      Heavy
                     </label>
                   </div>
                 </div>
@@ -1273,6 +1321,18 @@
             {/if}
             {#if !attack.spellRef}
               <!-- Non-spell attacks always show both buttons -->
+              {#if attack.heavy && hasGreatWeaponMaster($character)}
+                <select
+                  class="attack-context"
+                  aria-label="Attack context"
+                  bind:value={attackContexts[attack.id]}
+                  title="Heavy Weapon Mastery only applies to the Attack action"
+                >
+                  {#each ATTACK_CONTEXTS as c}
+                    <option value={c.value}>{c.label}</option>
+                  {/each}
+                </select>
+              {/if}
               <button on:click={() => rollAttack(attack)} class="btn btn-primary"
                 >Roll Attack</button
               >
